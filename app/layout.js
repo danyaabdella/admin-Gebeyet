@@ -1,9 +1,8 @@
-
 import { Roboto } from 'next/font/google';
 import {Toaster} from "react-hot-toast";
 import './globals.css';
-import Navbar from '@/components/Navbar';
-import ContextProvider from '@/components/ContextProvider';
+import Navbar from './components/NavBar';
+import AuthProvider from './context/AuthProvider';
 
 const roboto = Roboto({ subsets: ['latin'], weight: ['400', '500', '700'] });
 
@@ -16,13 +15,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="scroll-smooth">
       <body className={roboto.className}>
-        <ContextProvider>
+        <AuthProvider>
          <Toaster />
           <main className="max-w-4xl mx-auto p-4 overflow-y-hidden">
             <Navbar />
             {children}
           </main>
-        </ContextProvider>
+        </AuthProvider>
       </body>
     </html>
   );
