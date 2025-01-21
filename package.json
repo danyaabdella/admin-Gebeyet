@@ -6,8 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "start:cron": "node cron.js"
+    "lint": "next lint"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
