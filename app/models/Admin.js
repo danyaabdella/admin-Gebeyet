@@ -26,13 +26,14 @@ const adminSchema = new mongoose.Schema(
       type: Boolean,
       default: false, 
     },
+    trashDate: { 
+      type: Date, 
+      default: null,
+      expires: 30 * 24 * 60 * 60,
+    },    
     createdAt: {
       type: Date,
       default: Date.now, 
-    },
-    createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "SuperAdmin", 
     },
   },
   { timestamps: true } 
