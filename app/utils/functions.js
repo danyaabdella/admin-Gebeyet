@@ -1,4 +1,9 @@
 import mongoose from 'mongoose';
+import { role } from '../api/auth/[...nextauth]/route';
+import Admin from '../models/Admin';
+import SuperAdmin from '../models/SuperAdmin';
+import { getServerSession } from 'next-auth';
+import { options } from '../api/auth/[...nextauth]/options';
 
 export async function fetchUserData() {
   let data;
@@ -43,3 +48,35 @@ export async function fetchUserData() {
     }
   }
   
+  // Utility function to check if the user has "superAdmin" role
+  export async function isSuperAdmin() {
+    const userRole = await role();
+    if (userRole !== "superAdmin") {
+      throw new Error("Unauthorized: Only superAdmins can perform this operation");
+    }
+  }
+  
+  export async function isAdmin() {
+    const userRole = await role();
+    if (userRole !== "admin") {
+      throw new Error("Unauthorized: Only admins can perform this operation");
+    }
+  }
+
+  export async function userInfo() {
+    const session = await getServerSession(options)
+    const userEmail = session?.user?.email;
+    if (!userEmail) {
+      return false;
+    }
+    let userInfo = await Admin.findOne({email: userEmail})
+    if (!userInfo) {
+        userInfo = await SuperAdmin.findOne({email: userEmail})
+    }
+    console.log("user info to check role: ", userInfo.role);
+    if(!userInfo) {
+      return false;
+    }
+  
+    return userInfo;
+  }

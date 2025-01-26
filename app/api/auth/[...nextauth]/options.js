@@ -2,8 +2,7 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
-import Admin from '../../../models/Admin';
-import SuperAdmin from '../../../models/SuperAdmin';
+import User from '@/app/models/User';
 
 export const options = {
   providers: [
@@ -21,11 +20,7 @@ export const options = {
         await mongoose.connect(process.env.MONGO_URL);
 
         // Check for Admin or SuperAdmin
-        let user = await Admin.findOne({ email: credentials?.email });
-
-        if (!user) {
-          user = await SuperAdmin.findOne({ email: credentials?.email });
-        }
+        let user = await User.findOne({ email: credentials?.email });
 
         if (!user) {
           throw new Error('No user found with this email');

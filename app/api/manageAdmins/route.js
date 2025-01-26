@@ -1,24 +1,7 @@
-import { connectToDB } from "../../utils/functions";
-import Admin from "../../models/Admin";
-import { getServerSession } from "next-auth"; 
-import { options } from "../auth/[...nextauth]/options"; 
+import { connectToDB, isAdmin, isSuperAdmin } from "../../utils/functions";
+import Admin from "../../models/Admin"; 
 import { role } from "../auth/[...nextauth]/route"; 
-import bcrypt from "bcrypt"; // Make sure to import bcrypt
-
-// Utility function to check if the user has "superAdmin" role
-async function isSuperAdmin() {
-  const userRole = await role();
-  if (userRole !== "superAdmin") {
-    throw new Error("Unauthorized: Only superAdmins can perform this operation");
-  }
-}
-
-async function isAdmin() {
-  const userRole = await role();
-  if (userRole !== "admin") {
-    throw new Error("Unauthorized: Only admins can perform this operation");
-  }
-}
+import bcrypt from "bcrypt"; 
 
 // GET: Fetch all admins
 export async function GET(req) {
@@ -58,7 +41,7 @@ export async function GET(req) {
       filter.createdAt = { $gte: new Date(createdAt) };
     }
     if (isBanned) {
-      filter.isBanned = isBanned === "true"; // Convert query string to boolean
+      filter.isBanned = isBanned === "true"; 
     }
     if (email) {
       filter.email = email;
@@ -82,7 +65,7 @@ export async function GET(req) {
 export async function POST(req) {
   try {
     await connectToDB();
-    await isSuperAdmin(); // Authenticate user role
+    await isSuperAdmin(); 
 
     const { email, fullname, password, phone, role, createdBy } = await req.json();
 
