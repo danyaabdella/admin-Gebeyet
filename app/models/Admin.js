@@ -21,8 +21,13 @@ const adminSchema = new mongoose.Schema(
     },
     role: {
       type: String,
+      default: "admin"
     },
     isBanned: {
+      type: Boolean,
+      default: false, 
+    },
+    isDeleted: {
       type: Boolean,
       default: false, 
     },
@@ -31,10 +36,6 @@ const adminSchema = new mongoose.Schema(
       default: null,
       expires: 30 * 24 * 60 * 60,
     },    
-    createdAt: {
-      type: Date,
-      default: Date.now, 
-    },
   },
   { timestamps: true } 
 );

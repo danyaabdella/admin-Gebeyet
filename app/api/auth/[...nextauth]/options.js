@@ -1,8 +1,9 @@
 // import GitHubProvider from 'next-auth/providers/github';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import mongoose from 'mongoose';
-import bcrypt from 'bcrypt';
-import User from '@/app/models/User';
+import argon2 from 'argon2';  
+import Admin from '../../../models/Admin';
+import SuperAdmin from '../../../models/SuperAdmin';
 
 export const options = {
   providers: [
@@ -20,20 +21,24 @@ export const options = {
         await mongoose.connect(process.env.MONGO_URL);
 
         // Check for Admin or SuperAdmin
-        let user = await User.findOne({ email: credentials?.email });
+        let admin = await Admin.findOne({ email: credentials?.email });
 
-        if (!user) {
-          throw new Error('No user found with this email');
+        if (!admin) {
+          admin = await SuperAdmin.findOne({ email: credentials?.email });
         }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+        if (!admin) {
+          throw new Error('Invalid email or password'); // Corrected error throwing
+        }
+
+        const isPasswordValid = await argon2.verify(admin.password, credentials.password);
 
         if (!isPasswordValid) {
           throw new Error('Invalid email or password');
         }
 
         // Return the user object with role
-        return { id: user._id, email: user.email, role: user.role || null };
+        return { id: admin._id, email: admin.email, role: admin.role || null }; // Corrected to use `admin`
       },
     }),
   ],

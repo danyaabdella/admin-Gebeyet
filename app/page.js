@@ -14,7 +14,7 @@ export default function SignIn() {
 
   // Redirect if already authenticated
   if (session) {
-    router.push(`/${session.user.id}`); // Redirect to dynamic page
+    // router.push(`/${session.user.id}`); // Redirect to dynamic page
   }
 
   const handleSubmit = async (e) => {

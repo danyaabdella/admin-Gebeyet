@@ -11,15 +11,18 @@ export { handler as GET, handler as POST }
 
 export async function role() {
     const session = await getServerSession(options);
+    console.log("session: ", session);
+
     const userEmail = session?.user?.email;
     if (!userEmail) {
       return false;
     }
+    console.log("email: ", userEmail);
+
     let userInfo = await Admin.findOne({email: userEmail})
     if (!userInfo) {
         userInfo = await SuperAdmin.findOne({email: userEmail})
     }
-    console.log("user info to check role: ", userInfo.role);
     if(!userInfo) {
       return false;
     }

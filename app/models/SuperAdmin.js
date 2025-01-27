@@ -21,9 +21,10 @@ const superAdminSchema = new mongoose.Schema(
     },
     role: {
       type: String,
+      default: "superAdmin"
     },
   },
-  { timestamps: true }  // Automatically adds createdAt and updatedAt
+  { timestamps: true } 
 );
 
 const SuperAdmin = mongoose.models.SuperAdmin || mongoose.model("SuperAdmin", superAdminSchema);

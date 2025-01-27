@@ -29,21 +29,25 @@ export async function fetchUserData() {
     }
   }
 
-  let isConnected = false; // Global variable to track connection status
+  let isConnected = false; 
   
   export async function connectToDB() {
-    if (isConnected) {
+    if (isConnected && mongoose.connection.readyState === 1) {
       console.log("Using existing database connection");
       return;
     }
   
     try {
-      await mongoose.connect(process.env.MONGO_URL);
+      await mongoose.connect(process.env.MONGO_URL, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 30000,
+      });
   
       isConnected = true;
       console.log("Database connected successfully");
     } catch (error) {
-      console.error("Database connection failed:", error);
+      console.error("Database connection failed:", error.message);
       throw new Error("Failed to connect to the database");
     }
   }

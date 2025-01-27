@@ -1,41 +1,39 @@
 import { connectToDB, isAdmin, userInfo } from "../../utils/functions";
 import User from "../../models/User";
-import Admin from "../../models/Admin";
 
 export async function GET(req) {
   try {
-    console.log("Admin access verified.");
     await isAdmin();
-    console.log("Admin access verified.");
 
     await connectToDB();
 
     const url = new URL(req.url);
     const _id = url.searchParams.get("_id");
     const email = url.searchParams.get("email");
-    const name = url.searchParams.get("name");
+    const fullName = url.searchParams.get("fullName");
     const isBanned = url.searchParams.get("isBanned");
     const role = url.searchParams.get("role");
     const isSeller = url.searchParams.get("isSeller");
     const stateName = url.searchParams.get("stateName");
     const cityName = url.searchParams.get("cityName");
+    const approvedBy = url.searchParams.get("approvedBy");
+    const bannedBy = url.searchParams.get("bannedBy");
 
     // Build the filter object dynamically
     let filter = {};
     if (_id) filter._id = _id;
     if (email) filter.email = email;
-    if (name) filter.fullName = { $regex: name, $options: "i" };
+    if (fullName) filter.fullName = { $regex: fullName, $options: "i" };
     if (isBanned) filter.banned = isBanned === "true"; 
     if (role) filter.role = role;
+    if (approvedBy) filter.approvedBy = approvedBy;
+    if (bannedBy) filter.bannedBy = bannedBy;
     if (isSeller) filter.isSeller = isSeller === "true";
     if (stateName) filter.stateName = { $regex: stateName, $options: "i" }; 
     if (cityName) filter.cityName = { $regex: cityName, $options: "i" }; 
 
-    console.log("Filter criteria:", filter);
-
     // Fetch users based on the filter
     const users = await User.find(filter);
-    console.log("Users fetched:", users);
 
     return new Response(JSON.stringify(users), { status: 200 });
   } catch (error) {
@@ -54,7 +52,7 @@ export async function PUT(req) {
     await connectToDB();
 
     const userData = await userInfo();
-    console.log("User Data: ", userData);
+    console.log("Admin User data: ", userData);
 
     // Parse the request body
     const body = await req.json();
@@ -72,7 +70,6 @@ export async function PUT(req) {
 
     // Handle the undo deletion logic
     if (isDeleted === false && user.trashDate !== null) {
-      // Undo the deletion: reset trashDate and set isDeleted to false
       user.trashDate = null;
       user.isDeleted = false;
       await user.save();
@@ -83,14 +80,13 @@ export async function PUT(req) {
     let updateData = {};
     if (isSeller !== undefined) {
       updateData.isSeller = isSeller;
+      console.log("approved by: ", userData.email)
       updateData.approvedBy = isSeller ? userData.email : null;
     }
     if (isBanned !== undefined) {
       updateData.isBanned = isBanned;
       updateData.bannedBy = isBanned ? userData.email : null;
     }
-
-    console.log("Update data:", updateData);
 
     // Update the user if no deletion logic is applied
     const updatedUser = await User.findByIdAndUpdate(
@@ -103,7 +99,6 @@ export async function PUT(req) {
       return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
     }
 
-    console.log("User updated successfully:", updatedUser);
 
     return new Response(JSON.stringify({ message: "User updated successfully", user: updatedUser }), { status: 200 });
   } catch (error) {

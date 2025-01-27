@@ -22,11 +22,11 @@ const UserSchema = new Schema(
     cityName: { type: String, required: false },
     phoneNumber: { type: String, required: false },
 
-    isDeleted: { type: Boolean, default: false }, // Soft-delete marker
+    isDeleted: { type: Boolean, default: false }, 
     trashDate: { 
       type: Date, 
       default: null, 
-      expires: 30 * 60 * 60 * 60, // Automatically delete after 30 days
+      expires: 30 * 60 * 60 * 60, 
     },
   },
   { timestamps: true }
