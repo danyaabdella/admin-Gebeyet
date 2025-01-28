@@ -9,16 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "argon2": "^0.41.1",
+    "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "mongoose": "^8.9.4",
     "next": "15.1.4",
     "next-auth": "^4.24.11",
+    "node-cron": "^3.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/node": "22.10.5",
+    "@types/react": "19.0.6",
     "eslint": "^9",
     "eslint-config-next": "15.1.4",
     "postcss": "^8",
