@@ -17,7 +17,6 @@ export async function role() {
     if (!userEmail) {
       return false;
     }
-    console.log("email: ", userEmail);
 
     let userInfo = await Admin.findOne({email: userEmail})
     if (!userInfo) {
