@@ -28,6 +28,14 @@ const UserSchema = new Schema(
       default: null, 
       expires: 30 * 60 * 60 * 60, 
     },
+
+    // New required fields
+    account_name: { type: String, required: true },
+    account_number: { type: String, required: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, required: true },
+    reference: { type: String, required: true },
+    bank_code: { type: String, required: true },
   },
   { timestamps: true }
 );

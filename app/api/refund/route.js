@@ -1,5 +1,10 @@
+import Order from '../../models/Order';
+import { isAdmin } from '../../utils/functions';
+
 export async function POST(req) {
     try {
+      await isAdmin();
+
       const { tx_ref, amount, reason } = await req.json();
   
       if (!tx_ref || !reason) {
@@ -26,6 +31,10 @@ export async function POST(req) {
       const result = await response.json();
   
       if (response.ok) {
+        const order = await Order.findById(_id);
+        order.paymentStatus = "Refunded";
+        await order.save();
+
         return new Response(JSON.stringify(result), { status: 200 });
       } else {
         return new Response(JSON.stringify(result), { status: 400 });

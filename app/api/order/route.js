@@ -71,30 +71,36 @@ export async function PUT(req) {
         await isAdmin(); // Ensure only admins can perform this action
 
         const body = await req.json();
-        const { _id, status } = body;
+        const { _id, paymentStatus } = body;
 
         // Validate input
         if (!_id) {
-            return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
+            return NextResponse.json({ error: "Order ID is required", status: "fail" }, { status: 400 });
+        }
+
+        if (![ "Refunded", "Paid To Merchant" ].includes(paymentStatus)) {
+            return NextResponse.json({ error: "Invalid payment status", status: "fail" }, { status: 400 });
         }
 
         // Fetch the order
         const order = await Order.findById(_id);
-
         if (!order) {
-            return NextResponse.json({ error: "Order not found" }, { status: 404 });
+            return NextResponse.json({ error: "Order not found", status: "fail" }, { status: 404 });
         }
 
-        // Check if the status is being updated to "Refunded"
-        if (status === "Refunded") {
-            order.status = "Refunded"; 
-            await order.save(); // Save the updated order
-            return NextResponse.json({ message: "Order status updated to Refunded", order }, { status: 200 });
-        } else {
-            return NextResponse.json({ error: "Invalid status update" }, { status: 400 });
+        // Prevent updating if the order is already in the desired status
+        if (order.paymentStatus === paymentStatus) {
+            return NextResponse.json({ error: `Order is already marked as ${paymentStatus}`, status: "fail" }, { status: 400 });
         }
+
+        // Update the payment status
+        order.paymentStatus = paymentStatus;
+        await order.save(); // Save the updated order
+
+        return NextResponse.json({ message: `Order status updated to ${paymentStatus}`, order, status: "success" }, { status: 200 });
     } catch (error) {
         console.error("Error updating order:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: "Internal Server Error", status: "fail" }, { status: 500 });
     }
 }
+
