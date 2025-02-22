@@ -13,7 +13,6 @@ export { handler as GET, handler as POST }
 export async function role() {
   await connectToDB();
     const session = await getServerSession(options);
-    console.log("session: ", session);
 
     const userEmail = session?.user?.email;
     if (!userEmail) {

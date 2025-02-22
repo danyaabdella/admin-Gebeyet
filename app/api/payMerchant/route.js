@@ -1,8 +1,9 @@
+import { v4 as uuidv4 } from 'uuid';
 import Order from '../../models/Order';
 import { isAdmin } from '../../utils/functions';
 import { NextResponse } from 'next/server';
 
-const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY; // Store your Chapa secret key in environment variables
+const CHAPA_SECRET_KEY = "CHASECK_TEST-s6oBbGS04bRkcXLT7P6x2do2EKcCXfJ6";
 
 export async function POST(req) {
     try {
@@ -10,12 +11,18 @@ export async function POST(req) {
         const body = await req.json();
 
         // Extract required fields from the request body
-        const { _id, account_name, account_number, amount, currency, reference, bank_code } = body;
+        const { _id, account_name, account_number, amount, currency, bank_code } = body;
+
+        // Generate a unique reference of 20 characters
+        const reference = `mr_tx_${uuidv4().split('-')[0]}`;  // Get the first part of UUID and prepend
+
+        // Ensure reference is 20 characters long
+        const referenceFinal = reference.substring(0, 20);
 
         // Validate required fields
-        if (!account_name || !account_number || !amount || !currency || !reference || !bank_code) {
+        if (!account_name || !account_number || !amount || !currency || !bank_code) {
             return NextResponse.json(
-                { message: "All fields (account_name, account_number, amount, currency, reference, bank_code) are required" },
+                { message: "All fields (account_name, account_number, amount, currency, bank_code) are required" },
                 { status: 400 }
             );
         }
@@ -32,7 +39,7 @@ export async function POST(req) {
                 account_number,
                 amount,
                 currency,
-                reference,
+                reference: referenceFinal,  // Use 20-character reference
                 bank_code
             })
         });
@@ -42,8 +49,8 @@ export async function POST(req) {
         // Handle Chapa's response
         if (result.status === "success") {
             const order = await Order.findById(_id);
-            order.merchantDetail.merchantRefernce = reference;
-            order.status = "Paid To Merchant";
+            order.merchantDetail.merchantRefernce = referenceFinal;
+            order.paymentStatus = "Paid To Merchant";
             await order.save();
 
             return NextResponse.json({ message: "Transfer Queued Successfully", data: result.data }, { status: 200 });

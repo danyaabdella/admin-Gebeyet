@@ -32,23 +32,20 @@ export async function fetchUserData() {
   }
 
   let isConnected = false; 
+
   export async function connectToDB() {
-    if (isConnected && mongoose.connection.readyState === 1) {
+    if (isConnected) {
       console.log("Using existing database connection");
       return;
     }
   
     try {
-      await mongoose.connect(process.env.MONGO_URL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        serverSelectionTimeoutMS: 30000,
-      });
+      await mongoose.connect(process.env.MONGO_URL);
   
       isConnected = true;
       console.log("Database connected successfully");
     } catch (error) {
-      console.error("Database connection failed:", error.message);
+      console.error("Database connection failed:", error);
       throw new Error("Failed to connect to the database");
     }
   }
