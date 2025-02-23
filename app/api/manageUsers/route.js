@@ -1,4 +1,4 @@
-import { connectToDB, isAdmin, userInfo } from "../../utils/functions";
+import { connectToDB, isAdmin, sendNotification, userInfo } from "../../utils/functions";
 import User from "../../models/User";
 
 export async function GET(req) {
@@ -13,7 +13,7 @@ export async function GET(req) {
     const fullName = url.searchParams.get("fullName");
     const isBanned = url.searchParams.get("isBanned");
     const role = url.searchParams.get("role");
-    const isSeller = url.searchParams.get("isSeller");
+    const isMerchant = url.searchParams.get("isMerchant");
     const stateName = url.searchParams.get("stateName");
     const cityName = url.searchParams.get("cityName");
     const approvedBy = url.searchParams.get("approvedBy");
@@ -28,7 +28,7 @@ export async function GET(req) {
     if (role) filter.role = role;
     if (approvedBy) filter.approvedBy = approvedBy;
     if (bannedBy) filter.bannedBy = bannedBy;
-    if (isSeller) filter.isSeller = isSeller === "true";
+    if (isMerchant) filter.isMerchant = isMerchant === "true";
     if (stateName) filter.stateName = { $regex: stateName, $options: "i" }; 
     if (cityName) filter.cityName = { $regex: cityName, $options: "i" }; 
 
@@ -45,18 +45,16 @@ export async function GET(req) {
   }
 }
 
-
 export async function PUT(req) {
   try {
     await isAdmin();
     await connectToDB();
 
     const userData = await userInfo();
-    console.log("Admin User data: ", userData);
 
     // Parse the request body
     const body = await req.json();
-    const { _id, isSeller, isBanned, isDeleted } = body;
+    const { _id, isMerchant, isBanned, isDeleted } = body;
 
     if (!_id) {
       return new Response(JSON.stringify({ message: "User ID is required" }), { status: 400 });
@@ -73,19 +71,23 @@ export async function PUT(req) {
       user.trashDate = null;
       user.isDeleted = false;
       await user.save();
+      await sendNotification(user.email, "user", "restored");
       return new Response(JSON.stringify({ message: "User restored from trash" }), { status: 200 });
     }
 
     // Build the update object dynamically
     let updateData = {};
-    if (isSeller !== undefined) {
-      updateData.isSeller = isSeller;
-      console.log("approved by: ", userData.email)
-      updateData.approvedBy = isSeller ? userData.email : null;
+    if (isMerchant !== undefined) {
+      updateData.isMerchant = isMerchant;
+      updateData.approvedBy = isMerchant ? userData.email : null;
+      await sendNotification(user.email, "user", "approved");
     }
     if (isBanned !== undefined) {
       updateData.isBanned = isBanned;
       updateData.bannedBy = isBanned ? userData.email : null;
+      if (isBanned) {
+        await sendNotification(user.email, "user", "banned");
+      }
     }
 
     // Update the user if no deletion logic is applied
@@ -123,10 +125,17 @@ try {
     return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
     }
 
+    if (user.isDeleted) {
+      return new Response(
+        JSON.stringify({ message: "User alraeady in trash. It will be permanently deleted after 30 days." }),
+        { status: 200 }
+        );
+    }
     // Mark the user as deleted and set the trash date
     user.isDeleted = true;
     user.trashDate = new Date();
     await user.save();
+    await sendNotification(user.email, "user", "deleted");
 
     return new Response(
     JSON.stringify({ message: "User soft deleted. It will be permanently deleted after 30 days." }),

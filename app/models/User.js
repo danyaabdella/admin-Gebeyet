@@ -7,11 +7,11 @@ const UserSchema = new Schema(
     password: { type: String, required: true },
     role: { 
         type: String, 
-        enum: ['buyer', 'seller'],
-        default: 'buyer' 
+        enum: ['customer', 'merchant'],
+        default: 'customer' 
       },
     image: { type: String, default: " " },
-    isSeller: { type: Boolean, default: false },
+    isMerchant: { type: Boolean, default: false },
     approvedBy: { type: String, required: false },
     bannedBy: { type: String, required: false },
     tinNumber: { type: String, required: false },
@@ -28,6 +28,14 @@ const UserSchema = new Schema(
       default: null, 
       expires: 30 * 60 * 60 * 60, 
     },
+
+    // New required fields
+    account_name: { type: String, required: true },
+    account_number: { type: String, required: true },
+    amount: { type: Number, required: true },
+    currency: { type: String, required: true },
+    reference: { type: String, required: true },
+    bank_code: { type: String, required: true },
   },
   { timestamps: true }
 );
