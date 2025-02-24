@@ -9,16 +9,19 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fontsource/roboto": "^5.1.1",
     "argon2": "^0.41.1",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
+    "mongodb": "^6.13.0",
     "mongoose": "^8.9.4",
     "next": "15.1.4",
     "next-auth": "^4.24.11",
     "node-cron": "^3.0.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-hot-toast": "^2.5.1"
+    "react-hot-toast": "^2.5.1",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
