@@ -1,5 +1,5 @@
-import Category from "../../models/Category";
-import { checkSession, connectToDB, isAdmin, userInfo } from "../../utils/functions";
+import Category from "../../../models/Category";
+import { checkSession, connectToDB, isAdmin, userInfo } from "../../../utils/functions";
 
 export async function POST(req) {
     try {

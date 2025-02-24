@@ -1,7 +1,7 @@
 import { Roboto } from 'next/font/google';
 import {Toaster} from "react-hot-toast";
 import './globals.css';
-import Navbar from './components/NavBar';
+import Navbar from '../components/NavBar';
 import AuthProvider from './context/AuthProvider';
 
 const roboto = Roboto({ subsets: ['latin'], weight: ['400', '500', '700'] });

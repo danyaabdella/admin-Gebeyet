@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 import { options } from "../auth/[...nextauth]/options";
 import { getServerSession } from "next-auth";
-import SuperAdmin from "../../models/SuperAdmin";
-import Admin from "../../models/Admin";
+import SuperAdmin from "../../../models/SuperAdmin";
+import Admin from "../../../models/Admin";
 import {role} from "../auth/[...nextauth]/route";
 
 export async function GET(req) {

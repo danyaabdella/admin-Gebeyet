@@ -1,5 +1,5 @@
-import { connectToDB, isAdmin, sendNotification, userInfo } from "../../utils/functions";
-import User from "../../models/User";
+import { connectToDB, isAdmin, sendNotification, userInfo } from "../../../utils/functions";
+import User from "../../../models/User";
 
 export async function GET(req) {
   try {
