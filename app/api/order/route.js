@@ -1,5 +1,5 @@
-import Order from "@/app/models/Order";
-import { isAdmin } from "@/app/utils/functions";
+import Order from "@/models/Order";
+import { isAdmin } from "@/utils/functions";
 
 export async function GET(req) {
     try {

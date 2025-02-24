@@ -1,5 +1,5 @@
-import { connectToDB, isAdmin, isSuperAdmin, sendNotification } from "../../utils/functions";
-import Admin from "../../models/Admin"; 
+import { connectToDB, isAdmin, isSuperAdmin, sendNotification } from "../../../utils/functions";
+import Admin from "../../../models/Admin"; 
 import { role } from "../auth/[...nextauth]/route"; 
 import argon2 from 'argon2';
 

@@ -1,11 +1,11 @@
 import mongoose from 'mongoose';
 import nodemailer from "nodemailer";
 
-import { role } from '../api/auth/[...nextauth]/route';
+import { role } from '../app/api/auth/[...nextauth]/route';
 import Admin from '../models/Admin';
 import SuperAdmin from '../models/SuperAdmin';
 import { getServerSession } from 'next-auth';
-import { options } from '../api/auth/[...nextauth]/options';
+import { options } from '../app/api/auth/[...nextauth]/options';
 
 export async function fetchUserData() {
   let data;

@@ -1,9 +1,9 @@
 import NextAuth from 'next-auth';
 import { options } from './options';
 import { getServerSession } from 'next-auth';
-import Admin from '../../../models/Admin';
-import SuperAdmin from '../../../models/SuperAdmin';
-import { connectToDB } from '../../../utils/functions';
+import Admin from '../../../../models/Admin';
+import SuperAdmin from '../../../../models/SuperAdmin';
+import { connectToDB } from '../../../../utils/functions';
 
 const handler = NextAuth(options)
 

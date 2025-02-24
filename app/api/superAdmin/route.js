@@ -1,5 +1,5 @@
-import { isSuperAdmin } from '../../utils/functions'
-import SuperAdmin from "../../models/SuperAdmin";
+import { isSuperAdmin } from '../../../utils/functions'
+import SuperAdmin from "../../../models/SuperAdmin";
 import argon2 from "argon2";
 
 
