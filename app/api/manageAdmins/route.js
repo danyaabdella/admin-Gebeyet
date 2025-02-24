@@ -1,4 +1,4 @@
-import { connectToDB, isAdmin, isSuperAdmin } from "../../utils/functions";
+import { connectToDB, isAdmin, isSuperAdmin, sendNotification } from "../../utils/functions";
 import Admin from "../../models/Admin"; 
 import { role } from "../auth/[...nextauth]/route"; 
 import argon2 from 'argon2';
@@ -90,6 +90,8 @@ export async function POST(req) {
       createdBy,
     });
 
+    await sendNotification(newAdmin.email, "admin", "created", password);
+
     return new Response(JSON.stringify(newAdmin), { status: 201 });
   } catch (error) {
     return new Response(
@@ -119,17 +121,44 @@ export async function PUT(req) {
     }
 
     // Case 1: If isBanned is passed, check if user is superAdmin and only update isBanned
-    if (typeof isBanned !== "undefined" || (isDeleted === false && admin.trashDate !== null)) {
+    if (typeof isBanned !== "undefined") {
       await isSuperAdmin(); 
-
-      const updatedData = { isBanned, isDeleted, trashDate: null };
-
-      const updatedAdmin = await Admin.findByIdAndUpdate(_id, updatedData, { new: true });
+    
+      // Update ban status separately
+      const updatedAdmin = await Admin.findByIdAndUpdate(
+        _id,
+        { isBanned },
+        { new: true }
+      );
+    
       if (!updatedAdmin) {
         return new Response(JSON.stringify({ message: "Admin not found" }), { status: 404 });
       }
-
+    
+      if (isBanned) {
+        await sendNotification(updatedAdmin.email, "admin", "banned");
+      }
+    
       return new Response(JSON.stringify(updatedAdmin), { status: 200 });
+    } 
+    
+    // Restore admin if previously deleted
+    if (isDeleted === false && admin.trashDate !== null) {
+      await isSuperAdmin();
+    
+      const restoredAdmin = await Admin.findByIdAndUpdate(
+        _id,
+        { isDeleted: false, trashDate: null },
+        { new: true }
+      );
+    
+      if (!restoredAdmin) {
+        return new Response(JSON.stringify({ message: "Admin not found" }), { status: 404 });
+      }
+    
+      await sendNotification(restoredAdmin.email, "admin", "restored");
+    
+      return new Response(JSON.stringify(restoredAdmin), { status: 200 });
     } else {
       // Case 2: If isBanned is not passed, check if user is admin and update other fields
       await isAdmin(); 
@@ -179,6 +208,7 @@ export async function DELETE(req) {
     admin.trashDate = new Date();
     admin.isDeleted = true;
     await admin.save();
+    await sendNotification(admin.email, "admin", "deleted");
 
     return new Response(
       JSON.stringify({ message: "Admin soft deleted. It will be permanently deleted after 30 days." }),
