@@ -2,8 +2,8 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
 import mongoose from 'mongoose';
 import argon2 from 'argon2';  
-import Admin from '../../../models/Admin';
-import SuperAdmin from '../../../models/SuperAdmin';
+import Admin from '../../../../models/Admin';
+import SuperAdmin from '../../../../models/SuperAdmin';
 
 export const options = {
   providers: [
