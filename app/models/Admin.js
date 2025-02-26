@@ -15,6 +15,9 @@ const adminSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    img: {
+      type: String,
+    },
     phone: {
       type: String,
       default: null,
@@ -31,11 +34,11 @@ const adminSchema = new mongoose.Schema(
       type: Boolean,
       default: false, 
     },
-    trashDate: { 
-      type: Date, 
-      default: null,
-      expires: 30 * 24 * 60 * 60,
-    },    
+    // trashDate: { 
+    //   type: Date, 
+    //   default: null,
+    //   expires: 30 * 24 * 60 * 60,
+    // },    
   },
   { timestamps: true } 
 );
