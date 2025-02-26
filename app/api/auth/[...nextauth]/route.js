@@ -5,29 +5,23 @@ import Admin from '../../../../models/Admin';
 import SuperAdmin from '../../../../models/SuperAdmin';
 import { connectToDB } from '../../../../utils/functions';
 
-const handler = NextAuth(options)
 
-export { handler as GET, handler as POST }
+const handler = NextAuth(options);
+export { handler as GET, handler as POST };
 
-
-export async function role() {
+// Function to get user role
+export async function role(req) {
   await connectToDB();
-    const session = await getServerSession(options);
+  const session = await getServerSession(req, options);
 
-    const userEmail = session?.user?.email;
-    if (!userEmail) {
-      return false;
-    }
-
-    let userInfo = await Admin.findOne({email: userEmail})
-    if (!userInfo) {
-        userInfo = await SuperAdmin.findOne({email: userEmail})
-    }
-    if(!userInfo) {
-      return false;
-    }
-  
-    return userInfo.role;
+  if (!session?.user?.email) {
+    return null;
   }
+
+  const user = await Admin.findOne({ email: session.user.email }) || 
+               await SuperAdmin.findOne({ email: session.user.email });
+
+  return user?.role || null;
+}
 
   
