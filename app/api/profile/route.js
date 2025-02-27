@@ -1,4 +1,4 @@
-import { options } from "../auth/[...nextauth]/options";
+import { options } from "../auth/options";
 import { getServerSession } from "next-auth";
 import SuperAdmin from "../../models/SuperAdmin";
 import Admin from "../../models/Admin";

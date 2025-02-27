@@ -4,7 +4,7 @@ import { role } from "../auth/[...nextauth]/route";
 import argon2 from 'argon2';
 import DeletedAdmin from '../../models/DeletedAdmin';
 
-// GET: Fetch all admins
+
 export async function GET(req) {
   try {
     await connectToDB();
@@ -17,7 +17,8 @@ export async function GET(req) {
     const isDeleted = url.searchParams.get("isDeleted");
 
     // Check the user's role
-    const userRole = await role();
+    const userRole = await role(req); // Pass the req object here
+    console.log("User Role:", userRole); 
     if (!userRole) {
       return new Response(JSON.stringify({ message: "Unauthorized: No user session found" }), { status: 401 });
     }
@@ -35,7 +36,9 @@ export async function GET(req) {
     }
 
     // For all other fetch operations, only superAdmin is allowed
-    await isSuperAdmin();
+    if (userRole !== "superAdmin") {
+      return new Response(JSON.stringify({ message: "Unauthorized: Only superAdmins can perform this operation" }), { status: 403 });
+    }
 
     let filter = {};
 
@@ -43,13 +46,13 @@ export async function GET(req) {
       filter.createdAt = { $gte: new Date(createdAt) };
     }
     if (isBanned) {
-      filter.isBanned = isBanned ; 
+      filter.isBanned = isBanned;
     }
     if (email) {
       filter.email = email;
     }
     if (isDeleted) {
-      filter.isDeleted = isDeleted ;
+      filter.isDeleted = isDeleted;
     }
 
     const admins = await Admin.find(filter);
@@ -64,12 +67,12 @@ export async function GET(req) {
     );
   }
 }
-
 // POST: Create a new admin
 export async function POST(req) {
   try {
     await connectToDB();
-    await isSuperAdmin(); 
+    console.log("Request Object in POST endpoint:", req);
+    await isSuperAdmin(req); 
 
     const { email, fullname, password, phone, createdBy } = await req.json();
 

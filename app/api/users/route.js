@@ -1,8 +1,8 @@
 import { getServerSession } from "next-auth";
-import { options } from "../auth/[...nextauth]/options";
+import  options  from "../auth/options";
 import User from "../../models/User";
 import { role } from "../auth/[...nextauth]/route";
-import { connectToDB, sendNotification } from "@/app/utils/functions";
+import { connectToDB, sendNotification } from "../../utils/functions";
 
 
 export async function GET(req) {
@@ -49,7 +49,7 @@ export async function PUT(req) {
         }
 
         // Check if user is SuperAdmin or Admin
-        const userRole = await role();
+        const userRole = await role( req );
         if (userRole !== "superadmin" && userRole !== "admin") {
             return new Response(JSON.stringify({ error: "Access Denied" }), { status: 403 });
         }

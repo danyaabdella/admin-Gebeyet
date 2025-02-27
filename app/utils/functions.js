@@ -5,7 +5,7 @@ import { role } from '../api/auth/[...nextauth]/route';
 import Admin from '../models/Admin';
 import SuperAdmin from '../models/SuperAdmin';
 import { getServerSession } from 'next-auth';
-import { options } from '../api/auth/[...nextauth]/options';
+import  options  from '../api/auth/options';
 
 export async function fetchUserData() {
   let data;
@@ -51,15 +51,15 @@ export async function fetchUserData() {
   }
   
   // Utility function to check if the user has "superAdmin" role
-  export async function isSuperAdmin() {
-    const userRole = await role();
+  export async function isSuperAdmin(req) {
+    const userRole = await role(req);
     if (userRole !== "superAdmin") {
       throw new Error("Unauthorized: Only superAdmins can perform this operation");
     }
   }
   
-  export async function isAdmin() {
-    const userRole = await role();
+  export async function isAdmin(req) {
+    const userRole = await role(req);
     if (userRole !== "admin") {
       throw new Error("Unauthorized: Only admins can perform this operation");
     }
