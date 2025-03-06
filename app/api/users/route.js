@@ -36,3 +36,56 @@ export async function GET(req) {
         return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
     }
 }
+
+export async function PUT(req) {
+    try {
+        await connectToDB();
+        
+        const session = await getServerSession(options);
+        if (!session?.user?.email) {
+            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+        }
+
+        // Check if user is SuperAdmin or Admin
+        const userRole = await role();
+        if (userRole !== "superadmin" && userRole !== "admin") {
+            return new Response(JSON.stringify({ error: "Access Denied" }), { status: 403 });
+        }
+
+        // Get request body
+        const { userId, newRole, isBanned } = await req.json();
+        if (!userId || (!newRole && isBanned === undefined)) {
+            return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
+        }
+
+        // Find the user
+        const user = await User.findById(userId);
+        if (!user) {
+            return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
+        }
+
+        // Handle role change
+        if (newRole && ["customer", "merchant"].includes(newRole)) {
+            user.role = newRole;
+        }
+
+        // Handle banning/unbanning merchants
+        if (isBanned !== undefined && user.role === "merchant") {
+            user.isBanned = isBanned;
+            
+            if (isBanned) {
+                await sendNotification(user.email, "user", "banned");
+            } else {
+                await sendNotification(user.email, "user", "restored");
+            }
+        }
+
+        // Save changes
+        await user.save();
+
+        return new Response(JSON.stringify({ message: "User updated successfully", user }), { status: 200 });
+    } catch (error) {
+        console.error("Error updating user:", error);
+        return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
+    }
+}

@@ -14,7 +14,7 @@ export const options = {
         otp: { label: 'OTP:', type: 'text', placeholder: '123456' },
       },
       async authorize(credentials) {
-        await mongoose.connect(process.env.MONGO_URL);
+        await connectToDB();
 
         let user = await Admin.findOne({ email: credentials?.email }) || await SuperAdmin.findOne({ email: credentials?.email });
 
