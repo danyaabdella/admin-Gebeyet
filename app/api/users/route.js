@@ -1,41 +1,39 @@
-import { getServerSession } from "next-auth";
+import mongoose from "mongoose";
 import { options } from "../auth/[...nextauth]/options";
-import User from "../../models/User";
-import { role } from "../auth/[...nextauth]/route";
-import { connectToDB, sendNotification } from "@/app/utils/functions";
-
+import { getServerSession } from "next-auth";
+import SuperAdmin from "../../../models/SuperAdmin";
+import Admin from "../../../models/Admin";
+import {role} from "../auth/[...nextauth]/route";
 
 export async function GET(req) {
+    const role1 = await role();
     try {
-        await connectToDB();
+        mongoose.connect(process.env.MONGO_URL);
 
-        // Get user session
-        const session = await getServerSession(options);
-        if (!session?.user?.email) {
-            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-        }
-
-        // Check if user is SuperAdmin or Admin
-        const userRole = await role();
-        if (userRole !== "superadmin" && userRole !== "admin") {
-            return new Response(JSON.stringify({ error: "Access Denied" }), { status: 403 });
-        }
-
-        // Extract role query parameter
         const url = new URL(req.url);
-        const userRoleFilter = url.searchParams.get("role"); // ?role=merchant OR ?role=customer
+        const _id = url.searchParams.get('_id');
 
-        if (!userRoleFilter || !["merchant", "customer"].includes(userRoleFilter)) {
-            return new Response(JSON.stringify({ error: "Invalid role provided" }), { status: 400 });
+        let filterUser = {};
+        if (_id) {
+            filterUser = { _id };
+        } else {
+            const session = await getServerSession(options);
+            const email = session?.user?.email;
+            if (!email) {
+                return new Response(JSON.stringify({ error: "No session found" }), { status: 401 });
+            }
+            filterUser = { email };
         }
 
-        // Fetch users based on the role
-        const users = await User.find({ role: userRoleFilter });
+        let user = await SuperAdmin.findOne(filterUser).lean();
+        if (!user) {
+           user = await Admin.findOne(filterUser).lean();
+        }
 
-        return new Response(JSON.stringify(users), { status: 200 });
+        return new Response(JSON.stringify(user), { status: 200 });
     } catch (error) {
-        console.error("Error fetching users:", error);
-        return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
+        console.error('Error fetching user data:', error);
+        return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
     }
 }
 

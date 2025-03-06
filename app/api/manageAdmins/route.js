@@ -1,5 +1,5 @@
 import { connectToDB, isAdmin, isSuperAdmin, sendNotification } from "../../../utils/functions";
-import Admin from "../../../models/Admin"; 
+import Admin from "@/models/Admin";
 import { role } from "../auth/[...nextauth]/route"; 
 import argon2 from 'argon2';
 import DeletedAdmin from '../../models/DeletedAdmin';

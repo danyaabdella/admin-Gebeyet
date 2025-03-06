@@ -33,7 +33,7 @@ export async function fetchUserData() {
 
   let isConnected = false; 
 
-  export async function connectToDB() {
+export async function connectToDB() {
     if (isConnected) {
       console.log("Using existing database connection");
       return;
@@ -51,21 +51,28 @@ export async function fetchUserData() {
   }
   
   // Utility function to check if the user has "superAdmin" role
-  export async function isSuperAdmin() {
+export async function isSuperAdmin() {
     const userRole = await role();
     if (userRole !== "superAdmin") {
       throw new Error("Unauthorized: Only superAdmins can perform this operation");
     }
   }
   
-  export async function isAdmin() {
+export async function isAdmin() {
     const userRole = await role();
     if (userRole !== "admin") {
       throw new Error("Unauthorized: Only admins can perform this operation");
     }
   }
 
-  export async function userInfo() {
+export async function isAdminOrSuperAdmin() {
+    const userRole = await role();
+    if (userRole !== "admin" && userRole !== "superAdmin") {
+      throw new Error("Unauthorized: Only admins or superAdmins can perform this operation");
+    }
+  }
+
+export async function userInfo() {
     const session = await getServerSession(options)
     const userEmail = session?.user?.email;
     if (!userEmail) {
@@ -83,7 +90,7 @@ export async function fetchUserData() {
     return userInfo;
   }
 
-  export async function checkSession(email) {
+export async function checkSession(email) {
     if (!email) {
         return new Response(
             JSON.stringify({ error: "User email is required." }),

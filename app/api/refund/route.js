@@ -1,12 +1,12 @@
 import Order from '../../../models/Order';
 import Product from '../../../models/Product';
-import { isAdmin } from '../../../utils/functions';
+import { isAdmin,isAdminOrSuperAdmin } from '../../../utils/functions';
 
 const CHAPA_SECRET_KEY = "CHASECK_TEST-s6oBbGS04bRkcXLT7P6x2do2EKcCXfJ6";
 
 export async function POST(req) {
     try {
-        await isAdmin();
+        await isAdminOrSuperAdmin();
 
         const { tx_ref, reason } = await req.json();
         console.log("Data from client: ", tx_ref, reason);

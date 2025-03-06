@@ -1,9 +1,10 @@
-import Category from "../../../models/Category";
-import { checkSession, connectToDB, isAdmin, userInfo } from "../../../utils/functions";
+import Category from "@/models/Category";
+
+import { checkSession,isAdminOrSuperAdmin, connectToDB, isAdmin, userInfo, isSuperAdmin } from "../../../utils/functions";
 
 export async function POST(req) {
     try {
-      isAdmin();
+      isAdminOrSuperAdmin();
       await connectToDB();
       
       const { name, description } = await req.json();
@@ -19,7 +20,7 @@ export async function POST(req) {
     }
   }
 
-  export async function GET(req) {
+export async function GET(req) {
     try {
       await connectToDB();
 
@@ -43,34 +44,42 @@ export async function POST(req) {
     }
   }
 
-  export async function PUT(req) {
+export async function PUT(req) {
     await connectToDB();
 
     try {
         const { _id, name, description, isDeleted } = await req.json();
         const category = await Category.findById(_id);
-        
+
         if (!category) {
             return new Response(JSON.stringify({ error: 'Category not found' }), { status: 404 });
         }
 
         const user = await userInfo();
-        const email = user.email;
+        console.log("Admin user info: ", user);
+        const userEmail = user.email;
+        console.log("Admin user email: ", userEmail);
 
-        if (await checkSession(email) !== null) {
-            return new Response(JSON.stringify({ error: 'You are not the creator of this category' }), { status: 403 });
+        // Check if the user is either the creator or a superAdmin
+        if (category.createdBy !== userEmail) {
+            try {
+                await isSuperAdmin(); 
+            } catch (error) {
+                return new Response(JSON.stringify({ error: 'Unauthorized: You must be the creator or a superAdmin' }), { status: 403 });
+            }
         }
 
-        // If admin wants to restore from trash
-        if (isDeleted === false) {
+        // Handle category restoration
+        if (isDeleted === false && category.isDeleted === true) {
             category.isDeleted = false;
             category.trashDate = null;
-
+            await category.save();
             return new Response(JSON.stringify("Category restored from trash"), { status: 200 });
-        } else {
-            category.name = name || category.name;
-            category.description = description || category.description;
-        }
+        } 
+
+        // Update category details
+        category.name = name || category.name;
+        category.description = description || category.description;
 
         await category.save();
         return new Response(JSON.stringify(category), { status: 200 });
@@ -80,23 +89,30 @@ export async function POST(req) {
     }
 }
 
-
 export async function DELETE(req) {
+  await connectToDB();
+
   try {
       const { _id } = await req.json();
-      const user = await userInfo();
-      const email = user.email;
-
-      if (await checkSession(email) !== null) {
-          return new Response(JSON.stringify({ error: 'You are not the creator of this category' }), { status: 403 });
-      }
-
       const category = await Category.findById(_id);
+
       if (!category) {
           return new Response(JSON.stringify({ error: 'Category not found' }), { status: 404 });
       }
 
-      // Mark as deleted instead of actual deletion
+      const user = await userInfo();
+      const userEmail = user.email;
+
+      // Check if the user is either the creator or a superAdmin
+      if (category.createdBy !== userEmail) {
+          try {
+              await isSuperAdmin(); 
+          } catch (error) {
+              return new Response(JSON.stringify({ error: 'Unauthorized: You must be the creator or a superAdmin' }), { status: 403 });
+          }
+      }
+
+      // Mark as deleted instead of actual deletion (soft delete)
       category.isDeleted = true;
       category.trashDate = new Date();
       await category.save();
@@ -107,3 +123,4 @@ export async function DELETE(req) {
       return new Response(JSON.stringify({ error: error.message }), { status: 400 });
   }
 }
+
