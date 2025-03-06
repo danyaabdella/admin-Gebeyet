@@ -1,9 +1,9 @@
-import { connectToDB, isAdmin, sendNotification, userInfo } from "../../../utils/functions";
+import { connectToDB, isAdmin, sendNotification, userInfo, isAdminOrSuperAdmin } from "../../../utils/functions";
 import User from "../../../models/User";
 
 export async function GET(req) {
   try {
-    await isAdmin();
+    await isAdminOrSuperAdmin();
 
     await connectToDB();
 
@@ -47,7 +47,7 @@ export async function GET(req) {
 
 export async function PUT(req) {
   try {
-    await isAdmin();
+    await isAdminOrSuperAdmin();
     await connectToDB();
 
     const userData = await userInfo();
@@ -115,7 +115,7 @@ export async function PUT(req) {
 export async function DELETE(req) {
 try {
     await connectToDB();
-    await isAdmin();
+    await isAdminOrSuperAdmin();
 
     const { _id } = await req.json();
 

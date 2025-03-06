@@ -7,7 +7,6 @@ import {role} from "../auth/[...nextauth]/route";
 
 export async function GET(req) {
     const role1 = await role();
-    console.log("role of user: ", role1);
     try {
         mongoose.connect(process.env.MONGO_URL);
 
@@ -19,9 +18,7 @@ export async function GET(req) {
             filterUser = { _id };
         } else {
             const session = await getServerSession(options);
-            console.log("session in server:", session);
             const email = session?.user?.email;
-            console.log("email in server: ", email);
             if (!email) {
                 return new Response(JSON.stringify({ error: "No session found" }), { status: 401 });
             }

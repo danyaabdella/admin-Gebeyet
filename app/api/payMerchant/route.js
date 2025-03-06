@@ -1,13 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 import Order from '../../../models/Order';
-import { isAdmin } from '../../../utils/functions';
+import { isAdmin,isAdminOrSuperAdmin } from '../../../utils/functions';
 import { NextResponse } from 'next/server';
 
 const CHAPA_SECRET_KEY = "CHASECK_TEST-s6oBbGS04bRkcXLT7P6x2do2EKcCXfJ6";
 
 export async function POST(req) {
     try {
-        await isAdmin();
+        await isAdminOrSuperAdmin();
         const body = await req.json();
 
         // Extract required fields from the request body

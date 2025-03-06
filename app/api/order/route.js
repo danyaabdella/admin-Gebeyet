@@ -1,10 +1,10 @@
 import Order from "@/models/Order";
-import { isAdmin } from "@/utils/functions";
+import { isAdmin, isAdminOrSuperAdmin } from "@/utils/functions";
 
 export async function GET(req) {
     try {
         const { searchParams } = new URL(req.url);
-        await isAdmin();
+        await isAdminOrSuperAdmin();
 
         // Initialize filter object
         let filter = {};
@@ -68,8 +68,8 @@ export async function GET(req) {
 
 export async function PUT(req) {
     try {
-        await isAdmin(); // Ensure only admins can perform this action
-
+        await isAdminOrSuperAdmin(); 
+        
         const body = await req.json();
         const { _id, paymentStatus } = body;
 
