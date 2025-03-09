@@ -1,41 +1,37 @@
-"use client";
+"use client"
 
-import { useSidebar } from "@/components/sidebar-provider";
-import { Sidebar } from "@/components/sidebar";
-import { Menu } from "lucide-react";
+import type React from "react"
+
+import { useSidebar } from "@/components/sidebar-provider"
+import { Sidebar } from "@/components/sidebar"
+import { NavBar } from "@/components/nav-bar"
+import { Footer } from "./footer"
+import { Toaster } from "@/components/toaster"
 
 export default function LayoutClient({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const { isOpen, toggleSidebar } = useSidebar();
+  const { isOpen } = useSidebar()
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen flex-col">
       <Sidebar />
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-20 bg-black/50 md:hidden"
-          onClick={toggleSidebar}
-        />
-      )}
+      <NavBar />
+
       <div
-        className={`flex-1 transition-all duration-300 ${
-          isOpen ? "ml-[var(--sidebar-width)]" : "ml-0"
+        className={`flex min-h-[calc(100vh-4rem)] flex-col transition-all duration-300 ${
+          isOpen ? "md:ml-0" : "ml-0"
         }`}
+        style={{ marginTop: "4rem" }} // Height of the navbar
       >
-        <header className="flex items-center justify-between p-4 border-b">
-          {!isOpen && (
-            <button onClick={toggleSidebar} aria-label="Open sidebar">
-              <Menu className="h-6 w-6" />
-            </button>
-          )}
-          {/* Add other header content here, e.g., user profile */}
-        </header>
-        <main>{children}</main>
+        <main className="flex-1 p-4 md:p-6">{children}</main>
+        <Footer />
       </div>
+
+      <Toaster />
     </div>
-  );
+  )
 }
 

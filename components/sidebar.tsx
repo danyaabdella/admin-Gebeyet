@@ -17,7 +17,7 @@ export function Sidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="fixed top-0 left-0 z-30 h-screen w-[var(--sidebar-width)] border-r bg-background">
+    <div className="fixed top-0 left-0 z-30 h-screen w-[var(--sidebar-width)] border-r bg-background mt-16">
       <div className="flex flex-col gap-2 p-4">
         <nav className="grid gap-1">
           <Link href="/dashboard" passHref>

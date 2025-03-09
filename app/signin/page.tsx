@@ -1,111 +1,252 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Eye, EyeOff, Lock, Mail } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { OtpVerification } from "@/components/auth/otp-verification"
-import { loginUser, verifyOtp } from "@/lib/data-fetching"
-import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/toaster"
+import React, { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Eye, EyeOff, Lock, Mail } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/toaster";
+import { signIn } from "next-auth/react";
 
 export default function SignInPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showOtpVerification, setShowOtpVerification] = useState(false)
+  const router = useRouter();
 
+  // **State Variables**
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [storedPassword, setStoredPassword] = useState<string>(""); // Store password for OTP verification
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showOtpVerification, setShowOtpVerification] = useState<boolean>(false);
+  const [otp, setOtp] = useState<string[]>(Array(6).fill("")); // OTP as array for 6 digits
+  const [resendDisabled, setResendDisabled] = useState<boolean>(true);
+  const [countdown, setCountdown] = useState<number>(60);
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]); // Refs for OTP input focus
+
+  // **Handle Initial Sign-In (Send OTP)**
   const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
-      // Validate inputs
       if (!email || !password) {
         toast({
           variant: "destructive",
           title: "Error",
           description: "Please enter both email and password",
-        })
-        return
+        });
+        return;
       }
 
-      // Call login API
-      const result = await loginUser(email, password)
+      const response = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (result.success) {
-        // Show OTP verification after successful login
-        setShowOtpVerification(true)
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: result.message || "Invalid email or password",
-        })
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to generate OTP");
+      }
+
+      if (data.message === "OTP sent") {
+        setStoredPassword(password);
+        setShowOtpVerification(true);
+        setOtp(Array(6).fill("")); // Reset OTP input
       }
     } catch (error) {
-      console.error("Login error:", error)
+      console.error("Login error:", error);
       toast({
         variant: "destructive",
         title: "Login Failed",
         description: "An error occurred during login. Please try again.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleOtpVerified = async (otp: string) => {
+  // **Handle OTP Verification**
+  const handleOtpSubmit = async (otpString: string) => {
+    setIsLoading(true);
+
     try {
-      setIsLoading(true)
-      const result = await verifyOtp(email, otp, "login")
+      const result = await signIn("credentials", {
+        email,
+        password: storedPassword,
+        otp: otpString,
+        redirect: false,
+      });
 
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Login successful!",
-        })
-        // Redirect to dashboard after successful verification
-        router.push("/dashboard")
-      } else {
+      if (result?.error) {
         toast({
           variant: "destructive",
           title: "Verification Failed",
-          description: result.message || "Invalid OTP code",
-        })
+          description: result.error,
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Login successful!",
+        });
+        router.push("/dashboard");
       }
     } catch (error) {
-      console.error("OTP verification error:", error)
+      console.error("OTP verification error:", error);
       toast({
         variant: "destructive",
         title: "Verification Failed",
-        description: "An error occurred during verification. Please try again.",
-      })
+        description: "An error occurred during verification.",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
+  // **OTP Input Handlers**
+  const handleChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return; // Allow only digits
+  
+    const newOtp = [...otp];
+    newOtp[index] = value.slice(0, 1); // Limit to one character
+    setOtp(newOtp);
+  
+    // Move to next input if value entered
+    if (value && index < 5 && inputRefs.current[index + 1]) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  
+    // Auto-submit if all digits filled
+    if (index === 5 && value && !newOtp.includes("")) {
+      setTimeout(() => handleVerify(), 300); // Slight delay for UX
+    }
+  };
+  
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      const prevInput = inputRefs.current[index - 1];
+      if (prevInput) prevInput.focus(); // Move to previous input on backspace
+    }
+  };
+  
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text/plain").trim();
+
+    if (/^\d{6}$/.test(pastedData)) { // Validate 6-digit number
+      const digits = pastedData.split("");
+      setOtp(digits);
+      if (inputRefs.current[5]) {
+        inputRefs.current[5].focus();
+      }
+      setTimeout(() => handleVerify(), 300);
+    }
+  };
+
+  const handleVerify = () => {
+    const otpString = otp.join("");
+    if (otpString.length !== 6 || !/^\d{6}$/.test(otpString)) {
+      toast({
+        variant: "destructive",
+        title: "Invalid OTP",
+        description: "Please enter a valid 6-digit code",
+      });
+      return;
+    }
+    handleOtpSubmit(otpString);
+  };
+
+  const handleResend = async () => {
+    try {
+      const res = await fetch("/api/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        toast({
+          title: "OTP Resent",
+          description: "A new verification code has been sent to your email",
+        });
+
+        setResendDisabled(true);
+        setCountdown(60);
+
+        const interval = setInterval(() => {
+          setCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(interval);
+              setResendDisabled(false);
+              return 60;
+            }
+            return prev - 1;
+          });
+        }, 1000);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Resend Failed",
+          description: result.message || "Failed to resend verification code",
+        });
+      }
+    } catch (error) {
+      console.error("Resend OTP error:", error);
+      toast({
+        variant: "destructive",
+        title: "Resend Failed",
+        description: "An error occurred. Please try again.",
+      });
+    }
+  };
+
+  // **Effects**
+  useEffect(() => {
+    if (showOtpVerification) {
+      setResendDisabled(true);
+      setCountdown(60);
+    }
+  }, [showOtpVerification]);
+
+  useEffect(() => {
+    if (showOtpVerification && countdown > 0 && resendDisabled) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (showOtpVerification && countdown === 0) {
+      setResendDisabled(false);
+    }
+  }, [showOtpVerification, countdown, resendDisabled]);
+
+  useEffect(() => {
+    if (showOtpVerification && inputRefs.current[0]) {
+      inputRefs.current[0].focus(); // Focus first OTP input
+    }
+  }, [showOtpVerification]);
+
+  // **Render**
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
       <div className="w-full max-w-md">
-        {!showOtpVerification ? (
-          <Card className="w-full">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">Sign in</CardTitle>
-              <CardDescription className="text-center">
-                Enter your email and password to access your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+        <Card className="w-full">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">
+              {showOtpVerification ? "Verification Code" : "Sign In"}
+            </CardTitle>
+            <CardDescription className="text-center">
+              {showOtpVerification
+                ? `Enter the 6-digit code sent to ${email}`
+                : "Enter your email and password to sign in"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!showOtpVerification ? (
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -155,23 +296,67 @@ export default function SignInPage() {
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Signing in..." : "Sign in"}
+                  {isLoading ? "Sending OTP..." : "Sign In"}
                 </Button>
               </form>
-            </CardContent>
-          </Card>
-        ) : (
-          <OtpVerification
-            email={email}
-            purpose="login"
-            onVerified={handleOtpVerified}
-            onCancel={() => setShowOtpVerification(false)}
-            isLoading={isLoading}
-          />
-        )}
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-center gap-2">
+                  {otp.map((digit, index) => (
+                    <Input
+                      key={index}
+                      ref={(el) => {
+                        inputRefs.current[index] = el;
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleChange(index, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      onPaste={index === 0 ? handlePaste : undefined}
+                      className="h-12 w-12 text-center text-lg font-semibold"
+                    />
+                  ))}
+                </div>
+                <div className="text-center text-sm text-muted-foreground">
+                  {resendDisabled ? (
+                    <p>Resend code in {countdown} seconds</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResend}
+                      className="text-primary hover:underline focus:outline-none"
+                    >
+                      Resend code
+                    </button>
+                  )}
+                </div>
+                <Button
+                  onClick={handleVerify}
+                  className="w-full"
+                  disabled={otp.join("").length !== 6 || isLoading}
+                >
+                  {isLoading ? "Verifying..." : "Verify"}
+                </Button>
+                <div className="flex justify-center mt-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowOtpVerification(false)}
+                    disabled={isLoading}
+                    className="flex items-center text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
       <Toaster />
     </div>
-  )
+  );
 }
-
