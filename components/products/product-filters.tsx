@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
 import { MapPin, Star } from "lucide-react"
 import DistancePicker from "@/components/DistancePicker"
 
-// Update the component props to include onApplyFilters
 interface ProductFiltersProps {
   onApplyFilters: (filters: any) => void
 }
@@ -46,11 +44,10 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
   const [selectedCategory, setSelectedCategory] = useState("all")
 
   // Location filter
-  const [useLocation, setUseLocation] = useState(false)
-  const [locationRadius, setLocationRadius] = useState(10)
+  const [useLocation, setUseLocation] = useState(true)
+  const [locationRadius, setLocationRadius] = useState(50)
   const [locationCenter, setLocationCenter] = useState<{ lat: number; lng: number } | null>(null)
 
-  // Categories data (mock)
   const categories = [
     { id: "all", name: "All Categories" },
     { id: "category_1", name: "Electronics" },
@@ -62,11 +59,11 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
   ]
 
   const handleLocationChange = ({ radius, center }: { radius: number; center: any }) => {
-    setLocationRadius(Math.round(radius / 1000)) // Convert meters to km
+    setLocationRadius(Math.round(radius / 1000))
     setLocationCenter(center)
   }
 
-  // Handle input changes and update sliders
+  // Handle input changes
   const handleMinPriceChange = (value: string) => {
     const numValue = Number(value)
     setMinPrice(value)
@@ -147,37 +144,6 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
     }
   }
 
-  // Handle slider changes and update inputs
-  const handlePriceRangeChange = (values: number[]) => {
-    setPriceRange(values)
-    setMinPrice(values[0].toString())
-    setMaxPrice(values[1].toString())
-  }
-
-  const handleQuantityRangeChange = (values: number[]) => {
-    setQuantityRange(values)
-    setMinQuantity(values[0].toString())
-    setMaxQuantity(values[1].toString())
-  }
-
-  const handleSoldQuantityRangeChange = (values: number[]) => {
-    setSoldQuantityRange(values)
-    setMinSoldQuantity(values[0].toString())
-    setMaxSoldQuantity(values[1].toString())
-  }
-
-  const handleRatingRangeChange = (values: number[]) => {
-    setRatingRange(values)
-    setMinRating(values[0].toString())
-    setMaxRating(values[1].toString())
-  }
-
-  const handleDeliveryPriceRangeChange = (values: number[]) => {
-    setDeliveryPriceRange(values)
-    setMinDeliveryPrice(values[0].toString())
-    setMaxDeliveryPrice(values[1].toString())
-  }
-
   const handleApplyFilters = () => {
     const filters: any = {
       categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
@@ -206,45 +172,38 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
     setPriceRange([0, 1000])
     setMinPrice("0")
     setMaxPrice("1000")
-
     setQuantityRange([0, 100])
     setMinQuantity("0")
     setMaxQuantity("100")
-
     setSoldQuantityRange([0, 100])
     setMinSoldQuantity("0")
     setMaxSoldQuantity("100")
-
     setRatingRange([0, 5])
     setMinRating("0")
     setMaxRating("5")
-
     setDeliveryType("all")
     setDeliveryPriceRange([0, 50])
     setMinDeliveryPrice("0")
     setMaxDeliveryPrice("50")
-
     setSelectedCategory("all")
     setUseLocation(false)
     setLocationRadius(10)
     setLocationCenter(null)
-
-    // Apply the reset filters
     onApplyFilters({})
   }
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-0">
       <CardContent className="p-4">
-        <Tabs defaultValue="basic" className="w-full">
+        <Tabs defaultValue="basic" className="w-full mb-0">
           <TabsList className="mb-4">
             <TabsTrigger value="basic">Basic Filters</TabsTrigger>
             <TabsTrigger value="advanced">Advanced Filters</TabsTrigger>
-            <TabsTrigger value="location">Location</TabsTrigger>
           </TabsList>
 
+          {/* Basic Filters Tab */}
           <TabsContent value="basic" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Category Filter */}
               <div className="space-y-2">
                 <Label>Category</Label>
@@ -265,9 +224,6 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
               {/* Price Range Filter */}
               <div className="space-y-2">
                 <Label>Price Range</Label>
-                <div className="pt-4 pb-2">
-                  <Slider value={priceRange} max={1000} step={10} onValueChange={handlePriceRangeChange} />
-                </div>
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center">
                     <span className="text-sm text-muted-foreground mr-1">$</span>
@@ -314,151 +270,141 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
             </div>
           </TabsContent>
 
+          {/* Advanced Filters Tab */}
           <TabsContent value="advanced" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Quantity Range Filter */}
-              <div className="space-y-2">
-                <Label>Quantity in Stock</Label>
-                <div className="pt-4 pb-2">
-                  <Slider value={quantityRange} max={100} step={1} onValueChange={handleQuantityRangeChange} />
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <Input
-                    type="number"
-                    value={minQuantity}
-                    onChange={(e) => handleMinQuantityChange(e.target.value)}
-                    min={0}
-                    max={Number(maxQuantity)}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">to</span>
-                  <Input
-                    type="number"
-                    value={maxQuantity}
-                    onChange={(e) => handleMaxQuantityChange(e.target.value)}
-                    min={Number(minQuantity)}
-                    max={100}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">units</span>
-                </div>
-              </div>
-
-              {/* Sold Quantity Range Filter */}
-              <div className="space-y-2">
-                <Label>Sold Quantity</Label>
-                <div className="pt-4 pb-2">
-                  <Slider value={soldQuantityRange} max={100} step={1} onValueChange={handleSoldQuantityRangeChange} />
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <Input
-                    type="number"
-                    value={minSoldQuantity}
-                    onChange={(e) => handleMinSoldQuantityChange(e.target.value)}
-                    min={0}
-                    max={Number(maxSoldQuantity)}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">to</span>
-                  <Input
-                    type="number"
-                    value={maxSoldQuantity}
-                    onChange={(e) => handleMaxSoldQuantityChange(e.target.value)}
-                    min={Number(minSoldQuantity)}
-                    max={100}
-                    className="w-20"
-                  />
-                  <span className="text-sm text-muted-foreground">units</span>
-                </div>
-              </div>
-
-              {/* Rating Range Filter */}
-              <div className="space-y-2">
-                <Label>Average Rating</Label>
-                <div className="pt-4 pb-2">
-                  <Slider value={ratingRange} max={5} step={0.5} onValueChange={handleRatingRangeChange} />
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column - Filters */}
+              <div className="space-y-6">
+                {/* Quantity Range Filter */}
+                <div className="space-y-2">
+                  <Label>Quantity in Stock</Label>
+                  <div className="flex items-center justify-between gap-2">
                     <Input
                       type="number"
-                      value={minRating}
-                      onChange={(e) => handleMinRatingChange(e.target.value)}
+                      value={minQuantity}
+                      onChange={(e) => handleMinQuantityChange(e.target.value)}
                       min={0}
-                      max={Number(maxRating)}
-                      step={0.5}
-                      className="w-16"
+                      max={Number(maxQuantity)}
+                      className="w-20"
                     />
-                    <Star className="h-3 w-3 ml-1 text-yellow-500" />
-                  </div>
-                  <span className="text-sm text-muted-foreground">to</span>
-                  <div className="flex items-center">
+                    <span className="text-sm text-muted-foreground">to</span>
                     <Input
                       type="number"
-                      value={maxRating}
-                      onChange={(e) => handleMaxRatingChange(e.target.value)}
-                      min={Number(minRating)}
-                      max={5}
-                      step={0.5}
-                      className="w-16"
+                      value={maxQuantity}
+                      onChange={(e) => handleMaxQuantityChange(e.target.value)}
+                      min={Number(minQuantity)}
+                      max={100}
+                      className="w-20"
                     />
-                    <Star className="h-3 w-3 ml-1 text-yellow-500" />
+                    <span className="text-sm text-muted-foreground">units</span>
                   </div>
                 </div>
-              </div>
 
-              {/* Delivery Price Range Filter */}
-              <div className="space-y-2">
-                <Label>Delivery Price</Label>
-                <div className="pt-4 pb-2">
-                  <Slider value={deliveryPriceRange} max={50} step={1} onValueChange={handleDeliveryPriceRangeChange} />
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center">
-                    <span className="text-sm text-muted-foreground mr-1">$</span>
+                {/* Sold Quantity Range Filter */}
+                <div className="space-y-2">
+                  <Label>Sold Quantity</Label>
+                  <div className="flex items-center justify-between gap-2">
                     <Input
                       type="number"
-                      value={minDeliveryPrice}
-                      onChange={(e) => handleMinDeliveryPriceChange(e.target.value)}
+                      value={minSoldQuantity}
+                      onChange={(e) => handleMinSoldQuantityChange(e.target.value)}
                       min={0}
-                      max={Number(maxDeliveryPrice)}
-                      className="w-16"
+                      max={Number(maxSoldQuantity)}
+                      className="w-20"
                     />
-                  </div>
-                  <span className="text-sm text-muted-foreground">to</span>
-                  <div className="flex items-center">
-                    <span className="text-sm text-muted-foreground mr-1">$</span>
+                    <span className="text-sm text-muted-foreground">to</span>
                     <Input
                       type="number"
-                      value={maxDeliveryPrice}
-                      onChange={(e) => handleMaxDeliveryPriceChange(e.target.value)}
-                      min={Number(minDeliveryPrice)}
-                      max={50}
-                      className="w-16"
+                      value={maxSoldQuantity}
+                      onChange={(e) => handleMaxSoldQuantityChange(e.target.value)}
+                      min={Number(minSoldQuantity)}
+                      max={100}
+                      className="w-20"
                     />
+                    <span className="text-sm text-muted-foreground">units</span>
+                  </div>
+                </div>
+
+                {/* Rating Range Filter */}
+                <div className="space-y-2">
+                  <Label>Average Rating</Label>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center">
+                      <Input
+                        type="number"
+                        value={minRating}
+                        onChange={(e) => handleMinRatingChange(e.target.value)}
+                        min={0}
+                        max={Number(maxRating)}
+                        step={0.5}
+                        className="w-16"
+                      />
+                      <Star className="h-3 w-3 ml-1 text-yellow-500" />
+                    </div>
+                    <span className="text-sm text-muted-foreground">to</span>
+                    <div className="flex items-center">
+                      <Input
+                        type="number"
+                        value={maxRating}
+                        onChange={(e) => handleMaxRatingChange(e.target.value)}
+                        min={Number(minRating)}
+                        max={5}
+                        step={0.5}
+                        className="w-16"
+                      />
+                      <Star className="h-3 w-3 ml-1 text-yellow-500" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Delivery Price Range Filter */}
+                <div className="space-y-2">
+                  <Label>Delivery Price</Label>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground mr-1">$</span>
+                      <Input
+                        type="number"
+                        value={minDeliveryPrice}
+                        onChange={(e) => handleMinDeliveryPriceChange(e.target.value)}
+                        min={0}
+                        max={Number(maxDeliveryPrice)}
+                        className="w-16"
+                      />
+                    </div>
+                    <span className="text-sm text-muted-foreground">to</span>
+                    <div className="flex items-center">
+                      <span className="text-sm text-muted-foreground mr-1">$</span>
+                      <Input
+                        type="number"
+                        value={maxDeliveryPrice}
+                        onChange={(e) => handleMaxDeliveryPriceChange(e.target.value)}
+                        min={Number(minDeliveryPrice)}
+                        max={50}
+                        className="w-16"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </TabsContent>
 
-          <TabsContent value="location" className="space-y-4">
-            <div className="flex items-center gap-2 mb-4">
-              <input
-                type="checkbox"
-                id="useLocation"
-                checked={useLocation}
-                onChange={(e) => setUseLocation(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <Label htmlFor="useLocation" className="flex items-center">
-                <MapPin className="h-4 w-4 mr-1 text-red-500" />
-                Filter by location
-              </Label>
-            </div>
+            {/* Right Column - Map */}
+            <div className="flex gap-3 flex-col">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="useLocation"
+                  defaultChecked={useLocation} 
+                  onChange={(e) => setUseLocation(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                />
+                <Label htmlFor="useLocation" className="flex items-center">
+                  <MapPin className="h-4 w-4 mr-1 text-red-500" />
+                  Filter by location
+                </Label>
+              </div>
 
-            {useLocation && (
-              <div className="space-y-4">
+              {useLocation && (
                 <div className="space-y-2">
                   <Label>Distance (km)</Label>
                   <div className="flex items-center gap-2">
@@ -472,16 +418,19 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
                     />
                     <span className="text-sm text-muted-foreground">kilometers</span>
                   </div>
-                </div>
 
-                <div className="border rounded-md p-4">
-                  <DistancePicker
-                    onChange={handleLocationChange}
-                    defaultRadius={locationRadius * 1000} // Convert km to meters
-                  />
+                  <Label>Location Map</Label>
+                  <div className="border rounded-md p-4 h-[400px]">
+                    <DistancePicker
+                      onChange={handleLocationChange}
+                      defaultRadius={locationRadius * 1000}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+
+            </div>
           </TabsContent>
         </Tabs>
 
@@ -495,4 +444,3 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
     </Card>
   )
 }
-

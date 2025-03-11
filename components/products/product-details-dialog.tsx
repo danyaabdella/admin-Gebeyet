@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState } from "react"
 import {
   Dialog,
   DialogContent,
@@ -25,6 +25,7 @@ import {
   Star,
   Truck,
 } from "lucide-react"
+import { ProductMap } from "./product-map"
 
 // Declare Google Maps types
 declare global {
@@ -45,10 +46,7 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [showConfirmDelete, setShowConfirmDelete] = useState(false)
   const [showConfirmPermanentDelete, setShowConfirmPermanentDelete] = useState(false)
-
-  const mapRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<any>(null)
-  const markerRef = useRef<any>(null)
+  const [mapLoading, setMapLoading] = useState(false)
 
   const nextImage = () => {
     if (product.images && product.images.length > 0) {
@@ -68,58 +66,9 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
       ? (product.review.reduce((sum: number, review: any) => sum + review.rating, 0) / product.review.length).toFixed(1)
       : 0
 
-  useEffect(() => {
-    // Initialize map when the location tab is active and product has location data
-    if (product?.location?.coordinates && mapRef.current) {
-      const loadMap = () => {
-        const lat = product.location.coordinates[1]
-        const lng = product.location.coordinates[0]
-        const mapOptions = {
-          center: { lat, lng },
-          zoom: 12,
-          mapTypeId: window.google.maps.MapTypeId.ROADMAP,
-        }
-
-        // Create the map
-        const map = new window.google.maps.Map(mapRef.current!, mapOptions)
-        mapInstanceRef.current = map
-
-        // Add a marker for the product location
-        const marker = new window.google.maps.Marker({
-          position: { lat, lng },
-          map,
-          title: product.productName,
-        })
-        markerRef.current = marker
-      }
-
-      // Check if Google Maps API is already loaded
-      if (window.google && window.google.maps) {
-        loadMap()
-      } else {
-        // Load Google Maps API if not already loaded
-        const script = document.createElement("script")
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_MAPS_KEY}&libraries=places`
-        script.async = true
-        script.defer = true
-        script.onload = loadMap
-        document.head.appendChild(script)
-      }
-
-      // Cleanup
-      return () => {
-        if (markerRef.current) {
-          markerRef.current.setMap(null)
-          markerRef.current = null
-        }
-        mapInstanceRef.current = null
-      }
-    }
-  }, [product])
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>{product.productName}</span>
@@ -139,7 +88,7 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid grid-cols-4 mb-4">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-4">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="images">Images</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
@@ -248,7 +197,7 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                   <img
                     src={product.images[currentImageIndex] || "/placeholder.svg"}
                     alt={`Product image ${currentImageIndex + 1}`}
-                    className="w-full h-64 md:h-80 object-contain bg-gray-50"
+                    className="w-full h-48 sm:h-64 md:h-80 object-contain bg-gray-50"
                   />
 
                   {product.images.length > 1 && (
@@ -365,22 +314,30 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
           </TabsContent>
 
           <TabsContent value="location" className="space-y-4">
-            <div className="flex items-center">
-              <MapPin className="h-5 w-5 text-red-500 mr-2" />
-              <span className="font-medium">Product Location</span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <MapPin className="h-5 w-5 text-red-500 mr-2" />
+                <span className="font-medium">Product Location</span>
+              </div>
+              {product.location && product.location.coordinates && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                  {product.location.coordinates[1].toFixed(6)}, {product.location.coordinates[0].toFixed(6)}
+                </Badge>
+              )}
             </div>
 
             <div className="border rounded-md overflow-hidden">
               {product.location && product.location.coordinates ? (
-                <div
-                  ref={mapRef}
-                  className="h-64 w-full"
-                  aria-label={`Map showing location at coordinates ${product.location.coordinates[1]}, ${product.location.coordinates[0]}`}
+                <ProductMap
+                  coordinates={product.location.coordinates}
+                  productName={product.productName}
+                  category={product.category.categoryName}
                 />
               ) : (
-                <div className="h-64 bg-muted flex items-center justify-center">
+                <div className="h-64 md:h-80 bg-muted flex items-center justify-center">
                   <div className="text-center p-4">
-                    <p className="font-medium">No Location Data</p>
+                    <MapPin className="h-8 w-8 mx-auto text-muted-foreground" />
+                    <p className="font-medium mt-2">No Location Data</p>
                     <p className="text-sm text-muted-foreground mt-1">
                       This product does not have location information.
                     </p>
@@ -388,6 +345,20 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                 </div>
               )}
             </div>
+
+            {product.location && product.location.coordinates && (
+              <div className="flex justify-end">
+                <a
+                  href={`https://www.google.com/maps/search/?api=1&query=${product.location.coordinates[1]},${product.location.coordinates[0]}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm flex items-center text-blue-600 hover:text-blue-800"
+                >
+                  <MapPin className="h-3 w-3 mr-1" />
+                  View in Google Maps
+                </a>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
 
