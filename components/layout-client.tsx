@@ -17,14 +17,12 @@ export default function LayoutClient({
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Sidebar />
       <NavBar />
-
       <div
         className={`flex min-h-[calc(100vh-4rem)] flex-col transition-all duration-300 ${
           isOpen ? "md:ml-0" : "ml-0"
         }`}
-        style={{ marginTop: "4rem" }} // Height of the navbar
+        style={{ marginTop: "4rem" }} 
       >
         <main className="flex-1 p-4 md:p-6">{children}</main>
         <Footer />

@@ -113,14 +113,37 @@ export function UserDetailsDialog({ user, open, onOpenChange, onAction }: UserDe
                 <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                   <h3 className="text-sm font-medium">Merchant Information</h3>
                   <div className="grid grid-cols-1 gap-2 text-sm">
+                    
                     <div className="flex justify-between">
                       <span className="font-medium text-muted-foreground">TIN Number:</span>
-                      <span>{user.tinNumber || "Not provided"}</span>
+                      {user.tinNumber ? (
+                        <a
+                          href={user.tinNumber}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          View TIN Document
+                        </a>
+                      ) : (
+                        <span>Not provided</span>
+                      )}
                     </div>
 
                     <div className="flex justify-between">
                       <span className="font-medium text-muted-foreground">National ID:</span>
-                      <span>{user.nationalId || "Not provided"}</span>
+                      {user.nationalId ? (
+                        <a
+                          href={user.nationalId}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline"
+                        >
+                          View National ID
+                        </a>
+                      ) : (
+                        <span>Not provided</span>
+                      )}
                     </div>
 
                     <div className="flex justify-between">
@@ -169,6 +192,7 @@ export function UserDetailsDialog({ user, open, onOpenChange, onAction }: UserDe
               </div>
             </div>
           </div>
+
 
           <div className="flex flex-wrap justify-end gap-2 pt-2">
             {!user.isDeleted ? (

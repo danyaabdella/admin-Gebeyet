@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Settings, LogOut, User, Menu, X, ChevronDown } from "lucide-react";
+import { Settings, LogOut, User, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -65,121 +65,112 @@ export function NavBar() {
 
   return (
     <header
-      className={`fixed top-0 right-0 z-50 w-full md:w-[calc(100%-var(--sidebar-width))] h-16 border-b bg-background/95 backdrop-blur transition-all duration-300 ${
-        isScrolled ? "shadow-md" : ""
-      } ${isOpen ? "md:left-[var(--sidebar-width)]" : "left-0"}`}
-    >
-      <div className="flex h-full items-center justify-between px-4">
-        {/* Left Side: Toggle Button (Mobile) and Logo */}
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar} aria-label="Toggle sidebar">
-            <Menu className="h-5 w-5" />
-          </Button>
+  className={`fixed top-0 left-0 right-0 z-50 w-full h-16 border-b bg-background/95 backdrop-blur transition-all duration-300 ${
+    isScrolled ? "shadow-md" : ""
+  }`}
+>
+  <div className="flex h-full items-center justify-between px-4">
+    {/* Left Side: Toggle Button (Mobile) and Logo */}
+    <div className="flex items-center gap-4">
+      <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar} aria-label="Toggle sidebar">
+        <Menu className="h-5 w-5" />
+      </Button>
 
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">M</span>
+      <Link href="/" className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
+          <span className="text-lg font-bold text-primary-foreground">M</span>
+        </div>
+        <span className="hidden font-semibold sm:inline-block">Marketplace Admin</span>
+      </Link>
+    </div>
+
+    {/* Center: Navigation Links (Desktop) */}
+    <nav className="hidden md:block">
+      <ul className="flex items-center space-x-6">
+        {navLinks.map((link) => (
+          <li key={link.name}>
+            <Link href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+              {link.name}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    {/* Right Side: Notifications, Theme Toggle, User Avatar */}
+    <div className="flex items-center gap-2 sm:gap-4">
+      <NotificationPopover />
+      <ThemeToggle />
+
+      {/* User Profile */}
+      {session?.user && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8 transition-transform hover:scale-105">
+                <AvatarImage src={session.user.image || "/placeholder.svg"} alt={session.user.name || "User"} />
+                <AvatarFallback>{session.user.name?.charAt(0) || "U"}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56" align="end" forceMount>
+            <div className="flex items-center gap-2 p-2">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={session.user.image || "/placeholder.svg"} alt={session.user.name || "User"} />
+                <AvatarFallback>{session.user.name?.charAt(0) || "U"}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col space-y-1 leading-none">
+                <p className="font-medium">{session.user.name}</p>
+                <p className="text-xs text-muted-foreground">{session.user.email}</p>
+              </div>
             </div>
-            <span className="hidden font-semibold sm:inline-block">Marketplace Admin</span>
-          </Link>
-        </div>
-
-        {/* Center: Navigation Links (Desktop) */}
-        <nav className="hidden md:block">
-          <ul className="flex items-center space-x-6">
-            {navLinks.map((link) => (
-              <li key={link.name}>
-                <Link href={link.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        {/* Right Side: Notifications, Theme Toggle, User Avatar */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* Notifications */}
-          <div className="relative">
-            <NotificationPopover />
-            {session?.user?.notifications > 0 && (
-              <Badge className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive p-0 text-[10px] text-destructive-foreground">
-                {session.user.notifications}
-              </Badge>
-            )}
-          </div>
-
-          {/* Theme Toggle */}
-          <ThemeToggle />
-
-          {/* User Profile */}
-          {session?.user && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                  <Avatar className="h-8 w-8 transition-transform hover:scale-105">
-                    <AvatarImage src={session.user.image || "/placeholder.svg"} alt={session.user.name || "User"} />
-                    <AvatarFallback>{session.user.name?.charAt(0) || "U"}</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <div className="flex items-center gap-2 p-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={session.user.image || "/placeholder.svg"} alt={session.user.name || "User"} />
-                    <AvatarFallback>{session.user.name?.charAt(0) || "U"}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col space-y-1 leading-none">
-                    <p className="font-medium">{session.user.name}</p>
-                    <p className="text-xs text-muted-foreground">{session.user.email}</p>
-                  </div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Settings</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                  onClick={() => {
-                    signOut();
-                    router.push("/signin");
-                  }}
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      </div>
-
-      {/* Mobile Navigation Menu */}
-      {isMobileMenuOpen && (
-        <div className="mobile-menu absolute left-0 right-0 top-16 z-50 border-b bg-background shadow-lg md:hidden">
-          <nav className="py-2">
-            <ul className="space-y-1">
-              {navLinks.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="flex w-full px-4 py-2 text-sm font-medium hover:bg-muted"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer">
+              <User className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer">
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Settings</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="cursor-pointer text-destructive focus:text-destructive"
+              onClick={() => {
+                signOut();
+                router.push("/signin");
+              }}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
-    </header>
+    </div>
+  </div>
+
+  {/* Mobile Navigation Menu */}
+  {isMobileMenuOpen && (
+    <div className="mobile-menu absolute left-0 right-0 top-16 z-50 border-b bg-background shadow-lg md:hidden">
+      <nav className="py-2">
+        <ul className="space-y-1">
+          {navLinks.map((link) => (
+            <li key={link.name}>
+              <Link
+                href={link.href}
+                className="flex w-full px-4 py-2 text-sm font-medium hover:bg-muted"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {link.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </div>
+  )}
+</header>
+
   );
 }

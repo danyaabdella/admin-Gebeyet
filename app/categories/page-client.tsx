@@ -16,7 +16,7 @@ export default function CategoryManagementPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-4 px-8 pt-6">
+      <div className="flex items-center justify-between mb-4 px-8 pt-6 ">
         <h1 className="text-3xl font-bold tracking-tight">Category Management</h1>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />

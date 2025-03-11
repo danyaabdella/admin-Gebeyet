@@ -11,7 +11,7 @@ export default function TransactionsPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Sidebar />
-      <div className="flex-1 md:ml-[var(--sidebar-width)]">
+      <div className="flex-1 md:ml-[var(--sidebar-width)] -mt-12">
         <TransactionManagementContent />
       </div>
     </div>

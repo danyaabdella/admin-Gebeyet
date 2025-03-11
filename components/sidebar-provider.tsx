@@ -17,7 +17,6 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(true)
   const [userRole, setUserRole] = useState<"admin" | "superAdmin">("superAdmin")
 
-  // Check if we're on the client side before accessing window
   useEffect(() => {
     const handleResize = () => {
       if (isBrowser && window.innerWidth < 768) {
@@ -58,4 +57,3 @@ export function useSidebar() {
   }
   return context
 }
-
