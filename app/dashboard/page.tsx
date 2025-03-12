@@ -29,6 +29,7 @@ import { CategoryRevenueChart } from "@/components/charts/category-revenue-chart
 import { ExportReportButton } from "@/components/export-report-button"
 import { fetchDashboardStats, fetchTopProducts } from "@/lib/data-fetching"
 import { Toaster } from "@/components/toaster"
+import { TransactionTypesChart } from "@/components/transactions/transaction-types-chart"
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null)
@@ -48,6 +49,24 @@ export default function DashboardPage() {
     }
     loadData()
   }, [])
+
+  // In your dashboard component
+// const filteredTransactions = transactions.filter((transaction) => {
+//   // Add your filtering logic, e.g., based on a date range
+//   if (!transaction) return false;
+//   if (dateRange.from && new Date(transaction.date) < dateRange.from) return false;
+//   if (dateRange.to) {
+//     const endDate = new Date(dateRange.to);
+//     endDate.setHours(23, 59, 59, 999);
+//     if (new Date(transaction.date) > endDate) return false;
+//   }
+//   return true;
+// });
+
+// // Assuming transactions, dateRange, and isLoading are defined in your component
+// const transactions = /* your data */;
+// const dateRange = { from: /* start date */, to: /* end date */ };
+// const isLoading = /* loading state */;
 
   if (!stats) {
     return (
@@ -71,9 +90,9 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col overflow-x-hidden">
       <Sidebar />
-      <div className="flex-1 md:ml-[var(--sidebar-width)] -mt-12">
+      <div className="flex-1 md:ml-[var(--sidebar-width)] -mt-8 md:-mt-8">
         <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -405,7 +424,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-4">
+                <Card className="md:col-span-2 lg:col-span-4">
                   <CardHeader>
                     <CardTitle>Revenue Overview</CardTitle>
                     <CardDescription>Monthly revenue and order trends</CardDescription>
@@ -415,13 +434,19 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
 
-                <Card className="col-span-3">
+                {/* <TransactionTypesChart 
+                  transactions={filteredTransactions} 
+                  isLoading={isLoading} 
+                  className="lg:col-span-2" 
+                /> */}
+
+                <Card className="lg:col-span-1">
                   <CardHeader>
-                    <CardTitle>Transaction Distribution</CardTitle>
-                    <CardDescription>Breakdown by transaction type</CardDescription>
+                    <CardTitle>User Distribution</CardTitle>
+                    <CardDescription>Breakdown by user type</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <TransactionDistributionChart />
+                    <UserDistributionChart />
                   </CardContent>
                 </Card>
               </div>
@@ -570,57 +595,56 @@ export default function DashboardPage() {
             </TabsContent>
 
             <TabsContent value="reports" className="space-y-4">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex flex-wrap gap-2">
-                  <Select value={reportYear} onValueChange={setReportYear}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2023">2023</SelectItem>
-                      <SelectItem value="2022">2022</SelectItem>
-                      <SelectItem value="2021">2021</SelectItem>
-                      <SelectItem value="2020">2020</SelectItem>
-                    </SelectContent>
-                  </Select>
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap gap-2 sm:grid sm:grid-cols-2">
+              <Select value={reportYear} onValueChange={setReportYear}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Select year" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2023">2023</SelectItem>
+                  <SelectItem value="2022">2022</SelectItem>
+                  <SelectItem value="2021">2021</SelectItem>
+                  <SelectItem value="2020">2020</SelectItem>
+                </SelectContent>
+              </Select>
 
-                  <Select value={reportMonth} onValueChange={setReportMonth}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Select month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Months</SelectItem>
-                      <SelectItem value="1">January</SelectItem>
-                      <SelectItem value="2">February</SelectItem>
-                      <SelectItem value="3">March</SelectItem>
-                      <SelectItem value="4">April</SelectItem>
-                      <SelectItem value="5">May</SelectItem>
-                      <SelectItem value="6">June</SelectItem>
-                      <SelectItem value="7">July</SelectItem>
-                      <SelectItem value="8">August</SelectItem>
-                      <SelectItem value="9">September</SelectItem>
-                      <SelectItem value="10">October</SelectItem>
-                      <SelectItem value="11">November</SelectItem>
-                      <SelectItem value="12">December</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <Select value={reportMonth} onValueChange={setReportMonth}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Select month" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Months</SelectItem>
+                  <SelectItem value="1">January</SelectItem>
+                  <SelectItem value="2">February</SelectItem>
+                  <SelectItem value="3">March</SelectItem>
+                  <SelectItem value="4">April</SelectItem>
+                  <SelectItem value="5">May</SelectItem>
+                  <SelectItem value="6">June</SelectItem>
+                  <SelectItem value="7">July</SelectItem>
+                  <SelectItem value="8">August</SelectItem>
+                  <SelectItem value="9">September</SelectItem>
+                  <SelectItem value="10">October</SelectItem>
+                  <SelectItem value="11">November</SelectItem>
+                  <SelectItem value="12">December</SelectItem>
+                </SelectContent>
+              </Select>
 
-                  <Select value={reportPeriod} onValueChange={setReportPeriod}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="last7days">Last 7 days</SelectItem>
-                      <SelectItem value="last30days">Last 30 days</SelectItem>
-                      <SelectItem value="last90days">Last 90 days</SelectItem>
-                      <SelectItem value="year">Full Year</SelectItem>
-                    </SelectContent>
-                  </Select>
+              <Select value={reportPeriod} onValueChange={setReportPeriod}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="last7days">Last 7 days</SelectItem>
+                  <SelectItem value="last30days">Last 30 days</SelectItem>
+                  <SelectItem value="last90days">Last 90 days</SelectItem>
+                  <SelectItem value="year">Full Year</SelectItem>
+                </SelectContent>
+              </Select>
 
-                  <ExportReportButton period={reportPeriod} />
-                </div>
-              </div>
-
+              <ExportReportButton period={reportPeriod} />
+            </div>
+          </div>
               <Card>
                 <CardHeader>
                   <CardTitle>Monthly Reports</CardTitle>
