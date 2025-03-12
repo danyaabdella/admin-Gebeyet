@@ -22,14 +22,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RevenueChart } from "@/components/charts/revenue-chart"
 import { UserGrowthChart } from "@/components/charts/user-growth-chart"
 import { UserDistributionChart } from "@/components/charts/user-distribution-chart"
-import { MonthlyReportsChart } from "@/components/charts/monthly-reports-chart"
-import { TransactionDistributionChart } from "@/components/charts/transaction-distribution-chart"
 import { RevenueDistributionChart } from "@/components/charts/revenue-distribution-chart"
 import { CategoryRevenueChart } from "@/components/charts/category-revenue-chart"
+import { ProductSalesChart } from "@/components/charts/product-sales-chart"
+import { AuctionPerformanceChart } from "@/components/charts/auction-performance-chart"
 import { ExportReportButton } from "@/components/export-report-button"
 import { fetchDashboardStats, fetchTopProducts } from "@/lib/data-fetching"
 import { Toaster } from "@/components/toaster"
 import { TransactionTypesChart } from "@/components/transactions/transaction-types-chart"
+
+import { RevenueBarChart } from "@/components/charts/revenur-bar-chart"
+import { UserGrowthBarChart } from "@/components/charts/user-grouth-bar-chart"
+import { CategoryRevenueBarChart } from "@/components/charts/category-revenue-bar-chart"
+import { TransactionTypesBarChart } from "@/components/charts/transaction-bar-chart"
+import { MonthlyReportsBarChart } from "@/components/charts/monthly-report-bar-chart"
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null)
@@ -51,22 +57,27 @@ export default function DashboardPage() {
   }, [])
 
   // In your dashboard component
-// const filteredTransactions = transactions.filter((transaction) => {
-//   // Add your filtering logic, e.g., based on a date range
-//   if (!transaction) return false;
-//   if (dateRange.from && new Date(transaction.date) < dateRange.from) return false;
-//   if (dateRange.to) {
-//     const endDate = new Date(dateRange.to);
-//     endDate.setHours(23, 59, 59, 999);
-//     if (new Date(transaction.date) > endDate) return false;
-//   }
-//   return true;
-// });
+  const transactions = [
+    { id: 1, type: "deposit", date: "2024-03-01" },
+    { id: 2, type: "withdrawal", date: "2024-03-05" },
+    { id: 3, type: "deposit", date: "2024-03-10" },
+    { id: 4, type: "payment", date: "2024-03-15" },
+    { id: 5, type: "deposit", date: "2024-03-20" },
+  ]
 
-// // Assuming transactions, dateRange, and isLoading are defined in your component
-// const transactions = /* your data */;
-// const dateRange = { from: /* start date */, to: /* end date */ };
-// const isLoading = /* loading state */;
+  const dateRange = { from: new Date("2024-03-01"), to: new Date("2024-03-31") }
+  const isLoading = false
+
+  const filteredTransactions = transactions.filter((transaction) => {
+    if (!transaction) return false
+    if (dateRange.from && new Date(transaction.date) < dateRange.from) return false
+    if (dateRange.to) {
+      const endDate = new Date(dateRange.to)
+      endDate.setHours(23, 59, 59, 999)
+      if (new Date(transaction.date) > endDate) return false
+    }
+    return true
+  })
 
   if (!stats) {
     return (
@@ -88,6 +99,322 @@ export default function DashboardPage() {
       </div>
     )
   }
+
+  // Function to render the stats cards grid
+  const renderStatsCards = () => (
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* Total Transactions */}
+      <Link href="/transactions" className="block">
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${stats.transactions.total.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              <span
+                className={`flex items-center ${stats.transactions.isIncrease ? "text-green-500" : "text-red-500"}`}
+              >
+                {stats.transactions.isIncrease ? "+" : "-"}
+                {stats.transactions.percentChange}%{" "}
+                {stats.transactions.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* System Revenue */}
+      <Link href="/revenue" className="block">
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">System Revenue</CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">${stats.revenue.total.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={`flex items-center ${stats.revenue.isIncrease ? "text-green-500" : "text-red-500"}`}>
+                {stats.revenue.isIncrease ? "+" : "-"}
+                {stats.revenue.percentChange}%{" "}
+                {stats.revenue.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Total Merchants */}
+      <Link href="/users" className="block relative">
+        {stats.merchants.pendingApproval > 0 && (
+          <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
+            {stats.merchants.pendingApproval}
+          </span>
+        )}
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Merchants
+              {stats.merchants.pendingApproval > 0 && (
+                <span className="ml-2 text-red-500">
+                  <Bell className="inline h-3 w-3" />
+                </span>
+              )}
+            </CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+{stats.merchants.total}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={`flex items-center ${stats.merchants.isIncrease ? "text-green-500" : "text-red-500"}`}>
+                {stats.merchants.isIncrease ? "+" : "-"}
+                {stats.merchants.percentChange}%{" "}
+                {stats.merchants.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Total Customers */}
+      <Link href="/users" className="block">
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+{stats.customers.total}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={`flex items-center ${stats.customers.isIncrease ? "text-green-500" : "text-red-500"}`}>
+                {stats.customers.isIncrease ? "+" : "-"}
+                {stats.customers.percentChange}%{" "}
+                {stats.customers.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Total System Users */}
+      <Link href="/users" className="block">
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total System Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.users.total}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={`flex items-center ${stats.users.isIncrease ? "text-green-500" : "text-red-500"}`}>
+                {stats.users.isIncrease ? "+" : "-"}
+                {stats.users.percentChange}%{" "}
+                {stats.users.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Total Products */}
+      <Link href="/products" className="block">
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.products.total.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={`flex items-center ${stats.products.isIncrease ? "text-green-500" : "text-red-500"}`}>
+                {stats.products.isIncrease ? "+" : "-"}
+                {stats.products.percentChange}%{" "}
+                {stats.products.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Total Orders */}
+      <Link href="/orders" className="block relative">
+        {stats.orders.pendingRefunds > 0 && (
+          <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
+            {stats.orders.pendingRefunds}
+          </span>
+        )}
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Orders
+              {stats.orders.pendingRefunds > 0 && (
+                <span className="ml-2 text-red-500">
+                  <Bell className="inline h-3 w-3" />
+                </span>
+              )}
+            </CardTitle>
+            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+{stats.orders.total.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={`flex items-center ${stats.orders.isIncrease ? "text-green-500" : "text-red-500"}`}>
+                {stats.orders.isIncrease ? "+" : "-"}
+                {stats.orders.percentChange}%{" "}
+                {stats.orders.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Total Auctions */}
+      <Link href="/auctions" className="block relative">
+        {stats.auctions.pendingApproval > 0 && (
+          <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
+            {stats.auctions.pendingApproval}
+          </span>
+        )}
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Total Auctions
+              {stats.auctions.pendingApproval > 0 && (
+                <span className="ml-2 text-red-500">
+                  <Bell className="inline h-3 w-3" />
+                </span>
+              )}
+            </CardTitle>
+            <Gavel className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+{stats.auctions.total}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={`flex items-center ${stats.auctions.isIncrease ? "text-green-500" : "text-red-500"}`}>
+                {stats.auctions.isIncrease ? "+" : "-"}
+                {Math.abs(stats.auctions.percentChange)}%{" "}
+                {stats.auctions.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Total Categories */}
+      <Link href="/categories" className="block">
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Categories</CardTitle>
+            <Layers className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.categories.total}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={`flex items-center ${stats.categories.isIncrease ? "text-green-500" : "text-red-500"}`}>
+                {stats.categories.isIncrease ? "+" : "-"}
+                {stats.categories.percentChange}{" "}
+                {stats.categories.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+
+      {/* Total Admins */}
+      <Link href="/admins" className="block">
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Admins</CardTitle>
+            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.admins.total}</div>
+            <p className="text-xs text-muted-foreground">
+              <span className={`flex items-center ${stats.admins.isIncrease ? "text-green-500" : "text-red-500"}`}>
+                {stats.admins.isIncrease ? "+" : "-"}
+                {stats.admins.percentChange}{" "}
+                {stats.admins.isIncrease ? (
+                  <ArrowUpRight className="ml-1 h-3 w-3" />
+                ) : (
+                  <ArrowDownRight className="ml-1 h-3 w-3" />
+                )}
+              </span>{" "}
+              from last month
+            </p>
+          </CardContent>
+        </Card>
+      </Link>
+    </div>
+  )
+
+  // Function to render recent sales
+  const renderRecentSales = () => (
+    <Card>
+      <CardHeader>
+        <CardTitle>Recent Sales</CardTitle>
+        <CardDescription>You made 265 sales this month.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 justify-end">
+          {[...Array(10)].map((_, i) => (
+            <div className="flex items-center space-x-4 justify-between" key={i}>
+              <div className="space-y-1">
+                <p className="text-sm font-medium leading-none">Customer {i + 1}</p>
+                <p className="text-sm text-muted-foreground">customer{i + 1}@example.com</p>
+              </div>
+              <div className="ml-auto font-medium">+${(Math.random() * 1000).toFixed(2)}</div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <div className="flex min-h-screen flex-col overflow-x-hidden">
@@ -115,316 +442,10 @@ export default function DashboardPage() {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {/* Total Transactions */}
-                <Link href="/transactions" className="block">
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">${stats.transactions.total.toLocaleString()}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.transactions.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.transactions.isIncrease ? "+" : "-"}
-                          {stats.transactions.percentChange}%{" "}
-                          {stats.transactions.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
+              {renderStatsCards()}
 
-                {/* System Revenue */}
-                <Link href="/revenue" className="block">
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">System Revenue</CardTitle>
-                      <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">${stats.revenue.total.toLocaleString()}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.revenue.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.revenue.isIncrease ? "+" : "-"}
-                          {stats.revenue.percentChange}%{" "}
-                          {stats.revenue.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                {/* Total Merchants */}
-                <Link href="/users" className="block relative">
-                  {stats.merchants.pendingApproval > 0 && (
-                    <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
-                      {stats.merchants.pendingApproval}
-                    </span>
-                  )}
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Merchants
-                        {stats.merchants.pendingApproval > 0 && (
-                          <span className="ml-2 text-red-500">
-                            <Bell className="inline h-3 w-3" />
-                          </span>
-                        )}
-                      </CardTitle>
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">+{stats.merchants.total}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.merchants.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.merchants.isIncrease ? "+" : "-"}
-                          {stats.merchants.percentChange}%{" "}
-                          {stats.merchants.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                {/* Total Customers */}
-                <Link href="/users" className="block">
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">+{stats.customers.total}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.customers.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.customers.isIncrease ? "+" : "-"}
-                          {stats.customers.percentChange}%{" "}
-                          {stats.customers.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                {/* Total System Users */}
-                <Link href="/users" className="block">
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total System Users</CardTitle>
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats.users.total}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.users.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.users.isIncrease ? "+" : "-"}
-                          {stats.users.percentChange}%{" "}
-                          {stats.users.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                {/* Total Products */}
-                <Link href="/products" className="block">
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-                      <Package className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats.products.total.toLocaleString()}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.products.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.products.isIncrease ? "+" : "-"}
-                          {stats.products.percentChange}%{" "}
-                          {stats.products.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                {/* Total Orders */}
-                <Link href="/orders" className="block relative">
-                  {stats.orders.pendingRefunds > 0 && (
-                    <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
-                      {stats.orders.pendingRefunds}
-                    </span>
-                  )}
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Orders
-                        {stats.orders.pendingRefunds > 0 && (
-                          <span className="ml-2 text-red-500">
-                            <Bell className="inline h-3 w-3" />
-                          </span>
-                        )}
-                      </CardTitle>
-                      <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">+{stats.orders.total.toLocaleString()}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.orders.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.orders.isIncrease ? "+" : "-"}
-                          {stats.orders.percentChange}%{" "}
-                          {stats.orders.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                {/* Total Auctions */}
-                <Link href="/auctions" className="block relative">
-                  {stats.auctions.pendingApproval > 0 && (
-                    <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
-                      {stats.auctions.pendingApproval}
-                    </span>
-                  )}
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Total Auctions
-                        {stats.auctions.pendingApproval > 0 && (
-                          <span className="ml-2 text-red-500">
-                            <Bell className="inline h-3 w-3" />
-                          </span>
-                        )}
-                      </CardTitle>
-                      <Gavel className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">+{stats.auctions.total}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.auctions.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.auctions.isIncrease ? "+" : "-"}
-                          {Math.abs(stats.auctions.percentChange)}%{" "}
-                          {stats.auctions.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                {/* Total Categories */}
-                <Link href="/categories" className="block">
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Categories</CardTitle>
-                      <Layers className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats.categories.total}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.categories.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.categories.isIncrease ? "+" : "-"}
-                          {stats.categories.percentChange}{" "}
-                          {stats.categories.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-
-                {/* Total Admins */}
-                <Link href="/admins" className="block">
-                  <Card className="transition-all hover:shadow-md">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Admins</CardTitle>
-                      <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{stats.admins.total}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span
-                          className={`flex items-center ${stats.admins.isIncrease ? "text-green-500" : "text-red-500"}`}
-                        >
-                          {stats.admins.isIncrease ? "+" : "-"}
-                          {stats.admins.percentChange}{" "}
-                          {stats.admins.isIncrease ? (
-                            <ArrowUpRight className="ml-1 h-3 w-3" />
-                          ) : (
-                            <ArrowDownRight className="ml-1 h-3 w-3" />
-                          )}
-                        </span>{" "}
-                        from last month
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="md:col-span-2 lg:col-span-4">
+              <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
+                <Card className="">
                   <CardHeader>
                     <CardTitle>Revenue Overview</CardTitle>
                     <CardDescription>Monthly revenue and order trends</CardDescription>
@@ -434,13 +455,7 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
 
-                {/* <TransactionTypesChart 
-                  transactions={filteredTransactions} 
-                  isLoading={isLoading} 
-                  className="lg:col-span-2" 
-                /> */}
-
-                <Card className="lg:col-span-1">
+                <Card className="">
                   <CardHeader>
                     <CardTitle>User Distribution</CardTitle>
                     <CardDescription>Breakdown by user type</CardDescription>
@@ -462,27 +477,25 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
 
+                <TransactionTypesChart
+                  transactions={filteredTransactions}
+                  isLoading={isLoading}
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Recent Sales</CardTitle>
-                    <CardDescription>You made 265 sales this month.</CardDescription>
+                    <CardTitle>Revenue by Category</CardTitle>
+                    <CardDescription>Top performing categories</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-8">
-                      {/* Recent sale items */}
-                      {[1, 2, 3, 4, 5].map((i) => (
-                        <div className="flex items-center" key={i}>
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium leading-none">Customer {i}</p>
-                            <p className="text-sm text-muted-foreground">customer{i}@example.com</p>
-                          </div>
-                          <div className="ml-auto font-medium">+${(Math.random() * 1000).toFixed(2)}</div>
-                        </div>
-                      ))}
-                    </div>
+                    <CategoryRevenueChart />
                   </CardContent>
                 </Card>
               </div>
+
+              {renderRecentSales()}
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-4">
@@ -535,8 +548,8 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="col-span-2">
+              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+                <Card>
                   <CardHeader>
                     <CardTitle>User Growth</CardTitle>
                     <CardDescription>New user registrations over time</CardDescription>
@@ -547,18 +560,6 @@ export default function DashboardPage() {
                 </Card>
 
                 <Card>
-                  <CardHeader>
-                    <CardTitle>User Distribution</CardTitle>
-                    <CardDescription>Breakdown by user type</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <UserDistributionChart />
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="col-span-3">
                   <CardHeader>
                     <CardTitle>Sales Performance</CardTitle>
                     <CardDescription>Revenue and order trends</CardDescription>
@@ -571,147 +572,178 @@ export default function DashboardPage() {
                 </Card>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              {/* New Product Sales Graph */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Product Sales</CardTitle>
+                  <CardDescription>Monthly product sales data compared to targets</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProductSalesChart />
+                </CardContent>
+              </Card>
+
+              {/* New Auction Performance Graph */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Auction Performance</CardTitle>
+                  <CardDescription>Monthly auction activity breakdown</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AuctionPerformanceChart />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="reports" className="space-y-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  <Select value={reportYear} onValueChange={setReportYear}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Select year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="2023">2023</SelectItem>
+                      <SelectItem value="2022">2022</SelectItem>
+                      <SelectItem value="2021">2021</SelectItem>
+                      <SelectItem value="2020">2020</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={reportMonth} onValueChange={setReportMonth}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Select month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Months</SelectItem>
+                      <SelectItem value="1">January</SelectItem>
+                      <SelectItem value="2">February</SelectItem>
+                      <SelectItem value="3">March</SelectItem>
+                      <SelectItem value="4">April</SelectItem>
+                      <SelectItem value="5">May</SelectItem>
+                      <SelectItem value="6">June</SelectItem>
+                      <SelectItem value="7">July</SelectItem>
+                      <SelectItem value="8">August</SelectItem>
+                      <SelectItem value="9">September</SelectItem>
+                      <SelectItem value="10">October</SelectItem>
+                      <SelectItem value="11">November</SelectItem>
+                      <SelectItem value="12">December</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={reportPeriod} onValueChange={setReportPeriod}>
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Select period" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="last7days">Last 7 days</SelectItem>
+                      <SelectItem value="last30days">Last 30 days</SelectItem>
+                      <SelectItem value="last90days">Last 90 days</SelectItem>
+                      <SelectItem value="year">Full Year</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <ExportReportButton period={reportPeriod} />
+                </div>
+              </div>
+
+              {/* Monthly Reports Bar Chart */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Monthly Financial Reports</CardTitle>
+                  <CardDescription>Revenue, profit, and expenses breakdown by month</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MonthlyReportsBarChart />
+                </CardContent>
+              </Card>
+
+              {/* Revenue and User Growth Charts */}
+              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Transaction Distribution</CardTitle>
-                    <CardDescription>Breakdown by transaction type</CardDescription>
+                    <CardTitle>Revenue Report</CardTitle>
+                    <CardDescription>Monthly revenue trends</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <TransactionDistributionChart />
+                    <RevenueBarChart />
                   </CardContent>
                 </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>User Growth Report</CardTitle>
+                    <CardDescription>Monthly user growth by type</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <UserGrowthBarChart />
+                  </CardContent>
+                </Card>
+              </div>
 
+              {/* Product Sales and Auction Performance */}
+              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Product Sales Report</CardTitle>
+                    <CardDescription>Monthly product sales data compared to targets</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ProductSalesChart />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Auction Performance Report</CardTitle>
+                    <CardDescription>Monthly auction activity breakdown</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AuctionPerformanceChart />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Category Revenue and Transaction Types */}
+              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>Revenue by Category</CardTitle>
                     <CardDescription>Top performing categories</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <CategoryRevenueChart />
+                    <CategoryRevenueBarChart />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Transaction Types</CardTitle>
+                    <CardDescription>Breakdown of transaction types and values</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <TransactionTypesBarChart />
                   </CardContent>
                 </Card>
               </div>
-            </TabsContent>
 
-            <TabsContent value="reports" className="space-y-4">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap gap-2 sm:grid sm:grid-cols-2">
-              <Select value={reportYear} onValueChange={setReportYear}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Select year" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2023">2023</SelectItem>
-                  <SelectItem value="2022">2022</SelectItem>
-                  <SelectItem value="2021">2021</SelectItem>
-                  <SelectItem value="2020">2020</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={reportMonth} onValueChange={setReportMonth}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Select month" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Months</SelectItem>
-                  <SelectItem value="1">January</SelectItem>
-                  <SelectItem value="2">February</SelectItem>
-                  <SelectItem value="3">March</SelectItem>
-                  <SelectItem value="4">April</SelectItem>
-                  <SelectItem value="5">May</SelectItem>
-                  <SelectItem value="6">June</SelectItem>
-                  <SelectItem value="7">July</SelectItem>
-                  <SelectItem value="8">August</SelectItem>
-                  <SelectItem value="9">September</SelectItem>
-                  <SelectItem value="10">October</SelectItem>
-                  <SelectItem value="11">November</SelectItem>
-                  <SelectItem value="12">December</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={reportPeriod} onValueChange={setReportPeriod}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Select period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="last7days">Last 7 days</SelectItem>
-                  <SelectItem value="last30days">Last 30 days</SelectItem>
-                  <SelectItem value="last90days">Last 90 days</SelectItem>
-                  <SelectItem value="year">Full Year</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <ExportReportButton period={reportPeriod} />
-            </div>
-          </div>
+              {/* Top Products Table */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Monthly Reports</CardTitle>
-                  <CardDescription>Detailed breakdown of performance metrics by month</CardDescription>
+                  <CardTitle>Top Performing Products</CardTitle>
+                  <CardDescription>Products with highest revenue</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <MonthlyReportsChart />
+                  <div className="space-y-4">
+                    {topProducts.map((product, i) => (
+                      <div className="flex items-center" key={i}>
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium leading-none">{product.name}</p>
+                          <p className="text-sm text-muted-foreground">{product.category}</p>
+                        </div>
+                        <div className="ml-auto font-medium">${product.revenue.toLocaleString()}</div>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenue by Category</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[300px] w-full">
-                      <CategoryRevenueChart />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Top Performing Products</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {topProducts.map((product, i) => (
-                        <div className="flex items-center" key={i}>
-                          <div className="space-y-1">
-                            <p className="text-sm font-medium leading-none">{product.name}</p>
-                            <p className="text-sm text-muted-foreground">{product.category}</p>
-                          </div>
-                          <div className="ml-auto font-medium">${product.revenue.toLocaleString()}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>User Growth Analysis</CardTitle>
-                    <CardDescription>New user acquisition trends</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[300px] w-full">
-                      <UserGrowthChart />
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Transaction Analysis</CardTitle>
-                    <CardDescription>Transaction volume and distribution</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[300px] w-full">
-                      <TransactionDistributionChart />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
             </TabsContent>
           </Tabs>
         </main>
