@@ -40,17 +40,7 @@ export function UserFilters({
             <Filter className="h-4 w-4" />
             <span className="sr-only">Filter</span>
           </Button>
-          <Select value={roleFilter} onValueChange={setRoleFilter} className="w-full sm:w-[180px]">
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Users</SelectItem>
-              <SelectItem value="customer">Customers</SelectItem>
-              <SelectItem value="merchant">Merchants</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={statusFilter} onValueChange={setStatusFilter} className="w-full sm:w-[180px]">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger>
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>

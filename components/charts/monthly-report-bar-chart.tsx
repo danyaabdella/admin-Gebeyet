@@ -1,32 +1,41 @@
-"use client"
+"use client";
 
-import { ReportBarChart } from "./report-bar-chart"
+import { ReportBarChart } from "./report-bar-chart";
 
-// Sample data - in a real application, this would come from props or an API
+// Updated sample data with transactions > revenue & expenses, and added refund category
 const data = [
-  { month: "Jan", revenue: 4000, profit: 1600, expenses: 2400 },
-  { month: "Feb", revenue: 3000, profit: 1200, expenses: 1800 },
-  { month: "Mar", revenue: 2000, profit: 800, expenses: 1200 },
-  { month: "Apr", revenue: 2780, profit: 1112, expenses: 1668 },
-  { month: "May", revenue: 1890, profit: 756, expenses: 1134 },
-  { month: "Jun", revenue: 2390, profit: 956, expenses: 1434 },
-  { month: "Jul", revenue: 3490, profit: 1396, expenses: 2094 },
-  { month: "Aug", revenue: 4000, profit: 1600, expenses: 2400 },
-  { month: "Sep", revenue: 3200, profit: 1280, expenses: 1920 },
-  { month: "Oct", revenue: 2800, profit: 1120, expenses: 1680 },
-  { month: "Nov", revenue: 3300, profit: 1320, expenses: 1980 },
-  { month: "Dec", revenue: 5000, profit: 2000, expenses: 3000 },
-]
+  { month: "Jan", transactions: 5000, revenue: 4000, expenses: 2400, refunds: 500 },
+  { month: "Feb", transactions: 4200, revenue: 3000, expenses: 1800, refunds: 400 },
+  { month: "Mar", transactions: 3500, revenue: 2000, expenses: 1200, refunds: 300 },
+  { month: "Apr", transactions: 3900, revenue: 2780, expenses: 1668, refunds: 350 },
+  { month: "May", transactions: 3300, revenue: 1890, expenses: 1134, refunds: 280 },
+  { month: "Jun", transactions: 3700, revenue: 2390, expenses: 1434, refunds: 320 },
+  { month: "Jul", transactions: 4800, revenue: 3490, expenses: 2094, refunds: 450 },
+  { month: "Aug", transactions: 5100, revenue: 4000, expenses: 2400, refunds: 480 },
+  { month: "Sep", transactions: 4300, revenue: 3200, expenses: 1920, refunds: 400 },
+  { month: "Oct", transactions: 4100, revenue: 2800, expenses: 1680, refunds: 350 },
+  { month: "Nov", transactions: 4600, revenue: 3300, expenses: 1980, refunds: 420 },
+  { month: "Dec", transactions: 5500, revenue: 5000, expenses: 3000, refunds: 500 },
+];
 
 export function MonthlyReportsBarChart() {
   return (
-    <ReportBarChart
-      data={data}
-      dataKeys={["revenue", "profit", "expenses"]}
-      xAxisKey="month"
-      colors={["#8884d8", "#82ca9d", "#ffc658"]}
-      formatter={(value) => `$${value}`}
-    />
-  )
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-[600px] sm:min-w-full">
+        <ReportBarChart
+          data={data}
+          dataKeys={["transactions", "expenses", "revenue", "refunds"]}
+          xAxisKey="month"
+          colors={["#8884d8", "#ffc658", "#82ca9d", "#ff6961"]}
+          formatter={(value) =>
+            typeof value === "number"
+              ? value >= 1000
+                ? `$${value}` // Format revenue, expenses, and refunds as currency
+                : `${value} Tx` // Format transactions with "Tx"
+              : `${value}`
+          }
+        />
+      </div>
+    </div>
+  );
 }
-

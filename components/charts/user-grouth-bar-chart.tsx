@@ -20,13 +20,17 @@ const data = [
 
 export function UserGrowthBarChart() {
   return (
-    <ReportBarChart
-      data={data}
-      dataKeys={["customers", "merchants", "admins"]}
-      xAxisKey="month"
-      colors={["#8884d8", "#82ca9d", "#ffc658"]}
-      stacked={true}
-    />
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-[600px] sm:min-w-full">
+        <ReportBarChart
+          data={data}
+          dataKeys={["customers", "merchants", "admins"]}
+          xAxisKey="month"
+          colors={["#8884d8", "#82ca9d", "#ffc658"]}
+          stacked={true}
+        />
+      </div>
+    </div>
   )
 }
 

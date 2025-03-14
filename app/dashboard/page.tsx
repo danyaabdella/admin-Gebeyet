@@ -34,8 +34,10 @@ import { TransactionTypesChart } from "@/components/transactions/transaction-typ
 import { RevenueBarChart } from "@/components/charts/revenur-bar-chart"
 import { UserGrowthBarChart } from "@/components/charts/user-grouth-bar-chart"
 import { CategoryRevenueBarChart } from "@/components/charts/category-revenue-bar-chart"
-import { TransactionTypesBarChart } from "@/components/charts/transaction-bar-chart"
+import { OrderDistributionBarChart } from "@/components/charts/order-bar-chart"
 import { MonthlyReportsBarChart } from "@/components/charts/monthly-report-bar-chart"
+import { TransactionTypeDistributionChart } from "@/components/charts/transaction-type-chart"
+import { OrderDistributionPieChart } from "@/components/charts/order-distribution-chart"
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any>(null)
@@ -131,7 +133,7 @@ export default function DashboardPage() {
       </Link>
 
       {/* System Revenue */}
-      <Link href="/revenue" className="block">
+      <Link href="/transactions?revenue" className="block">
         <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">System Revenue</CardTitle>
@@ -156,7 +158,7 @@ export default function DashboardPage() {
       </Link>
 
       {/* Total Merchants */}
-      <Link href="/users" className="block relative">
+      <Link href="/users?merchants" className="block relative">
         {stats.merchants.pendingApproval > 0 && (
           <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
             {stats.merchants.pendingApproval}
@@ -193,7 +195,7 @@ export default function DashboardPage() {
       </Link>
 
       {/* Total Customers */}
-      <Link href="/users" className="block">
+      <Link href="/users?customers" className="block">
         <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
@@ -401,7 +403,7 @@ export default function DashboardPage() {
         <CardDescription>You made 265 sales this month.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 justify-end">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 justify-end">
           {[...Array(10)].map((_, i) => (
             <div className="flex items-center space-x-4 justify-between" key={i}>
               <div className="space-y-1">
@@ -444,7 +446,7 @@ export default function DashboardPage() {
             <TabsContent value="overview" className="space-y-4">
               {renderStatsCards()}
 
-              <div className="grid gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 <Card className="">
                   <CardHeader>
                     <CardTitle>Revenue Overview</CardTitle>
@@ -466,7 +468,7 @@ export default function DashboardPage() {
                 </Card>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>Revenue Distribution</CardTitle>
@@ -477,13 +479,18 @@ export default function DashboardPage() {
                   </CardContent>
                 </Card>
 
-                <TransactionTypesChart
-                  transactions={filteredTransactions}
-                  isLoading={isLoading}
-                />
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Transaction Distribution</CardTitle>
+                    <CardDescription>Breakdown by transaction types</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <TransactionTypeDistributionChart />
+                  </CardContent>
+                </Card>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
                 <Card>
                   <CardHeader>
                     <CardTitle>Revenue by Category</CardTitle>
@@ -491,6 +498,15 @@ export default function DashboardPage() {
                   </CardHeader>
                   <CardContent>
                     <CategoryRevenueChart />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Order Distribution</CardTitle>
+                    <CardDescription>Order classification</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <OrderDistributionPieChart />
                   </CardContent>
                 </Card>
               </div>
@@ -647,7 +663,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Monthly Reports Bar Chart */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 -ml-16">
               <Card>
                 <CardHeader>
                   <CardTitle>Monthly Financial Reports</CardTitle>
@@ -658,70 +674,65 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* Revenue and User Growth Charts */}
-              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenue Report</CardTitle>
-                    <CardDescription>Monthly revenue trends</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <RevenueBarChart />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>User Growth Report</CardTitle>
-                    <CardDescription>Monthly user growth by type</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <UserGrowthBarChart />
-                  </CardContent>
-                </Card>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue Report</CardTitle>
+                  <CardDescription>Monthly revenue trends</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RevenueBarChart />
+                </CardContent>
+              </Card>
 
-              {/* Product Sales and Auction Performance */}
-              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Product Sales Report</CardTitle>
-                    <CardDescription>Monthly product sales data compared to targets</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <ProductSalesChart />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Auction Performance Report</CardTitle>
-                    <CardDescription>Monthly auction activity breakdown</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <AuctionPerformanceChart />
-                  </CardContent>
-                </Card>
-              </div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>User Growth Report</CardTitle>
+                  <CardDescription>Monthly user growth by type</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <UserGrowthBarChart />
+                </CardContent>
+              </Card>
 
-              {/* Category Revenue and Transaction Types */}
-              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenue by Category</CardTitle>
-                    <CardDescription>Top performing categories</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <CategoryRevenueBarChart />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Transaction Types</CardTitle>
-                    <CardDescription>Breakdown of transaction types and values</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <TransactionTypesBarChart />
-                  </CardContent>
-                </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Product Sales Report</CardTitle>
+                  <CardDescription>Monthly product sales data compared to targets</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ProductSalesChart />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Auction Performance Report</CardTitle>
+                  <CardDescription>Monthly auction activity breakdown</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AuctionPerformanceChart />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Revenue by Category</CardTitle>
+                  <CardDescription>Top performing categories</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CategoryRevenueBarChart />
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Order Distribution</CardTitle>
+                  <CardDescription>Breakdown of Order Distribution</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <OrderDistributionBarChart />
+                </CardContent>
+              </Card>
               </div>
 
               {/* Top Products Table */}

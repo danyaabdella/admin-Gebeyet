@@ -10,6 +10,7 @@ import {
   Gavel,
   CreditCard,
   Shield,
+  Home, // Import the home icon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -30,35 +31,35 @@ export function Sidebar() {
           <Link href="/users" passHref>
             <Button variant={pathname === "/users" ? "secondary" : "ghost"} className="justify-start">
               <Users className="mr-2 h-4 w-4" />
-              User Management
+              User
             </Button>
           </Link>
 
           <Link href="/admins" passHref>
             <Button variant={pathname === "/admins" ? "secondary" : "ghost"} className="justify-start">
               <Shield className="mr-2 h-4 w-4" />
-              Admin Management
+              Admin
             </Button>
           </Link>
 
           <Link href="/auctions" passHref>
             <Button variant={pathname === "/auctions" ? "secondary" : "ghost"} className="justify-start">
               <Gavel className="mr-2 h-4 w-4" />
-              Auction Management
+              Auction
             </Button>
           </Link>
 
           <Link href="/products" passHref>
             <Button variant={pathname === "/products" ? "secondary" : "ghost"} className="justify-start">
               <ShoppingBag className="mr-2 h-4 w-4" />
-              Product Management
+              Product
             </Button>
           </Link>
 
           <Link href="/categories" passHref>
             <Button variant={pathname === "/categories" ? "secondary" : "ghost"} className="justify-start">
               <Tag className="mr-2 h-4 w-4" />
-              Category Management
+              Category
             </Button>
           </Link>
 
@@ -69,8 +70,17 @@ export function Sidebar() {
             </Button>
           </Link>
         </nav>
+
+        {/* Add Back Home button at the bottom */}
+        <div className="mt-64">
+          <Link href="/" passHref>
+            <Button variant="ghost" className="justify-start">
+              <Home className="mr-2 h-4 w-4" />
+              Back Home
+            </Button>
+          </Link>
+        </div>
       </div>
     </div>
   )
 }
-

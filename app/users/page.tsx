@@ -89,6 +89,20 @@ export default function UsersPage() {
     trashPagination.limit,
   ])
 
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    console.log("url: ", urlParams.toString());
+  
+    const tabParam = urlParams.has("customers")
+      ? "customers"
+      : urlParams.has("merchants")
+      ? "merchants"
+      : "all";
+  
+    setActiveTab(tabParam);
+    console.log("Active tab :", tabParam);
+  }, []);
+
   // Handle page change
   const handlePageChange = (newPage: number) => {
     if (activeTab === "trash") {
@@ -246,7 +260,7 @@ export default function UsersPage() {
             </div>
           </div>
 
-          <Tabs defaultValue="all" className="space-y-4" onValueChange={setActiveTab}>
+          <Tabs value={activeTab} className="space-y-4" onValueChange={setActiveTab}>
             <TabsList className="w-full sm:w-auto grid grid-cols-4 sm:flex">
               <TabsTrigger value="all" className="flex-1 sm:flex-none">
                 All Users

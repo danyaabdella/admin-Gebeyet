@@ -11,11 +11,12 @@ import {
 import { Button } from "@/components/ui/button"
 
 interface ConfirmationDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  title: string
-  description: string
-  onConfirm: () => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description: string;
+  onConfirm: () => void;
+  variant: "default" | "destructive";
 }
 
 export function ConfirmationDialog({ open, onOpenChange, title, description, onConfirm }: ConfirmationDialogProps) {

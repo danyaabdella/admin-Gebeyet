@@ -16,13 +16,17 @@ const data = [
 
 export function CategoryRevenueBarChart() {
   return (
-    <ReportBarChart
-      data={data}
-      dataKeys={["revenue"]}
-      xAxisKey="category"
-      colors={["#8884d8"]}
-      formatter={(value) => `$${value}`}
-    />
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-[600px] sm:min-w-full">
+        <ReportBarChart
+          data={data}
+          dataKeys={["revenue"]}
+          xAxisKey="category"
+          colors={["#8884d8"]}
+          formatter={(value) => `$${value}`}
+        />
+      </div>
+    </div>
   )
 }
 

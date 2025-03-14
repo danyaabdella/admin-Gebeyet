@@ -93,8 +93,8 @@ export function NotificationPopover() {
           )}
         </div>
         <div className="border-t pt-2">
-          <Button variant="outline" size="sm" className="w-full">
-            View all notifications
+          <Button variant="outline" size="sm" className="w-full" asChild>
+            <a href="/notifications">View all notifications</a>
           </Button>
         </div>
       </PopoverContent>
