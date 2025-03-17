@@ -106,7 +106,7 @@ export function CategoryDetailsDialog({
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex flex-row justify-between gap-2">
             {!category.isDeleted && canPerformAction() && (
               <>
                 <Button variant="outline" onClick={handleEdit} disabled={isLoading}>

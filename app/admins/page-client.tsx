@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Search, CheckCircle, XCircle, Plus } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -55,8 +54,12 @@ export default function AdminsPageClient() {
     // Implement search functionality
   }
 
+  const handleCreateAdmin = (data: any) => {
+    console.log("Admin Created:", data);
+    // Perform API call or logic to create an admin
+  };
+
   const filteredAdmins = (selectedTab === "active" ? activeAdmins : deletedAdmins).filter((admin) => {
-    // Apply search filter
     if (
       searchQuery &&
       !admin.fullname.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -64,28 +67,21 @@ export default function AdminsPageClient() {
     ) {
       return false
     }
-
-    // Apply status filter
-    if (statusFilter === "banned" && !admin.isBanned) {
-      return false
-    }
-    if (statusFilter === "active" && admin.isBanned) {
-      return false
-    }
-
+    if (statusFilter === "banned" && !admin.isBanned) return false
+    if (statusFilter === "active" && admin.isBanned) return false
     return true
   })
 
   return (
     <div className="flex min-h-screen flex-col">
       <Sidebar />
-      <div className="flex-1 md:ml-[var(--sidebar-width)] -mt-12">
+      <div className="flex-1 md:ml-[var(--sidebar-width)] lg:-mt-12 -mt-8">
         <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight">Admin Management</h1>
-            <div className="flex items-center gap-2">
+            <h1 className="text-xl md:text-3xl font-bold tracking-tight">Admin Management</h1>
+            <div className="flex items-center gap-2 -mr-8 lg:mr-0">
               <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus className="mr-2 h-4 w-4 " />
                 Create Admin
               </Button>
             </div>
@@ -107,27 +103,41 @@ export default function AdminsPageClient() {
                 Search
               </Button>
             </form>
-
-            <div className="flex items-center gap-2">
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Admins</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="banned">Banned</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <Tabs value={selectedTab} onValueChange={setSelectedTab}>
-            <TabsList>
-              <TabsTrigger value="active">Active Admins</TabsTrigger>
-              <TabsTrigger value="deleted">Deleted Admins</TabsTrigger>
-            </TabsList>
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[120px] lg:w-[160px]">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">
+                  <span className="sm:hidden">All</span>
+                  <span className="hidden sm:inline">All Admins</span>
+                </SelectItem>
+                <SelectItem value="active">
+                  <span className="sm:hidden">Active</span>
+                  <span className="hidden sm:inline">Active Admins</span>
+                </SelectItem>
+                <SelectItem value="banned">
+                  <span className="sm:hidden">Banned</span>
+                  <span className="hidden sm:inline">Banned Admins</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
 
+            <TabsList>
+              <TabsTrigger value="active">
+                <span className="sm:hidden">Active</span>
+                <span className="hidden sm:inline">Active Admins</span>
+              </TabsTrigger>
+              <TabsTrigger value="deleted">
+                <span className="sm:hidden">Deleted</span>
+                <span className="hidden sm:inline">Deleted Admins</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
             <Card className="mt-4">
               <CardHeader className="p-4">
                 <CardTitle>{selectedTab === "active" ? "Active Admins" : "Deleted Admins"}</CardTitle>
@@ -142,10 +152,10 @@ export default function AdminsPageClient() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
+                      <TableHead className="hidden md:table-cell">Email</TableHead>
                       <TableHead className="hidden md:table-cell">Phone</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="hidden md:table-cell">Created</TableHead>
+                      <TableHead>Created</TableHead> {/* Date column always visible */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -156,7 +166,7 @@ export default function AdminsPageClient() {
                         onClick={() => setSelectedAdmin(admin)}
                       >
                         <TableCell className="font-medium">{admin.fullname}</TableCell>
-                        <TableCell>{admin.email}</TableCell>
+                        <TableCell className="hidden md:table-cell">{admin.email}</TableCell>
                         <TableCell className="hidden md:table-cell">{admin.phone}</TableCell>
                         <TableCell>
                           {admin.isBanned ? (
@@ -174,12 +184,11 @@ export default function AdminsPageClient() {
                             </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell>
                           {new Date(admin.createdAt).toLocaleDateString()}
-                        </TableCell>
+                        </TableCell> {/* Date column always visible */}
                       </TableRow>
                     ))}
-
                     {filteredAdmins.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} className="h-24 text-center">
@@ -203,8 +212,11 @@ export default function AdminsPageClient() {
         <AdminDetailsDialog admin={selectedAdmin} open={!!selectedAdmin} onOpenChange={() => setSelectedAdmin(null)} />
       )}
 
-      <CreateAdminDialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
+      <CreateAdminDialog 
+        open={isCreateDialogOpen} 
+        onOpenChange={setIsCreateDialogOpen} 
+        onSubmit={handleCreateAdmin} 
+      />
     </div>
   )
 }
-

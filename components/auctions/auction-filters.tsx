@@ -17,7 +17,7 @@ import { format } from "date-fns"
 export function AuctionFilters() {
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState("all")
-  const [priceRange, setPriceRange] = useState([0, 2000])
+  const [priceRange, setPriceRange] = useState([0, 0])
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
   const [activeFilters, setActiveFilters] = useState<string[]>([])
 
@@ -151,21 +151,13 @@ export function AuctionFilters() {
                       />
                     </div>
                   </div>
-                  <Slider
-                    defaultValue={[0, 2000]}
-                    max={2000}
-                    step={10}
-                    value={priceRange}
-                    onValueChange={handlePriceRangeChange}
-                    className="py-4"
-                  />
                   <Button onClick={applyPriceFilter}>Apply Price Filter</Button>
                 </div>
               </div>
             </PopoverContent>
           </Popover>
 
-          <Popover>
+          {/* <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm" className="h-10">
                 <Calendar className="mr-2 h-4 w-4" />
@@ -187,7 +179,7 @@ export function AuctionFilters() {
                 </Button>
               </div>
             </PopoverContent>
-          </Popover>
+          </Popover> */}
         </div>
       </div>
 

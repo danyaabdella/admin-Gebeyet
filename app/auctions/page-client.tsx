@@ -13,10 +13,10 @@ export default function AuctionsPageClient() {
   return (
     <div className="flex min-h-screen flex-col">
       <Sidebar />
-      <div className="flex-1 md:ml-[var(--sidebar-width)] -mt-12">
+      <div className="flex-1 md:ml-[var(--sidebar-width)] lg:-mt-12 -mt-8">
         <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight">Auction Management</h1>
+            <h1 className="text-xl md:text-3xl font-bold tracking-tight">Auction Management</h1>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Total Auctions: 342</span>
             </div>
@@ -84,7 +84,7 @@ function AuctionTable() {
             <TableHead className="hidden md:table-cell">Merchant</TableHead>
             <TableHead className="hidden md:table-cell">Starting Price</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead className="hidden md:table-cell">Start/End Time</TableHead>
+            <TableHead className="table-cell">Start/End Time</TableHead>
             <TableHead className="hidden md:table-cell">Current Bid</TableHead>
           </TableRow>
         </TableHeader>
@@ -121,7 +121,7 @@ function AuctionTable() {
                   </span>
                 )}
               </TableCell>
-              <TableCell className="hidden md:table-cell">
+              <TableCell className="table-cell">
                 {new Date(auction.startTime).toLocaleDateString()} - {new Date(auction.endTime).toLocaleDateString()}
               </TableCell>
               <TableCell className="hidden md:table-cell">

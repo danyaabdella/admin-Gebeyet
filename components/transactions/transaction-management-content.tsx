@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Search, Download } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,8 @@ import { TransactionCharts } from "@/components/transactions/transaction-charts"
 import { DateRangePicker } from "@/components/date-range-picker"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/toaster"
+import { DateRange } from "react-day-picker"
+import { mockTransactions } from "@/lib/mock-transaction"
 
 // Mock transaction types
 const transactionTypes = [
@@ -37,7 +39,10 @@ export function TransactionManagementContent() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedType, setSelectedType] = useState("all")
   const [selectedStatus, setSelectedStatus] = useState("all")
-  const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({})
+  const [dateRange, setDateRange] = useState<DateRange>({
+    from: new Date(), // Default to today's date
+    to: new Date(),   // Default to today's date
+  })
   const [currentPage, setCurrentPage] = useState(1)
   const [transactions, setTransactions] = useState<any[]>([])
   const [totalTransactions, setTotalTransactions] = useState(0)
@@ -45,351 +50,8 @@ export function TransactionManagementContent() {
   const [isLoadingData, setIsLoadingData] = useState(true)
   const { toast } = useToast()
 
-  // Mock transactions data
-  const mockTransactions = [
-    {
-      _id: "txn_1",
-      transactionId: "TXN-2023-10-01-001",
-      type: "purchase",
-      amount: 129.99,
-      fee: 3.99,
-      status: "completed",
-      date: "2023-10-01T10:15:00.000Z",
-      customer: {
-        name: "John Doe",
-        email: "john.doe@example.com",
-      },
-      product: {
-        name: "Premium Headphones",
-        id: "prod_001",
-      },
-      paymentMethod: "credit_card",
-    },
-    {
-      _id: "txn_2",
-      transactionId: "TXN-2023-10-02-002",
-      type: "purchase",
-      amount: 49.99,
-      fee: 1.5,
-      status: "completed",
-      date: "2023-10-02T14:30:00.000Z",
-      customer: {
-        name: "Jane Smith",
-        email: "jane.smith@example.com",
-      },
-      product: {
-        name: "Wireless Mouse",
-        id: "prod_002",
-      },
-      paymentMethod: "paypal",
-    },
-    {
-      _id: "txn_3",
-      transactionId: "TXN-2023-10-03-003",
-      type: "refund",
-      amount: 49.99,
-      fee: 0,
-      status: "completed",
-      date: "2023-10-03T09:45:00.000Z",
-      customer: {
-        name: "Jane Smith",
-        email: "jane.smith@example.com",
-      },
-      product: {
-        name: "Wireless Mouse",
-        id: "prod_002",
-      },
-      paymentMethod: "paypal",
-    },
-    {
-      _id: "txn_4",
-      transactionId: "TXN-2023-10-04-004",
-      type: "withdrawal",
-      amount: 500.0,
-      fee: 5.0,
-      status: "completed",
-      date: "2023-10-04T16:20:00.000Z",
-      customer: {
-        name: "Seller Account",
-        email: "seller@example.com",
-      },
-      product: null,
-      paymentMethod: "bank_transfer",
-    },
-    {
-      _id: "txn_5",
-      transactionId: "TXN-2023-10-05-005",
-      type: "purchase",
-      amount: 199.99,
-      fee: 5.99,
-      status: "pending",
-      date: "2023-10-05T11:10:00.000Z",
-      customer: {
-        name: "Robert Johnson",
-        email: "robert.j@example.com",
-      },
-      product: {
-        name: "Smart Watch",
-        id: "prod_003",
-      },
-      paymentMethod: "credit_card",
-    },
-    {
-      _id: "txn_6",
-      transactionId: "TXN-2023-10-06-006",
-      type: "deposit",
-      amount: 1000.0,
-      fee: 0,
-      status: "completed",
-      date: "2023-10-06T13:25:00.000Z",
-      customer: {
-        name: "Seller Account",
-        email: "seller@example.com",
-      },
-      product: null,
-      paymentMethod: "bank_transfer",
-    },
-    {
-      _id: "txn_7",
-      transactionId: "TXN-2023-10-07-007",
-      type: "fee",
-      amount: 25.0,
-      fee: 0,
-      status: "completed",
-      date: "2023-10-07T09:00:00.000Z",
-      customer: {
-        name: "Marketplace",
-        email: "admin@marketplace.com",
-      },
-      product: null,
-      paymentMethod: "system",
-    },
-    {
-      _id: "txn_8",
-      transactionId: "TXN-2023-10-08-008",
-      type: "purchase",
-      amount: 79.99,
-      fee: 2.49,
-      status: "failed",
-      date: "2023-10-08T15:40:00.000Z",
-      customer: {
-        name: "Michael Brown",
-        email: "michael.b@example.com",
-      },
-      product: {
-        name: "Bluetooth Speaker",
-        id: "prod_004",
-      },
-      paymentMethod: "credit_card",
-    },
-    {
-      _id: "txn_9",
-      transactionId: "TXN-2023-10-09-009",
-      type: "purchase",
-      amount: 149.99,
-      fee: 4.5,
-      status: "completed",
-      date: "2023-10-09T12:15:00.000Z",
-      customer: {
-        name: "Emily Davis",
-        email: "emily.d@example.com",
-      },
-      product: {
-        name: "External Hard Drive",
-        id: "prod_005",
-      },
-      paymentMethod: "paypal",
-    },
-    {
-      _id: "txn_10",
-      transactionId: "TXN-2023-10-10-010",
-      type: "refund",
-      amount: 79.99,
-      fee: 0,
-      status: "processing",
-      date: "2023-10-10T10:30:00.000Z",
-      customer: {
-        name: "Michael Brown",
-        email: "michael.b@example.com",
-      },
-      product: {
-        name: "Bluetooth Speaker",
-        id: "prod_004",
-      },
-      paymentMethod: "credit_card",
-    },
-    {
-      _id: "txn_11",
-      transactionId: "TXN-2023-10-11-011",
-      type: "purchase",
-      amount: 299.99,
-      fee: 8.99,
-      status: "completed",
-      date: "2023-10-11T14:20:00.000Z",
-      customer: {
-        name: "Sarah Wilson",
-        email: "sarah.w@example.com",
-      },
-      product: {
-        name: "Tablet",
-        id: "prod_006",
-      },
-      paymentMethod: "credit_card",
-    },
-    {
-      _id: "txn_12",
-      transactionId: "TXN-2023-10-12-012",
-      type: "withdrawal",
-      amount: 750.0,
-      fee: 7.5,
-      status: "pending",
-      date: "2023-10-12T16:45:00.000Z",
-      customer: {
-        name: "Seller Account",
-        email: "seller@example.com",
-      },
-      product: null,
-      paymentMethod: "bank_transfer",
-    },
-    {
-      _id: "txn_13",
-      transactionId: "TXN-2023-10-13-013",
-      type: "purchase",
-      amount: 59.99,
-      fee: 1.8,
-      status: "completed",
-      date: "2023-10-13T11:05:00.000Z",
-      customer: {
-        name: "David Miller",
-        email: "david.m@example.com",
-      },
-      product: {
-        name: "Gaming Mouse",
-        id: "prod_007",
-      },
-      paymentMethod: "paypal",
-    },
-    {
-      _id: "txn_14",
-      transactionId: "TXN-2023-10-14-014",
-      type: "fee",
-      amount: 15.0,
-      fee: 0,
-      status: "completed",
-      date: "2023-10-14T09:30:00.000Z",
-      customer: {
-        name: "Marketplace",
-        email: "admin@marketplace.com",
-      },
-      product: null,
-      paymentMethod: "system",
-    },
-    {
-      _id: "txn_15",
-      transactionId: "TXN-2023-10-15-015",
-      type: "purchase",
-      amount: 89.99,
-      fee: 2.7,
-      status: "completed",
-      date: "2023-10-15T13:40:00.000Z",
-      customer: {
-        name: "Jennifer Lee",
-        email: "jennifer.l@example.com",
-      },
-      product: {
-        name: "Wireless Keyboard",
-        id: "prod_008",
-      },
-      paymentMethod: "credit_card",
-    },
-    {
-      _id: "txn_16",
-      transactionId: "TXN-2023-10-16-016",
-      type: "deposit",
-      amount: 500.0,
-      fee: 0,
-      status: "completed",
-      date: "2023-10-16T15:15:00.000Z",
-      customer: {
-        name: "Seller Account",
-        email: "seller@example.com",
-      },
-      product: null,
-      paymentMethod: "bank_transfer",
-    },
-    {
-      _id: "txn_17",
-      transactionId: "TXN-2023-10-17-017",
-      type: "purchase",
-      amount: 399.99,
-      fee: 11.99,
-      status: "failed",
-      date: "2023-10-17T10:50:00.000Z",
-      customer: {
-        name: "Thomas Anderson",
-        email: "thomas.a@example.com",
-      },
-      product: {
-        name: "Smartphone",
-        id: "prod_009",
-      },
-      paymentMethod: "credit_card",
-    },
-    {
-      _id: "txn_18",
-      transactionId: "TXN-2023-10-18-018",
-      type: "refund",
-      amount: 149.99,
-      fee: 0,
-      status: "completed",
-      date: "2023-10-18T12:25:00.000Z",
-      customer: {
-        name: "Emily Davis",
-        email: "emily.d@example.com",
-      },
-      product: {
-        name: "External Hard Drive",
-        id: "prod_005",
-      },
-      paymentMethod: "paypal",
-    },
-    {
-      _id: "txn_19",
-      transactionId: "TXN-2023-10-19-019",
-      type: "purchase",
-      amount: 249.99,
-      fee: 7.49,
-      status: "completed",
-      date: "2023-10-19T14:10:00.000Z",
-      customer: {
-        name: "Daniel White",
-        email: "daniel.w@example.com",
-      },
-      product: {
-        name: "Noise-Cancelling Headphones",
-        id: "prod_010",
-      },
-      paymentMethod: "credit_card",
-    },
-    {
-      _id: "txn_20",
-      transactionId: "TXN-2023-10-20-020",
-      type: "withdrawal",
-      amount: 1200.0,
-      fee: 12.0,
-      status: "completed",
-      date: "2023-10-20T16:30:00.000Z",
-      customer: {
-        name: "Seller Account",
-        email: "seller@example.com",
-      },
-      product: null,
-      paymentMethod: "bank_transfer",
-    },
-  ]
-
-  // Filter transactions based on search, type, status, and date range
-  const filterTransactions = () => {
+  // Compute filtered transactions using useMemo
+  const filteredTransactions = useMemo(() => {
     return mockTransactions.filter((transaction) => {
       // Filter by type
       if (selectedType !== "all" && transaction.type !== selectedType) return false
@@ -418,21 +80,15 @@ export function TransactionManagementContent() {
 
       return true
     })
-  }
+  }, [selectedType, selectedStatus, dateRange, searchQuery])
 
-  // Load transactions with pagination
+  // Handle pagination and loading state
   useEffect(() => {
     setIsLoadingData(true)
-
-    // Simulate API call with delay
     const fetchData = async () => {
-      // In a real app, this would be an API call with the filters
+      // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 500))
 
-      // Filter transactions
-      const filteredTransactions = filterTransactions()
-
-      // Calculate pagination
       const itemsPerPage = 10
       const totalItems = filteredTransactions.length
       const totalPages = Math.ceil(totalItems / itemsPerPage)
@@ -445,9 +101,8 @@ export function TransactionManagementContent() {
       setTotalPages(totalPages)
       setIsLoadingData(false)
     }
-
     fetchData()
-  }, [currentPage, selectedType, selectedStatus, dateRange, searchQuery])
+  }, [filteredTransactions, currentPage])
 
   const handleSearch = () => {
     setCurrentPage(1)
@@ -466,8 +121,6 @@ export function TransactionManagementContent() {
   const handleDateRangeChange = (range: { from?: Date; to?: Date }) => {
     setDateRange(range)
     setCurrentPage(1)
-
-    // Show a loading toast
     if (range.from || range.to) {
       toast({
         title: "Filtering Transactions",
@@ -486,7 +139,7 @@ export function TransactionManagementContent() {
   return (
     <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Transaction Management</h1>
+        <h1 className="text-xl md:text-3xl font-bold tracking-tight">Transaction Management</h1>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={handleExportData}>
             <Download className="mr-2 h-4 w-4" />
@@ -495,9 +148,9 @@ export function TransactionManagementContent() {
         </div>
       </div>
 
-      <TransactionOverview transactions={mockTransactions} dateRange={dateRange} isLoading={isLoadingData} />
+      <TransactionOverview transactions={filteredTransactions} dateRange={dateRange} isLoading={isLoadingData} />
 
-      <TransactionCharts transactions={mockTransactions} dateRange={dateRange} isLoading={isLoadingData} />
+      <TransactionCharts transactions={filteredTransactions} dateRange={dateRange} isLoading={isLoadingData} />
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 items-center gap-2">
@@ -566,4 +219,3 @@ export function TransactionManagementContent() {
     </main>
   )
 }
-

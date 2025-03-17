@@ -17,7 +17,6 @@ import {
 import { NotificationPopover } from "./notification-popover";
 import { ThemeToggle } from "./ui/theme-toogle";
 import { useSidebar } from "./sidebar-provider";
-import { Badge } from "./ui/badge";
 
 export function NavBar() {
   const { data: session, status } = useSession();

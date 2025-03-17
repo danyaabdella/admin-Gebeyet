@@ -85,8 +85,8 @@ export function CategoryTable({
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Created By</TableHead>
+            <TableHead className="hidden md:table-cell">Description</TableHead>
+            <TableHead className="hidden md:table-cell">Created By</TableHead>
             <TableHead>Created At</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -112,8 +112,8 @@ export function CategoryTable({
                 onClick={() => setSelectedCategory(category)}
               >
                 <TableCell className="font-medium">{category.name}</TableCell>
-                <TableCell>{category.description}</TableCell>
-                <TableCell>{category.createdBy}</TableCell>
+                <TableCell className="hidden md:table-cell">{category.description}</TableCell>
+                <TableCell className="hidden md:table-cell">{category.createdBy}</TableCell>
                 <TableCell>{formatDate(category.createdAt)}</TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
@@ -142,7 +142,7 @@ export function CategoryTable({
           )}
         </TableBody>
       </Table>
-
+  
       {selectedCategory && (
         <CategoryDetailsDialog
           category={selectedCategory}
@@ -152,31 +152,28 @@ export function CategoryTable({
           userSession={userSession}
         />
       )}
-
+  
       <ConfirmationDialog
         open={showDeleteConfirm}
         onOpenChange={setShowDeleteConfirm}
         title="Delete Category"
         description="Are you sure you want to delete this category? It will be moved to trash."
-        onConfirm={confirmDelete}
-      />
-
+        onConfirm={confirmDelete} variant={"default"}      />
+  
       <ConfirmationDialog
         open={showRestoreConfirm}
         onOpenChange={setShowRestoreConfirm}
         title="Restore Category"
         description="Are you sure you want to restore this category?"
-        onConfirm={confirmRestore}
-      />
-
+        onConfirm={confirmRestore} variant={"default"}      />
+  
       <ConfirmationDialog
         open={showPermanentDeleteConfirm}
         onOpenChange={setShowPermanentDeleteConfirm}
         title="Permanently Delete Category"
         description="Are you sure you want to permanently delete this category? This action cannot be undone."
-        onConfirm={confirmPermanentDelete}
-      />
+        onConfirm={confirmPermanentDelete} variant={"default"}      />
     </>
-  )
+  );
 }
 

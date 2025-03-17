@@ -350,7 +350,7 @@ export function CategoryManagementContent() {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Category Management</h1>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Total Categories: {totalCategories}</span>
+          <span className="text-sm text-muted-foreground hidden md:block">Total Categories: {totalCategories}</span>
         </div>
       </div>
 
@@ -391,11 +391,16 @@ export function CategoryManagementContent() {
               <SelectValue placeholder="View" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active">Active Categories</SelectItem>
-              <SelectItem value="deleted">Deleted Categories</SelectItem>
+              <SelectItem value="active">
+                <span className="sm:hidden">Active</span>
+                <span className="hidden sm:inline">Active Categories</span>
+              </SelectItem>
+              <SelectItem value="deleted">
+                <span className="sm:hidden">Deleted</span>
+                <span className="hidden sm:inline">Deleted Categories</span>
+              </SelectItem>
             </SelectContent>
           </Select>
-
           <CreateCategoryDialog onCategoryAdded={handleCategoryAdded} />
         </div>
       </div>

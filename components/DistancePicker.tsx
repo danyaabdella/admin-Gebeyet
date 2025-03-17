@@ -51,7 +51,7 @@ export default function DistancePicker({
 
   async function loadMap() {
     const loader = new Loader({
-      apiKey: MAPS_API_KEY,
+      apiKey: MAPS_API_KEY!,
     })
     const Core = await loader.importLibrary("core")
     const { Map, Circle } = await loader.importLibrary("maps")

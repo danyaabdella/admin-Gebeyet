@@ -85,7 +85,7 @@ export default function DashboardPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <Sidebar />
-        <div className="flex-1 md:ml-[var(--sidebar-width)] -mt-12">
+        <div className="flex-1 md:ml-[var(--sidebar-width)] lg:-mt-12 -mt-8">
           <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
@@ -424,7 +424,7 @@ export default function DashboardPage() {
       <div className="flex-1 md:ml-[var(--sidebar-width)] -mt-8 md:-mt-8">
         <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <h1 className="text-xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</span>
             </div>
@@ -613,9 +613,9 @@ export default function DashboardPage() {
 
             <TabsContent value="reports" className="space-y-4">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
                   <Select value={reportYear} onValueChange={setReportYear}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="w-[120px]">
                       <SelectValue placeholder="Select year" />
                     </SelectTrigger>
                     <SelectContent>
@@ -627,7 +627,7 @@ export default function DashboardPage() {
                   </Select>
 
                   <Select value={reportMonth} onValueChange={setReportMonth}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="w-[120px]">
                       <SelectValue placeholder="Select month" />
                     </SelectTrigger>
                     <SelectContent>
@@ -648,7 +648,7 @@ export default function DashboardPage() {
                   </Select>
 
                   <Select value={reportPeriod} onValueChange={setReportPeriod}>
-                    <SelectTrigger className="w-[150px]">
+                    <SelectTrigger className="w-[120px]">
                       <SelectValue placeholder="Select period" />
                     </SelectTrigger>
                     <SelectContent>
@@ -663,7 +663,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 -ml-16">
+              <div className="grid grid-cols-1 lg:grid-cols-2 ">
               <Card>
                 <CardHeader>
                   <CardTitle>Monthly Financial Reports</CardTitle>

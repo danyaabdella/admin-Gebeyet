@@ -1,50 +1,46 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
+import debounce from "lodash.debounce"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
-import { MapPin, Star } from "lucide-react"
+import { MapPin, Star, X, DollarSign, Box, Truck, Tag, Banknote } from "lucide-react"
 import DistancePicker from "@/components/DistancePicker"
 
 interface ProductFiltersProps {
   onApplyFilters: (filters: any) => void
+  productCount: number
 }
 
-export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
-  // Price range filter
-  const [priceRange, setPriceRange] = useState([0, 1000])
+interface ActiveFilter {
+  label: string
+  remove: () => void
+}
+
+export function ProductFilters({ onApplyFilters, productCount }: ProductFiltersProps) {
+  // State for all filters
+  const [priceRange, setPriceRange] = useState([0, 0])
   const [minPrice, setMinPrice] = useState("0")
-  const [maxPrice, setMaxPrice] = useState("1000")
+  const [maxPrice, setMaxPrice] = useState("0")
 
-  // Quantity filters
-  const [quantityRange, setQuantityRange] = useState([0, 100])
+  const [quantityRange, setQuantityRange] = useState([0, 0])
   const [minQuantity, setMinQuantity] = useState("0")
-  const [maxQuantity, setMaxQuantity] = useState("100")
+  const [maxQuantity, setMaxQuantity] = useState("0")
 
-  const [soldQuantityRange, setSoldQuantityRange] = useState([0, 100])
-  const [minSoldQuantity, setMinSoldQuantity] = useState("0")
-  const [maxSoldQuantity, setMaxSoldQuantity] = useState("100")
-
-  // Review rating filter
   const [ratingRange, setRatingRange] = useState([0, 5])
   const [minRating, setMinRating] = useState("0")
   const [maxRating, setMaxRating] = useState("5")
 
-  // Delivery filters
   const [deliveryType, setDeliveryType] = useState("all")
-  const [deliveryPriceRange, setDeliveryPriceRange] = useState([0, 50])
+  const [deliveryPriceRange, setDeliveryPriceRange] = useState([0, 0])
   const [minDeliveryPrice, setMinDeliveryPrice] = useState("0")
-  const [maxDeliveryPrice, setMaxDeliveryPrice] = useState("50")
+  const [maxDeliveryPrice, setMaxDeliveryPrice] = useState("0")
 
-  // Category filter
   const [selectedCategory, setSelectedCategory] = useState("all")
 
-  // Location filter
-  const [useLocation, setUseLocation] = useState(true)
   const [locationRadius, setLocationRadius] = useState(50)
   const [locationCenter, setLocationCenter] = useState<{ lat: number; lng: number } | null>(null)
 
@@ -58,12 +54,7 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
     { id: "category_6", name: "Sports" },
   ]
 
-  const handleLocationChange = ({ radius, center }: { radius: number; center: any }) => {
-    setLocationRadius(Math.round(radius / 1000))
-    setLocationCenter(center)
-  }
-
-  // Handle input changes
+  // Input change handlers
   const handleMinPriceChange = (value: string) => {
     const numValue = Number(value)
     setMinPrice(value)
@@ -93,22 +84,6 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
     setMaxQuantity(value)
     if (!isNaN(numValue) && numValue >= quantityRange[0]) {
       setQuantityRange([quantityRange[0], numValue])
-    }
-  }
-
-  const handleMinSoldQuantityChange = (value: string) => {
-    const numValue = Number(value)
-    setMinSoldQuantity(value)
-    if (!isNaN(numValue) && numValue >= 0 && numValue <= soldQuantityRange[1]) {
-      setSoldQuantityRange([numValue, soldQuantityRange[1]])
-    }
-  }
-
-  const handleMaxSoldQuantityChange = (value: string) => {
-    const numValue = Number(value)
-    setMaxSoldQuantity(value)
-    if (!isNaN(numValue) && numValue >= soldQuantityRange[0]) {
-      setSoldQuantityRange([soldQuantityRange[0], numValue])
     }
   }
 
@@ -144,23 +119,27 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
     }
   }
 
-  const handleApplyFilters = () => {
+  const handleLocationChange = ({ radius, center }: { radius: number; center: any }) => {
+    setLocationRadius(Math.round(radius / 1000))
+    setLocationCenter(center)
+  }
+
+  // Apply filters logic
+  const applyFilters = () => {
     const filters: any = {
       categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
       minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
-      maxPrice: priceRange[1] < 1000 ? priceRange[1] : undefined,
+      maxPrice: priceRange[1] > 0 ? priceRange[1] : undefined,
       minQuantity: quantityRange[0] > 0 ? quantityRange[0] : undefined,
-      maxQuantity: quantityRange[1] < 100 ? quantityRange[1] : undefined,
-      minSoldQuantity: soldQuantityRange[0] > 0 ? soldQuantityRange[0] : undefined,
-      maxSoldQuantity: soldQuantityRange[1] < 100 ? soldQuantityRange[1] : undefined,
+      maxQuantity: quantityRange[1] > 0 ? quantityRange[1] : undefined,
       minAvgReview: ratingRange[0] > 0 ? ratingRange[0] : undefined,
       maxAvgReview: ratingRange[1] < 5 ? ratingRange[1] : undefined,
       delivery: deliveryType !== "all" ? deliveryType : undefined,
       minDeliveryPrice: deliveryPriceRange[0] > 0 ? deliveryPriceRange[0] : undefined,
-      maxDeliveryPrice: deliveryPriceRange[1] < 50 ? deliveryPriceRange[1] : undefined,
+      maxDeliveryPrice: deliveryPriceRange[1] > 0 ? deliveryPriceRange[1] : undefined,
     }
 
-    if (useLocation && locationCenter) {
+    if (locationCenter) {
       filters.location = locationCenter
       filters.radius = locationRadius
     }
@@ -168,277 +147,249 @@ export function ProductFilters({ onApplyFilters }: ProductFiltersProps) {
     onApplyFilters(filters)
   }
 
+  // Debounced filter application
+  const debouncedApplyFilters = useMemo(
+    () => debounce(applyFilters, 300),
+    [onApplyFilters]
+  )
+
+  // Apply filters in real-time when state changes
+  useEffect(() => {
+    debouncedApplyFilters()
+    return () => debouncedApplyFilters.cancel()
+  }, [
+    priceRange,
+    quantityRange,
+    ratingRange,
+    deliveryType,
+    deliveryPriceRange,
+    selectedCategory,
+    locationRadius,
+    locationCenter,
+    debouncedApplyFilters,
+  ])
+
+  // Reset filters
   const handleResetFilters = () => {
-    setPriceRange([0, 1000])
+    setPriceRange([0, 0])
     setMinPrice("0")
-    setMaxPrice("1000")
-    setQuantityRange([0, 100])
+    setMaxPrice("0")
+    setQuantityRange([0, 0])
     setMinQuantity("0")
-    setMaxQuantity("100")
-    setSoldQuantityRange([0, 100])
-    setMinSoldQuantity("0")
-    setMaxSoldQuantity("100")
+    setMaxQuantity("0")
     setRatingRange([0, 5])
     setMinRating("0")
     setMaxRating("5")
     setDeliveryType("all")
-    setDeliveryPriceRange([0, 50])
+    setDeliveryPriceRange([0, 0])
     setMinDeliveryPrice("0")
-    setMaxDeliveryPrice("50")
+    setMaxDeliveryPrice("0")
     setSelectedCategory("all")
-    setUseLocation(false)
-    setLocationRadius(10)
+    setLocationRadius(50)
     setLocationCenter(null)
-    onApplyFilters({})
   }
 
   return (
     <Card className="mb-0">
-      <CardContent className="p-4">
-        <Tabs defaultValue="basic" className="w-full mb-0">
-          <TabsList className="mb-4">
-            <TabsTrigger value="basic">Basic Filters</TabsTrigger>
-            <TabsTrigger value="advanced">Advanced Filters</TabsTrigger>
-          </TabsList>
+      <CardContent className="p-2">
+        {/* Product Count and Active Filters */}
+        <div className="mb-2">
+          <h2 className="text-lg font-semibold">Filter Products</h2>
+        </div>
 
-          {/* Basic Filters Tab */}
-          <TabsContent value="basic" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Category Filter */}
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Price Range Filter */}
-              <div className="space-y-2">
-                <Label>Price Range</Label>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center">
-                    <span className="text-sm text-muted-foreground mr-1">$</span>
-                    <Input
-                      type="number"
-                      value={minPrice}
-                      onChange={(e) => handleMinPriceChange(e.target.value)}
-                      min={0}
-                      max={Number(maxPrice)}
-                      className="w-20"
-                    />
-                  </div>
-                  <span className="text-sm text-muted-foreground">to</span>
-                  <div className="flex items-center">
-                    <span className="text-sm text-muted-foreground mr-1">$</span>
-                    <Input
-                      type="number"
-                      value={maxPrice}
-                      onChange={(e) => handleMaxPriceChange(e.target.value)}
-                      min={Number(minPrice)}
-                      max={1000}
-                      className="w-20"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Delivery Type Filter */}
-              <div className="space-y-2">
-                <Label>Delivery Type</Label>
-                <Select value={deliveryType} onValueChange={setDeliveryType}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select delivery type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="FLAT">Flat Rate</SelectItem>
-                    <SelectItem value="PERPIECE">Per Piece</SelectItem>
-                    <SelectItem value="PERKG">Per Kilogram</SelectItem>
-                    <SelectItem value="FREE">Free Shipping</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Advanced Filters Tab */}
-          <TabsContent value="advanced" className="space-y-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Left Column - Filters */}
-              <div className="space-y-6">
-                {/* Quantity Range Filter */}
-                <div className="space-y-2">
-                  <Label>Quantity in Stock</Label>
-                  <div className="flex items-center justify-between gap-2">
-                    <Input
-                      type="number"
-                      value={minQuantity}
-                      onChange={(e) => handleMinQuantityChange(e.target.value)}
-                      min={0}
-                      max={Number(maxQuantity)}
-                      className="w-20"
-                    />
-                    <span className="text-sm text-muted-foreground">to</span>
-                    <Input
-                      type="number"
-                      value={maxQuantity}
-                      onChange={(e) => handleMaxQuantityChange(e.target.value)}
-                      min={Number(minQuantity)}
-                      max={100}
-                      className="w-20"
-                    />
-                    <span className="text-sm text-muted-foreground">units</span>
-                  </div>
-                </div>
-
-                {/* Sold Quantity Range Filter */}
-                <div className="space-y-2">
-                  <Label>Sold Quantity</Label>
-                  <div className="flex items-center justify-between gap-2">
-                    <Input
-                      type="number"
-                      value={minSoldQuantity}
-                      onChange={(e) => handleMinSoldQuantityChange(e.target.value)}
-                      min={0}
-                      max={Number(maxSoldQuantity)}
-                      className="w-20"
-                    />
-                    <span className="text-sm text-muted-foreground">to</span>
-                    <Input
-                      type="number"
-                      value={maxSoldQuantity}
-                      onChange={(e) => handleMaxSoldQuantityChange(e.target.value)}
-                      min={Number(minSoldQuantity)}
-                      max={100}
-                      className="w-20"
-                    />
-                    <span className="text-sm text-muted-foreground">units</span>
-                  </div>
-                </div>
-
-                {/* Rating Range Filter */}
-                <div className="space-y-2">
-                  <Label>Average Rating</Label>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center">
-                      <Input
-                        type="number"
-                        value={minRating}
-                        onChange={(e) => handleMinRatingChange(e.target.value)}
-                        min={0}
-                        max={Number(maxRating)}
-                        step={0.5}
-                        className="w-16"
-                      />
-                      <Star className="h-3 w-3 ml-1 text-yellow-500" />
-                    </div>
-                    <span className="text-sm text-muted-foreground">to</span>
-                    <div className="flex items-center">
-                      <Input
-                        type="number"
-                        value={maxRating}
-                        onChange={(e) => handleMaxRatingChange(e.target.value)}
-                        min={Number(minRating)}
-                        max={5}
-                        step={0.5}
-                        className="w-16"
-                      />
-                      <Star className="h-3 w-3 ml-1 text-yellow-500" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Delivery Price Range Filter */}
-                <div className="space-y-2">
-                  <Label>Delivery Price</Label>
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center">
-                      <span className="text-sm text-muted-foreground mr-1">$</span>
-                      <Input
-                        type="number"
-                        value={minDeliveryPrice}
-                        onChange={(e) => handleMinDeliveryPriceChange(e.target.value)}
-                        min={0}
-                        max={Number(maxDeliveryPrice)}
-                        className="w-16"
-                      />
-                    </div>
-                    <span className="text-sm text-muted-foreground">to</span>
-                    <div className="flex items-center">
-                      <span className="text-sm text-muted-foreground mr-1">$</span>
-                      <Input
-                        type="number"
-                        value={maxDeliveryPrice}
-                        onChange={(e) => handleMaxDeliveryPriceChange(e.target.value)}
-                        min={Number(minDeliveryPrice)}
-                        max={50}
-                        className="w-16"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-            {/* Right Column - Map */}
-            <div className="flex gap-3 flex-col">
+        {/* Filter Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 items-start">
+        {/* Left Column: Other Filters */}
+          <div className="grid grid-cols-2 gap-4 h-auto">
+            {/* Price Range */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+               <Banknote className="h-4 w-4" />;
+                Price Range
+              </Label>
               <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="useLocation"
-                  defaultChecked={useLocation} 
-                  onChange={(e) => setUseLocation(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                <Input
+                  type="number"
+                  value={minPrice}
+                  onChange={(e) => handleMinPriceChange(e.target.value)}
+                  min={0}
+                  className="w-20"
                 />
-                <Label htmlFor="useLocation" className="flex items-center">
-                  <MapPin className="h-4 w-4 mr-1 text-red-500" />
-                  Filter by location
-                </Label>
+                <span className="text-sm text-muted-foreground">to</span>
+                <Input
+                  type="number"
+                  value={maxPrice}
+                  onChange={(e) => handleMaxPriceChange(e.target.value)}
+                  min={Number(minPrice) || 0}
+                  className="w-20"
+                />
               </div>
+            </div>
 
-              {useLocation && (
-                <div className="space-y-2">
-                  <Label>Distance (km)</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={locationRadius}
-                      onChange={(e) => setLocationRadius(Number(e.target.value))}
-                      min={1}
-                      max={1000}
-                      className="w-24"
-                    />
-                    <span className="text-sm text-muted-foreground">kilometers</span>
-                  </div>
+            {/* Stock Quantity */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                <Box className="h-4 w-4" />
+                 Stock Quantity
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={minQuantity}
+                  onChange={(e) => handleMinQuantityChange(e.target.value)}
+                  min={0}
+                  className="w-20"
+                />
+                <span className="text-sm text-muted-foreground">to</span>
+                <Input
+                  type="number"
+                  value={maxQuantity}
+                  onChange={(e) => handleMaxQuantityChange(e.target.value)}
+                  min={Number(minQuantity) || 0}
+                  className="w-20"
+                />
+              </div>
+            </div>
 
-                  <Label>Location Map</Label>
-                  <div className="border rounded-md p-4 h-[400px]">
-                    <DistancePicker
-                      onChange={handleLocationChange}
-                      defaultRadius={locationRadius * 1000}
-                    />
-                  </div>
+            {/* Average Rating */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                <Star className="h-4 w-4" />
+                Average Rating
+              </Label>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center">
+                  <Input
+                    type="number"
+                    value={minRating}
+                    onChange={(e) => handleMinRatingChange(e.target.value)}
+                    min={0}
+                    max={5}
+                    step={0.5}
+                    className="w-16"
+                  />
+                  <Star className="h-3 w-3 ml-1 text-yellow-500" />
                 </div>
-              )}
+                <span className="text-sm text-muted-foreground">to</span>
+                <div className="flex items-center">
+                  <Input
+                    type="number"
+                    value={maxRating}
+                    onChange={(e) => handleMaxRatingChange(e.target.value)}
+                    min={Number(minRating) || 0}
+                    max={5}
+                    step={0.5}
+                    className="w-16"
+                  />
+                  <Star className="h-3 w-3 ml-1 text-yellow-500" />
+                </div>
+              </div>
             </div>
 
+            {/* Delivery Type */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                <Truck className="h-4 w-4" />
+                Delivery Type
+              </Label>
+              <Select value={deliveryType} onValueChange={setDeliveryType}>
+                <SelectTrigger className="w-[150px] lg:w-[180px]"> {/* Set fixed width */}
+                  <SelectValue placeholder="Select delivery type" />
+                </SelectTrigger>
+                <SelectContent className="w-[150px] lg:w-[180px]"> {/* Ensure dropdown matches */}
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="FLAT">Flat Rate</SelectItem>
+                  <SelectItem value="PERPIECE">Per Piece</SelectItem>
+                  <SelectItem value="PERKG">Per Kilogram</SelectItem>
+                  <SelectItem value="FREE">Free Shipping</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          </TabsContent>
-        </Tabs>
 
-        <div className="flex justify-end gap-2 mt-4">
+            {/* Delivery Price */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+              <Banknote className="h-4 w-4" />;
+               Delivery Price
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  value={minDeliveryPrice}
+                  onChange={(e) => handleMinDeliveryPriceChange(e.target.value)}
+                  min={0}
+                  className="w-20"
+                />
+                <span className="text-sm text-muted-foreground">to</span>
+                <Input
+                  type="number"
+                  value={maxDeliveryPrice}
+                  onChange={(e) => handleMaxDeliveryPriceChange(e.target.value)}
+                  min={Number(minDeliveryPrice) || 0}
+                  className="w-20"
+                />
+              </div>
+            </div>
+
+            {/* Category */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1">
+                <Tag className="h-4 w-4" />
+                Category
+              </Label>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[150px] lg:w-[180px]"> {/* Adjust width if needed */}
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent className="w-[150px]"> {/* Match width */}
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+          </div>
+          {/* Right Column: Location Filter */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 justify-between">
+              <Label htmlFor="useLocation" className="flex items-center">
+                <MapPin className="h-4 w-4 mr-1 text-red-500" />
+                Location
+              </Label>
+              <div className="flex items-center gap-2">
+                <Label className="hidden md:block">Distance (km)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    value={locationRadius}
+                    onChange={(e) => setLocationRadius(Number(e.target.value))}
+                    min={1}
+                    max={1000}
+                    className="w-24"
+                  />
+                  <span className="text-sm text-muted-foreground">KM</span>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="border rounded-md p-4 h-[250px]">
+                <DistancePicker
+                  onChange={handleLocationChange}
+                  defaultRadius={locationRadius * 1000}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Reset Button */}
+        <div className="flex justify-end">
           <Button variant="outline" onClick={handleResetFilters}>
             Reset Filters
           </Button>
-          <Button onClick={handleApplyFilters}>Apply Filters</Button>
         </div>
       </CardContent>
     </Card>

@@ -61,10 +61,13 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
   }
 
   // Calculate average rating
-  const avgRating =
-    product.review && product.review.length > 0
-      ? (product.review.reduce((sum: number, review: any) => sum + review.rating, 0) / product.review.length).toFixed(1)
-      : 0
+  const avgRating: number =
+  product.review && product.review.length > 0
+    ? parseFloat(
+        (product.review.reduce((sum: number, review: any) => sum + review.rating, 0) / product.review.length).toFixed(1)
+      )
+    : 0;
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -88,7 +91,7 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
         </DialogHeader>
 
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-4">
+          <TabsList className="grid grid-cols-2 sm:grid-cols-4 mb-12 gap-2">
             <TabsTrigger value="details">Details</TabsTrigger>
             <TabsTrigger value="images">Images</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
@@ -96,7 +99,7 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
           </TabsList>
 
           <TabsContent value="details" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 ">
               <div>
                 <Label className="text-sm font-medium">Product Name</Label>
                 <div className="text-sm mt-1">{product.productName}</div>
@@ -257,61 +260,62 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
           </TabsContent>
 
           <TabsContent value="reviews">
-            {product.review && product.review.length > 0 ? (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <span className="text-2xl font-bold mr-2">{avgRating}</span>
-                    <div className="flex">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-5 w-5 ${
-                            i < Math.floor(avgRating)
-                              ? "text-yellow-500 fill-yellow-500"
-                              : i < Math.ceil(avgRating)
-                                ? "text-yellow-500 fill-yellow-500 opacity-50"
-                                : "text-gray-300"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm text-muted-foreground">
-                      ({product.review.length} {product.review.length === 1 ? "review" : "reviews"})
-                    </span>
-                  </div>
-                </div>
+  {product.review && product.review.length > 0 ? (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center space-x-2">
+          <span className="text-2xl font-bold">{avgRating.toFixed(1)}</span>
+          <div className="flex">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                className={`h-5 w-5 ${
+                  i < Math.floor(avgRating)
+                    ? "text-yellow-500 fill-yellow-500"
+                    : i < Math.ceil(avgRating)
+                    ? "text-yellow-500 fill-yellow-500 opacity-50"
+                    : "text-gray-300"
+                }`}
+              />
+            ))}
+          </div>
+          <span className="ml-2 text-sm text-muted-foreground">
+            ({product.review.length} {product.review.length === 1 ? "review" : "reviews"})
+          </span>
+        </div>
+      </div>
 
-                <div className="space-y-4">
-                  {product.review.map((review: any, index: number) => (
-                    <div key={index} className="border rounded-md p-4">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-medium">Customer ID: {review.customerId}</div>
-                          <div className="flex items-center mt-1">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`h-4 w-4 ${
-                                  i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
-                                }`}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(review.createdDate).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <p className="mt-2 text-sm">{review.comment}</p>
-                    </div>
+      {/* Reviews List */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {product.review.map((review: any, index: number) => (
+          <div key={index} className="border rounded-lg p-4 shadow-sm bg-white">
+            <div className="flex justify-between items-start">
+              <div>
+                <div className="font-medium">Customer ID: {review.customerId}</div>
+                <div className="flex items-center mt-1">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-4 w-4 ${
+                        i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+                      }`}
+                    />
                   ))}
                 </div>
               </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">No reviews available for this product.</div>
-            )}
-          </TabsContent>
+              <div className="text-sm text-gray-500">
+                {new Date(review.createdDate).toLocaleDateString()}
+              </div>
+            </div>
+            <p className="mt-2 text-sm text-gray-700">{review.comment}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : (
+    <div className="text-center py-8 text-gray-500">No reviews available for this product.</div>
+  )}
+</TabsContent>
 
           <TabsContent value="location" className="space-y-4">
             <div className="flex items-center justify-between">

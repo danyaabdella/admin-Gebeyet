@@ -11,7 +11,7 @@ export default function CategoriesPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Sidebar />
-      <div className="flex-1 md:ml-[var(--sidebar-width)] -mt-12">
+      <div className="flex-1 md:ml-[var(--sidebar-width)] lg:-mt-12 -mt-8">
         <CategoryManagementContent />
       </div>
     </div>

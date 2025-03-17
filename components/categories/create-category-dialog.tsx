@@ -118,7 +118,7 @@ export function CreateCategoryDialog({ onCategoryAdded, open, onOpenChange }: Cr
             {errors.description && <p className="text-xs text-destructive">{errors.description}</p>}
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex flex-row justify-between items-center">
           <Button variant="outline" onClick={() => setDialogOpen(false)}>
             Cancel
           </Button>

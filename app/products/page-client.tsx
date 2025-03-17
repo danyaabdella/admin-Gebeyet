@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Search, Filter, CheckCircle, XCircle } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Search, Filter, CheckCircle, XCircle, Trash2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,7 @@ import {
   restoreProduct,
   permanentDeleteProduct,
 } from "@/lib/data-fetching"
+import debounce from "lodash.debounce"
 
 export default function ProductsPageClient() {
   const [selectedTab, setSelectedTab] = useState("active")
@@ -40,7 +41,16 @@ export default function ProductsPageClient() {
   })
   const { toast } = useToast()
 
-  // Fetch products when filters or pagination changes
+  // Debounced search handler to prevent excessive API calls
+  const debouncedSearch = useMemo(
+    () => debounce((query: string) => {
+      setFilters((prev) => ({ ...prev, phrase: query }))
+      setCurrentPage(1)
+    }, 300),
+    []
+  )
+
+  // Fetch products when filters, pagination, tab, or search query changes
   useEffect(() => {
     const loadProducts = async () => {
       setIsLoadingData(true)
@@ -68,22 +78,26 @@ export default function ProductsPageClient() {
     loadProducts()
   }, [currentPage, filters, selectedTab, searchQuery, toast])
 
-  const handleSearch = () => {
-    setCurrentPage(1)
-    setFilters((prev) => ({ ...prev, phrase: searchQuery }))
+  // Handle search input change with debouncing
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value)
+    debouncedSearch(e.target.value)
   }
 
+  // Handle tab change and trigger fetch
   const handleTabChange = (value: string) => {
     setSelectedTab(value)
     setCurrentPage(1)
     setFilters((prev) => ({ ...prev, isDeleted: value === "deleted" }))
   }
 
+  // Handle filter application and trigger fetch
   const handleApplyFilters = (newFilters: any) => {
     setCurrentPage(1)
     setFilters((prev) => ({ ...prev, ...newFilters }))
   }
 
+  // Handle product actions (ban, unban, delete, etc.)
   const handleProductAction = async (type: string, productId: string) => {
     setIsLoading(true)
     try {
@@ -113,7 +127,7 @@ export default function ProductsPageClient() {
         description: response.message,
       })
 
-      // Refresh the product list
+      // Refresh product list after action
       const updatedResponse = await fetchProducts(currentPage, 15, {
         ...filters,
         isDeleted: selectedTab === "deleted",
@@ -134,32 +148,15 @@ export default function ProductsPageClient() {
     }
   }
 
-  const handleProductAdded = async () => {
-    // Refresh the product list after adding a new product
-    try {
-      const response = await fetchProducts(1, 15, {
-        ...filters,
-        isDeleted: false,
-      })
-      setProducts(response.products)
-      setTotalProducts(response.total)
-      setTotalPages(response.pagination.totalPages)
-      setSelectedTab("active")
-      setCurrentPage(1)
-    } catch (error) {
-      console.error("Error refreshing products:", error)
-    }
-  }
-
   return (
     <div className="flex min-h-screen flex-col">
       <Sidebar />
-      <div className="flex-1 md:ml-[var(--sidebar-width)] -mt-12">
+      <div className="flex-1 md:ml-[var(--sidebar-width)] lg:-mt-12 -mt-8">
         <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold tracking-tight">Product Management</h1>
+            <h1 className="text-xl md:text-3xl font-bold tracking-tight">Product Management</h1>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Total Products: {totalProducts}</span>
+              <span className="text-sm text-muted-foreground hidden md:block">Total Products: {totalProducts}</span>
               <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
                 <Filter className="mr-2 h-4 w-4" />
                 {showFilters ? "Hide Filters" : "Show Filters"}
@@ -167,7 +164,7 @@ export default function ProductsPageClient() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex gap-4 flex-row md:items-center md:justify-between">
             <div className="flex flex-1 items-center gap-2">
               <div className="relative flex-1 md:max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -176,105 +173,119 @@ export default function ProductsPageClient() {
                   placeholder="Search products..."
                   className="pl-8"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                  onChange={handleSearchChange}
                 />
               </div>
-              <Button variant="secondary" size="sm" onClick={handleSearch}>
-                Search
-              </Button>
             </div>
 
             <div className="flex items-center gap-2">
               <Select defaultValue="active" value={selectedTab} onValueChange={handleTabChange}>
-                <SelectTrigger className="w-[180px]">
+                <SelectTrigger className="w-[140px] md:w-[180px]">
                   <SelectValue placeholder="View" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active Products</SelectItem>
+                  <SelectItem value="banned">Banned Products</SelectItem>
                   <SelectItem value="deleted">Deleted Products</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          {showFilters && <ProductFilters onApplyFilters={handleApplyFilters} />}
+          {showFilters && (
+            <ProductFilters 
+              onApplyFilters={handleApplyFilters} 
+              productCount={totalProducts} 
+            />
+          )}
 
           <Card>
-            <CardHeader className="p-4">
-              <CardTitle>{selectedTab === "active" ? "All Products" : "Deleted Products"}</CardTitle>
-              <CardDescription>
+          <CardHeader className="p-4 text-sm md:text-base lg:text-lg">
+             <CardTitle>
+                {selectedTab === "active" 
+                  ? "All Products" 
+                  : selectedTab === "banned" 
+                  ? "Banned Products" 
+                  : "Deleted Products (Trash)"}
+              </CardTitle>
+              <CardDescription className="hidden md:block">
                 {selectedTab === "active"
-                  ? "Manage all products in the marketplace system"
-                  : "View and restore deleted products"}
+                  ? "Manage all active products in the marketplace system"
+                  : selectedTab === "banned"
+                  ? "View and manage banned products"
+                  : "View and restore products moved to the trash"}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product Name</TableHead>
+                  <TableHead className="hidden md:table-cell">Category</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead className="hidden md:table-cell">Merchant</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Stock</TableHead>
+                  <TableHead className="hidden md:table-cell">Rating</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoadingData ? (
                   <TableRow>
-                    <TableHead>Product Name</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Merchant</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="hidden md:table-cell">Stock</TableHead>
-                    <TableHead className="hidden md:table-cell">Rating</TableHead>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      Loading products...
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoadingData ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        Loading products...
+                ) : products.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      No products found.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  products.map((product) => (
+                    <TableRow
+                      key={product._id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => setSelectedProduct(product)}
+                    >
+                      <TableCell className="font-medium">{product.productName}</TableCell>
+                      <TableCell className="hidden md:table-cell">{product.category.categoryName}</TableCell>
+                      <TableCell>${product.price.toFixed(2)}</TableCell>
+                      <TableCell className="hidden md:table-cell">{product.merchantDetail.merchantName}</TableCell>
+                      <TableCell>
+                        {selectedTab === "deleted" ? (
+                          <span className="flex items-center text-gray-500">
+                            <Trash2 className="mr-1 h-4 w-4" /> Deleted
+                          </span>
+                        ) : product.isBanned ? (
+                          <span className="flex items-center text-red-500">
+                            <XCircle className="mr-1 h-4 w-4" /> Banned
+                          </span>
+                        ) : (
+                          <span className="flex items-center text-green-500">
+                            <CheckCircle className="mr-1 h-4 w-4" /> Active
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {product.quantity} ({product.soldQuantity} sold)
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {product.avgRating > 0 ? (
+                          <div className="flex items-center">
+                            {product.avgRating}
+                            <span className="text-yellow-500 ml-1">★</span>
+                            <span className="text-xs text-muted-foreground ml-1">({product.review.length})</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">No ratings</span>
+                        )}
                       </TableCell>
                     </TableRow>
-                  ) : products.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-24 text-center">
-                        No products found.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    products.map((product) => (
-                      <TableRow
-                        key={product._id}
-                        className="cursor-pointer hover:bg-muted/50"
-                        onClick={() => setSelectedProduct(product)}
-                      >
-                        <TableCell className="font-medium">{product.productName}</TableCell>
-                        <TableCell>{product.category.categoryName}</TableCell>
-                        <TableCell>${product.price.toFixed(2)}</TableCell>
-                        <TableCell>{product.merchantDetail.merchantName}</TableCell>
-                        <TableCell>
-                          {product.isBanned ? (
-                            <span className="flex items-center text-red-500">
-                              <XCircle className="mr-1 h-4 w-4" /> Banned
-                            </span>
-                          ) : (
-                            <span className="flex items-center text-green-500">
-                              <CheckCircle className="mr-1 h-4 w-4" /> Active
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {product.quantity} ({product.soldQuantity} sold)
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {product.avgRating > 0 ? (
-                            <div className="flex items-center">
-                              {product.avgRating}
-                              <span className="text-yellow-500 ml-1">★</span>
-                              <span className="text-xs text-muted-foreground ml-1">({product.review.length})</span>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">No ratings</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
+                  ))
+                )}
+              </TableBody>
               </Table>
             </CardContent>
           </Card>
@@ -298,4 +309,3 @@ export default function ProductsPageClient() {
     </div>
   )
 }
-
