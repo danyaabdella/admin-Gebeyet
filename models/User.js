@@ -3,7 +3,11 @@ import mongoose, { Schema } from "mongoose";
 const UserSchema = new Schema(
   {
     fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { 
+      type: String, 
+      required: true, 
+      unique: true
+    }, 
     password: { type: String, required: true },
     role: { 
       type: String, 
@@ -11,18 +15,8 @@ const UserSchema = new Schema(
       default: 'customer' 
     },
     image: { type: String, default: " " },
-    isMerchant: { type: Boolean, default: false },
-    approvedBy: { type: String, required: false },
-    bannedBy: { type: String, required: false },
-    tinNumber: { 
-      type: String, 
-      required: function() { return this.role === "merchant"; } 
-    },
-    nationalId: { 
-      type: String, 
-      required: function() { return this.role === "merchant"; } 
-    },
     isBanned: { type: Boolean, default: false },
+    bannedBy: { type: String, required: function() { return this.isBanned === true; } },
     isEmailVerified: { type: Boolean, default: false },
     stateName: { type: String, required: false },
     cityName: { type: String, required: false },
@@ -31,9 +25,32 @@ const UserSchema = new Schema(
     trashDate: { 
       type: Date,
       default: null,
-      expires: 30 * 60 * 60 * 60,
+      expires: 30 * 24 * 60 * 60, // 30 days in seconds
     },
-    account_name: { 
+    approvalStatus: {     
+      type: String, 
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+      required: function() { return this.role === "merchant"; } 
+    },
+    rejectionReason: { 
+      type: String,
+      required: function() { return this.approvalStatus === "rejected"; }
+    },
+    approvedBy: { type: String },
+    tinNumber: { 
+      type: String, 
+      required: function() { return this.role === "merchant"; } 
+    },
+    uniqueTinNumber: { 
+      type: String, 
+      required: function() { return this.role === "merchant"; } 
+    },
+    nationalId: { 
+      type: String, 
+      required: function() { return this.role === "merchant"; } 
+    },
+    account_name: {
       type: String, 
       required: function() { return this.role === "merchant"; } 
     },

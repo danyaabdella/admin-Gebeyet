@@ -57,3 +57,22 @@ export const verifyOtp = async (email, otp) => {
     await user.save();
     return true;
 };
+
+export const resendOtp = async (email, purpose) => {
+    try {
+      // Generate a new OTP
+      const otp = generateOtp();
+  
+      // Send OTP via email
+      await sendOtpEmail(email, otp);
+  
+      // Store OTP in the database or cache
+      await storeOtp(email, otp);
+  
+      return { success: true, message: "OTP resent successfully" };
+    } catch (error) {
+      console.error("Error resending OTP:", error);
+      return { success: false, message: "Failed to resend OTP. Please try again." };
+    }
+  };
+  
