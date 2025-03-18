@@ -10,11 +10,18 @@ export async function POST(req) {
 
   // Find user
   let user = await Admin.findOne({ email }) || await SuperAdmin.findOne({ email });
-  if (!user) return Response.json({ error: 'Invalid email' }, { status: 400 });
+  if (!user) {
+    return Response.json({ error: 'Invalid email' }, { status: 400 });
+  }
 
-  // Verify password (since this endpoint validates credentials before sending OTP)
-  const isPasswordValid = await argon2.verify(user.password, password);
-  if (!isPasswordValid) return Response.json({ error: 'Invalid password' }, { status: 400 });
+  // If no password is provided, it means it's for reset, so we skip password verification
+  if (password) {
+    // Verify password (only needed for "verify" flow)
+    const isPasswordValid = await argon2.verify(user.password, password);
+    if (!isPasswordValid) {
+      return Response.json({ error: 'Invalid password' }, { status: 400 });
+    }
+  }
 
   // Generate and send OTP
   const otp = generateOtp();

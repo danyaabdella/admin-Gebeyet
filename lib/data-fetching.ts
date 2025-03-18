@@ -2,6 +2,12 @@
 // Currently using mock data, but can be replaced with actual API calls
 
 // Mock user data
+
+type Filters = {
+  page?: number;
+  limit?: number;
+};
+
 const mockUsers = Array.from({ length: 50 }, (_, i) => ({
   _id: `user_${i + 1}`,
   fullName: `User ${i + 1}`,
@@ -412,7 +418,7 @@ export async function fetchAdmins(filters = {}) {
   await new Promise((resolve) => setTimeout(resolve, 500))
 
   const filteredAdmins = filterAdmins(isTrashView ? mockTrashAdmins : mockAdmins, filters)
-  const { items, pagination } = paginateResults(filteredAdmins, filters.page || 1, filters.limit || 15)
+  const { items, pagination } = paginateResults(filteredAdmins, filters?.page || 1, filters?.limit || 15)
 
   return {
     admins: items,
@@ -739,29 +745,6 @@ export async function generateReport(period: string, format: string) {
   return {
     success: true,
     downloadUrl,
-  }
-}
-
-// Authentication functions
-// Update the loginUser function to accept common test credentials
-export async function loginUser(email: string, password: string) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
-
-  // Mock login - in a real app, this would validate credentials
-  // Accept common test credentials for easier testing
-  if ((email === "admin@example.com" && password === "password") || (email && password && password.length >= 6)) {
-    return {
-      success: true,
-      message: "Login successful, OTP sent to your email",
-      userId: "user_1234",
-      email: email,
-    }
-  }
-
-  return {
-    success: false,
-    message: "Invalid email or password",
   }
 }
 

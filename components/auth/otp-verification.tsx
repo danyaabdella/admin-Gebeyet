@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { resendOtp } from "@/lib/data-fetching"
+import { resendOtp } from "@/utils/sendOtp"
 import { toast } from "@/components/ui/use-toast"
 
 interface OtpVerificationProps {
@@ -51,7 +51,7 @@ export function OtpVerification({ email, purpose, onVerified, onCancel, isLoadin
 
     // Auto-focus next input
     if (value && index < 5 && inputRefs.current[index + 1]) {
-      inputRefs.current[index + 1].focus()
+      inputRefs.current[index + 1]?.focus()
     }
 
     // If all digits are filled, automatically verify
@@ -66,7 +66,7 @@ export function OtpVerification({ email, purpose, onVerified, onCancel, isLoadin
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     // Move to previous input on backspace if current input is empty
     if (e.key === "Backspace" && !otp[index] && index > 0 && inputRefs.current[index - 1]) {
-      inputRefs.current[index - 1].focus()
+      inputRefs.current[index - 1]?.focus()
     }
   }
 
@@ -104,32 +104,42 @@ export function OtpVerification({ email, purpose, onVerified, onCancel, isLoadin
 
   const handleResend = async () => {
     try {
-      const result = await resendOtp(email, purpose)
-
+      const response = await fetch("/api/auth/resend-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+  
+      const result = await response.json();
+  
       if (result.success) {
         toast({
           title: "OTP Resent",
           description: "A new verification code has been sent to your email",
-        })
+        });
+  
         // Reset countdown
-        setResendDisabled(true)
-        setCountdown(60)
+        setResendDisabled(true);
+        setCountdown(60);
       } else {
         toast({
           variant: "destructive",
           title: "Resend Failed",
           description: result.message || "Failed to resend verification code",
-        })
+        });
       }
     } catch (error) {
-      console.error("Resend OTP error:", error)
+      console.error("Resend OTP error:", error);
       toast({
         variant: "destructive",
         title: "Resend Failed",
         description: "An error occurred. Please try again.",
-      })
+      });
     }
-  }
+  };
+  
 
   return (
     <Card className="w-full">
@@ -143,7 +153,9 @@ export function OtpVerification({ email, purpose, onVerified, onCancel, isLoadin
             {otp.map((digit, index) => (
               <Input
                 key={index}
-                ref={(el) => (inputRefs.current[index] = el)}
+                ref={(el) => {
+                  inputRefs.current[index] = el;
+                }}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}

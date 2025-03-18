@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { Sidebar } from "@/components/sidebar"
-import { CategoryManagementContent } from "@/components/categories/category-management-content"
+import { CategoryPageClient } from "./page-client"
 
 export const metadata: Metadata = {
   title: "Category Management - Marketplace Admin",
@@ -9,12 +9,9 @@ export const metadata: Metadata = {
 
 export default function CategoriesPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Sidebar />
-      <div className="flex-1 md:ml-[var(--sidebar-width)] lg:-mt-12 -mt-8">
-        <CategoryManagementContent />
+    <div className="flex-1 md:ml-[calc(var(--sidebar-width)-40px)] md:-mt-12 -mt-8">
+        <CategoryPageClient />
       </div>
-    </div>
   )
 }
 

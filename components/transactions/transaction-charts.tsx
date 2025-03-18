@@ -24,8 +24,15 @@ export function TransactionCharts({ transactions = [], dateRange = {}, isLoading
   });
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <RevenueOverviewChart transactions={filteredTransactions} isLoading={isLoading} />
+    <div className="grid gap-2 md:gap-4 grid-cols-1 md:grid-cols-2">
+      {/* First chart takes full width on large screens */}
+      {/* <RevenueOverviewChart
+        transactions={filteredTransactions}
+        isLoading={isLoading}
+        className="md:col-span-2"
+      /> */}
+
+      {/* Last two charts share space in a row on large screens */}
       <TransactionTypesChart transactions={filteredTransactions} isLoading={isLoading} />
       <PaymentMethodsChart transactions={filteredTransactions} isLoading={isLoading} />
     </div>

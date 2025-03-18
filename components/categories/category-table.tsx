@@ -114,9 +114,9 @@ export function CategoryTable({
                 <TableCell className="font-medium">{category.name}</TableCell>
                 <TableCell className="hidden md:table-cell">{category.description}</TableCell>
                 <TableCell className="hidden md:table-cell">{category.createdBy}</TableCell>
-                <TableCell>{formatDate(category.createdAt)}</TableCell>
+                <TableCell className="whitespace-nowrap">{formatDate(category.createdAt)}</TableCell>
                 <TableCell className="text-right">
-                  <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex justify-end gap-2 items-center" onClick={(e) => e.stopPropagation()}>
                     {selectedTab === "active" && canPerformAction(category) && (
                       <Button variant="ghost" size="icon" onClick={() => handleDelete(category)}>
                         <Trash2 className="h-4 w-4" />
@@ -124,17 +124,14 @@ export function CategoryTable({
                     )}
                     {selectedTab === "deleted" && canPerformAction(category) && (
                       <>
-                        <Button variant="ghost" size="icon" onClick={() => handleRestore(category)}>
-                          <RotateCcw className="h-4 w-4" />
+                        <Button className="hidden md:block" variant="ghost" size="icon" onClick={() => handleRestore(category)}>
+                          <RotateCcw className="h-4 w-4 " />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => handlePermanentDelete(category)}>
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </>
                     )}
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
                   </div>
                 </TableCell>
               </TableRow>

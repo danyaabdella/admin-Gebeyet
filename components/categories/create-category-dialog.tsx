@@ -79,7 +79,7 @@ export function CreateCategoryDialog({ onCategoryAdded, open, onOpenChange }: Cr
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="">
           <Plus className="mr-2 h-4 w-4" />
           Create Category
         </Button>

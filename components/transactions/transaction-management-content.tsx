@@ -119,7 +119,7 @@ export function TransactionManagementContent() {
   }
 
   const handleDateRangeChange = (range: { from?: Date; to?: Date }) => {
-    setDateRange(range)
+    setDateRange(range as DateRange)
     setCurrentPage(1)
     if (range.from || range.to) {
       toast({
@@ -148,9 +148,8 @@ export function TransactionManagementContent() {
         </div>
       </div>
 
-      <TransactionOverview transactions={filteredTransactions} dateRange={dateRange} isLoading={isLoadingData} />
-
-      <TransactionCharts transactions={filteredTransactions} dateRange={dateRange} isLoading={isLoadingData} />
+        <TransactionOverview transactions={filteredTransactions} dateRange={dateRange} isLoading={isLoadingData} />
+        <TransactionCharts transactions={filteredTransactions} dateRange={dateRange} isLoading={isLoadingData} />
 
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 items-center gap-2">
@@ -202,9 +201,9 @@ export function TransactionManagementContent() {
       </div>
 
       <Card>
-        <CardHeader className="p-4">
-          <CardTitle>All Transactions</CardTitle>
-          <CardDescription>Manage and view all transactions in the marketplace</CardDescription>
+        <CardHeader className="p-2 md:p-4">
+          <CardTitle className="text-xl md:text-2xl">All Transactions</CardTitle>
+          <CardDescription className="hidden md:block">Manage and view all transactions in the marketplace</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           <TransactionTable transactions={transactions} isLoading={isLoadingData} />

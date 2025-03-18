@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { resetPassword } from "@/lib/data-fetching"
 import { toast } from "@/components/ui/use-toast"
 
 interface ResetPasswordFormProps {
@@ -29,29 +28,15 @@ export function ResetPasswordForm({ email, onSuccess, onCancel }: ResetPasswordF
   // Add password strength validation
   const validatePassword = (password: string) => {
     const errors = []
-
-    if (password.length < 8) {
+    if (password.length < 4) {
       errors.push("Password must be at least 8 characters long")
     }
-
-    if (!/[A-Z]/.test(password)) {
-      errors.push("Password must contain at least one uppercase letter")
-    }
-
-    if (!/[a-z]/.test(password)) {
-      errors.push("Password must contain at least one lowercase letter")
-    }
-
-    if (!/[0-9]/.test(password)) {
-      errors.push("Password must contain at least one number")
-    }
-
     return errors
   }
 
   const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
       // Validate passwords
@@ -60,60 +45,68 @@ export function ResetPasswordForm({ email, onSuccess, onCancel }: ResetPasswordF
           variant: "destructive",
           title: "Error",
           description: "Please enter both password fields",
-        })
-        setIsLoading(false)
-        return
+        });
+        setIsLoading(false);
+        return;
       }
-
+  
       // Check password strength
-      const passwordErrors = validatePassword(password)
+      const passwordErrors = validatePassword(password);
       if (passwordErrors.length > 0) {
         toast({
           variant: "destructive",
           title: "Password Requirements",
           description: passwordErrors[0],
-        })
-        setIsLoading(false)
-        return
+        });
+        setIsLoading(false);
+        return;
       }
-
+  
       if (password !== confirmPassword) {
         toast({
           variant: "destructive",
           title: "Error",
           description: "Passwords do not match",
-        })
-        setIsLoading(false)
-        return
+        });
+        setIsLoading(false);
+        return;
       }
-
+  
       // Call API to reset password
-      const result = await resetPassword(email, password)
-
-      if (result.success) {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+  
+      const result = await response.json();
+  
+      if (response.ok) {
         toast({
           title: "Success",
           description: "Your password has been reset successfully",
-        })
-        onSuccess()
+        });
+        onSuccess();
       } else {
         toast({
           variant: "destructive",
           title: "Reset Failed",
           description: result.message || "Failed to reset password",
-        })
+        });
       }
     } catch (error) {
-      console.error("Password reset error:", error)
+      console.error("Password reset error:", error);
       toast({
         variant: "destructive",
         title: "Reset Failed",
         description: "An error occurred. Please try again.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <Card className="w-full">
