@@ -10,9 +10,9 @@ const handler = NextAuth(options);
 export { handler as GET, handler as POST };
 
 // Function to get user role
-export async function role(req) {
-  await connectToDB();
-  const session = await getServerSession(req, options);
+export async function role() {
+  const session = await getServerSession(options);
+  console.log("session: ", session);
 
   if (!session?.user?.email) {
     return null;
@@ -23,5 +23,4 @@ export async function role(req) {
 
   return user?.role || null;
 }
-
   
