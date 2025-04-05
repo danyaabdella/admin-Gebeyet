@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import SuperAdmin from "../../../models/SuperAdmin";
 import Admin from "../../../models/Admin";
 import {role} from "../auth/[...nextauth]/route";
+import User from "@/models/User";
 
 export async function GET(req) {
     const role1 = await role();

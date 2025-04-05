@@ -1,17 +1,21 @@
 "use client"
 
-import { Search, Filter } from "lucide-react"
+import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface UserFiltersProps {
   searchTerm: string
   setSearchTerm: (value: string) => void
-  roleFilter: string
-  setRoleFilter: (value: string) => void
-  statusFilter: string
-  setStatusFilter: (value: string) => void
+  roleFilter?: string
+  setRoleFilter?: (value: string) => void
+  statusFilter?: string
+  setStatusFilter?: (value: string) => void
+  approvalStatusFilter?: string
+  setApprovalStatusFilter?: (value: string) => void
+  showRoleFilter: boolean
+  showStatusFilter: boolean
+  showApprovalStatusFilter: boolean
 }
 
 export function UserFilters({
@@ -21,39 +25,66 @@ export function UserFilters({
   setRoleFilter,
   statusFilter,
   setStatusFilter,
+  approvalStatusFilter,
+  setApprovalStatusFilter,
+  showRoleFilter,
+  showStatusFilter,
+  showApprovalStatusFilter,
 }: UserFiltersProps) {
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div className="flex flex-1 flex-col sm:flex-row items-start sm:items-center gap-2">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search users..."
-            className="pl-8 w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button variant="outline" size="icon" className="shrink-0">
-            <Filter className="h-4 w-4" />
-            <span className="sr-only">Filter</span>
-          </Button>
+      <div className="relative w-full md:w-auto">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Search here"
+          className="pl-8 w-full"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {showRoleFilter && roleFilter && setRoleFilter && (
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder="Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Roles</SelectItem>
+              <SelectItem value="customer">Customer</SelectItem>
+              <SelectItem value="merchant">Merchant</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+
+        {showStatusFilter && statusFilter && setStatusFilter && (
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by status" />
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Verification Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Verification</SelectItem>
+              <SelectItem value="verified">Verified</SelectItem>
+              <SelectItem value="unverified">Unverified</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+
+        { approvalStatusFilter && setApprovalStatusFilter && (
+          <Select value={approvalStatusFilter} onValueChange={setApprovalStatusFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Approval Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="verified">Verified</SelectItem>
-              <SelectItem value="unverified">Unverified</SelectItem>
-              <SelectItem value="banned">Banned</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        )}
       </div>
     </div>
   )
 }
-

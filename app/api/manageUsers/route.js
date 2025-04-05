@@ -13,7 +13,7 @@ export async function GET(req) {
     const fullName = url.searchParams.get("fullName");
     const isBanned = url.searchParams.get("isBanned");
     const role = url.searchParams.get("role");
-    const isMerchant = url.searchParams.get("isMerchant");
+    const approvalStatus = url.searchParams.get("approvalStatus");
     const stateName = url.searchParams.get("stateName");
     const cityName = url.searchParams.get("cityName");
     const approvedBy = url.searchParams.get("approvedBy");
@@ -28,7 +28,7 @@ export async function GET(req) {
     if (role) filter.role = role;
     if (approvedBy) filter.approvedBy = approvedBy;
     if (bannedBy) filter.bannedBy = bannedBy;
-    if (isMerchant) filter.isMerchant = isMerchant === "true";
+    if (approvalStatus) filter.approvalStatus = approvalStatus === "true";
     if (stateName) filter.stateName = { $regex: stateName, $options: "i" }; 
     if (cityName) filter.cityName = { $regex: cityName, $options: "i" }; 
 
@@ -51,58 +51,62 @@ export async function PUT(req) {
     await connectToDB();
 
     const userData = await userInfo();
+    const { _id, approvalStatus, isBanned, isDeleted } = await req.json();
 
-    // Parse the request body
-    const body = await req.json();
-    const { _id, isMerchant, isBanned, isDeleted } = body;
+    console.log("User passed: ", _id, approvalStatus, isBanned, isDeleted);
 
     if (!_id) {
       return new Response(JSON.stringify({ message: "User ID is required" }), { status: 400 });
     }
 
-    // Check if the user is marked as deleted
     const user = await User.findById(_id);
+    console.log("Full user Info: ", user);
     if (!user) {
       return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
     }
 
-    // Handle the undo deletion logic
-    if (isDeleted === false && user.trashDate !== null) {
-      user.trashDate = null;
+    // Restore user from trash
+    if (
+      (isDeleted === false || isDeleted === "false") &&
+      user.isDeleted &&
+      user.trashDate !== null
+    ) {
       user.isDeleted = false;
+      user.trashDate = null;
       await user.save();
       await sendNotification(user.email, "user", "restored");
+
       return new Response(JSON.stringify({ message: "User restored from trash" }), { status: 200 });
     }
 
-    // Build the update object dynamically
-    let updateData = {};
-    if (isMerchant !== undefined) {
-      updateData.isMerchant = isMerchant;
-      updateData.approvedBy = isMerchant ? userData.email : null;
-      await sendNotification(user.email, "user", "approved");
-    }
-    if (isBanned !== undefined) {
-      updateData.isBanned = isBanned;
-      updateData.bannedBy = isBanned ? userData.email : null;
-      if (isBanned) {
-        await sendNotification(user.email, "user", "banned");
-      }
+    // Update approvalStatus
+    if (approvalStatus) {
+      user.approvalStatus = approvalStatus;
+      user.approvedBy = approvalStatus === "approved" ? userData.email : null;
+      await user.save();
+      await sendNotification(user.email, "user", approvalStatus);
+
+      return new Response(JSON.stringify({ message: `User ${approvalStatus}` }), { status: 200 });
     }
 
-    // Update the user if no deletion logic is applied
-    const updatedUser = await User.findByIdAndUpdate(
-      _id,
-      { $set: updateData },
-      { new: true }
+    // Update ban status
+    if (isBanned === true || isBanned === false || isBanned === "true" || isBanned === "false") {
+      const isBannedBool = isBanned === true || isBanned === "true";
+      user.isBanned = isBannedBool;
+      user.bannedBy = isBannedBool ? userData.email : null;
+      await user.save();
+      await sendNotification(user.email, "user", isBannedBool ? "banned" : "unbanned");
+
+      return new Response(
+        JSON.stringify({ message: `User ${isBannedBool ? "banned" : "unbanned"}` }),
+        { status: 200 }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ message: "No update action was provided" }),
+      { status: 400 }
     );
-
-    if (!updatedUser) {
-      return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
-    }
-
-
-    return new Response(JSON.stringify({ message: "User updated successfully", user: updatedUser }), { status: 200 });
   } catch (error) {
     console.error("Error occurred:", error.message);
     return new Response(
@@ -113,38 +117,44 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
-try {
+  try {
     await connectToDB();
     await isAdminOrSuperAdmin();
 
     const { _id } = await req.json();
+    console.log("id: ", _id);
 
-    // Find the user to soft-delete
+    // Find the user
     const user = await User.findById(_id);
+    console.log("User to delete: ", user);
     if (!user) {
-    return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
+      return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
     }
 
     if (user.isDeleted) {
+      await User.findByIdAndDelete(_id);
+
       return new Response(
-        JSON.stringify({ message: "User alraeady in trash. It will be permanently deleted after 30 days." }),
+        JSON.stringify({ message: "User permanently deleted from the trash." }),
         { status: 200 }
-        );
+      );
     }
-    // Mark the user as deleted and set the trash date
+
+    // Soft delete: mark user as deleted and set trash date
     user.isDeleted = true;
     user.trashDate = new Date();
     await user.save();
+
     await sendNotification(user.email, "user", "deleted");
 
     return new Response(
-    JSON.stringify({ message: "User soft deleted. It will be permanently deleted after 30 days." }),
-    { status: 200 }
+      JSON.stringify({ message: "User soft deleted. It will be permanently deleted after 30 days." }),
+      { status: 200 }
     );
-} catch (error) {
+  } catch (error) {
     return new Response(
-    JSON.stringify({ message: error.message || "Error deleting user" }),
-    { status: 500 }
+      JSON.stringify({ message: error.message || "Error deleting user" }),
+      { status: 500 }
     );
-}
+  }
 }

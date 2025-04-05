@@ -11,6 +11,8 @@ export { handler as GET, handler as POST };
 
 // Function to get user role
 export async function role() {
+
+  await connectToDB();
   const session = await getServerSession(options);
   console.log("session: ", session);
 
