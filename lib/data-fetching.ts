@@ -442,21 +442,6 @@ export async function fetchAuctions(page = 1, limit = 15, filters = {}) {
   }
 }
 
-// Fetch products with pagination and filters
-export async function fetchProducts(page = 1, limit = 15, filters = {}) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  const filteredProducts = filterProducts(mockProducts, filters)
-  const { items, pagination } = paginateResults(filteredProducts, page, limit)
-
-  return {
-    products: items,
-    pagination,
-    total: filteredProducts.length,
-  }
-}
-
 // Auction actions
 export async function approveAuction(auctionId: string) {
   // Simulate API delay
@@ -540,54 +525,92 @@ export async function permanentlyDeleteUser(userId: string) {
 }
 
 // Product actions
-export async function banProduct(productId: string) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
+// @/lib/data-fetching.ts
 
-  return {
-    success: true,
-    message: "Product banned successfully",
-  }
+// @/lib/data-fetching.ts
+export async function fetchProducts(page: number, limit: number, filters: { isDeleted: any; phrase: any; categoryId: any; minPrice: any; maxPrice: any; minQuantity: any; maxQuantity: any; minAvgReview: any; maxAvgReview: any; delivery: any; minDeliveryPrice: any; maxDeliveryPrice: any; center: any; radius: any; }) {
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    isDeleted: filters.isDeleted.toString(),
+    phrase: filters.phrase || "",
+    ...(filters.categoryId && { categoryId: filters.categoryId }),
+    ...(filters.minPrice && { minPrice: filters.minPrice.toString() }),
+    ...(filters.maxPrice && { maxPrice: filters.maxPrice.toString() }),
+    ...(filters.minQuantity && { minQuantity: filters.minQuantity.toString() }),
+    ...(filters.maxQuantity && { maxQuantity: filters.maxQuantity.toString() }),
+    ...(filters.minAvgReview && { minAvgReview: filters.minAvgReview.toString() }),
+    ...(filters.maxAvgReview && { maxAvgReview: filters.maxAvgReview.toString() }),
+    ...(filters.delivery && { delivery: filters.delivery }),
+    ...(filters.minDeliveryPrice && { minDeliveryPrice: filters.minDeliveryPrice.toString() }),
+    ...(filters.maxDeliveryPrice && { maxDeliveryPrice: filters.maxDeliveryPrice.toString() }),
+    ...(filters.center && { center: filters.center }),
+    radius: filters.radius.toString(), // Always included
+  });
+
+  const response = await fetch(`/api/products?${queryParams.toString()}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch products");
+  return response.json();
+}
+
+// Other functions (banProduct, unbanProduct, etc.) remain unchanged
+
+export async function banProduct(productId: string) {
+  const response = await fetch(`/api/products`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ _id: productId, isBanned: true }),
+  });
+
+  if (!response.ok) throw new Error("Failed to ban product");
+  return response.json();
 }
 
 export async function unbanProduct(productId: string) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
+  const response = await fetch(`/api/products`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ _id: productId, isBanned: false }),
+  });
 
-  return {
-    success: true,
-    message: "Product unbanned successfully",
-  }
+  if (!response.ok) throw new Error("Failed to unban product");
+  return response.json();
 }
 
 export async function deleteProduct(productId: string) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
+  const response = await fetch(`/api/products`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ _id: productId, isDeleted: true }),
+  });
 
-  return {
-    success: true,
-    message: "Product deleted successfully",
-  }
+  if (!response.ok) throw new Error("Failed to delete product");
+  return response.json();
 }
 
 export async function restoreProduct(productId: string) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
+  const response = await fetch(`/api/products`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ _id: productId, isDeleted: false }),
+  });
 
-  return {
-    success: true,
-    message: "Product restored successfully",
-  }
+  if (!response.ok) throw new Error("Failed to restore product");
+  return response.json();
 }
 
 export async function permanentDeleteProduct(productId: string) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
+  const response = await fetch(`/api/products?_id=${productId}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  });
 
-  return {
-    success: true,
-    message: "Product permanently deleted",
-  }
+  if (!response.ok) throw new Error("Failed to permanently delete product");
+  return response.json();
 }
 
 // Admin actions

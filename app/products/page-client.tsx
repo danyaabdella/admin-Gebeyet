@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useMemo } from "react"
-import { Search, Filter, CheckCircle, XCircle, Trash2 } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Sidebar } from "@/components/sidebar"
-import { ProductDetailsDialog } from "@/components/products/product-details-dialog"
-import { ProductFilters } from "@/components/products/product-filters"
-import { PaginationControls } from "@/components/auctions/pagination-controls"
-import { useToast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/toaster"
-import { AddProductDialog } from "@/components/products/add-product-dialog"
+import { useState, useEffect, useMemo } from "react";
+import { Search, Filter, CheckCircle, XCircle, Trash2, MapPin, DollarSign, Box, Star, Truck, Tag } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Sidebar } from "@/components/sidebar";
+import { ProductDetailsDialog } from "@/components/products/product-details-dialog";
+import { PaginationControls } from "@/components/auctions/pagination-controls";
+import { useToast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/toaster";
+import DistancePicker from "@/components/DistancePicker";
 import {
   fetchProducts,
   banProduct,
@@ -21,132 +21,193 @@ import {
   deleteProduct,
   restoreProduct,
   permanentDeleteProduct,
-} from "@/lib/data-fetching"
-import debounce from "lodash.debounce"
+} from "@/lib/data-fetching";
+import debounce from "lodash.debounce";
 
 export default function ProductsPageClient() {
-  const [selectedTab, setSelectedTab] = useState("active")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedProduct, setSelectedProduct] = useState<any | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
-  const [showFilters, setShowFilters] = useState(false)
-  const [products, setProducts] = useState<any[]>([])
-  const [totalProducts, setTotalProducts] = useState(0)
-  const [totalPages, setTotalPages] = useState(1)
-  const [isLoadingData, setIsLoadingData] = useState(true)
-  const [filters, setFilters] = useState({
-    isDeleted: false,
-    phrase: "",
-  })
-  const { toast } = useToast()
+  const [selectedTab, setSelectedTab] = useState("active");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showFilters, setShowFilters] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
-  // Debounced search handler to prevent excessive API calls
-  const debouncedSearch = useMemo(
-    () => debounce((query: string) => {
-      setFilters((prev) => ({ ...prev, phrase: query }))
-      setCurrentPage(1)
-    }, 300),
-    []
-  )
+  // Filter states
+  const [priceRange, setPriceRange] = useState([0, 0]);
+  const [minPrice, setMinPrice] = useState("0");
+  const [maxPrice, setMaxPrice] = useState("0");
+  const [quantityRange, setQuantityRange] = useState([0, 0]);
+  const [minQuantity, setMinQuantity] = useState("0");
+  const [maxQuantity, setMaxQuantity] = useState("0");
+  const [ratingRange, setRatingRange] = useState([0, 5]);
+  const [minRating, setMinRating] = useState("0");
+  const [maxRating, setMaxRating] = useState("5");
+  const [deliveryType, setDeliveryType] = useState("all");
+  const [deliveryPriceRange, setDeliveryPriceRange] = useState([0, 0]);
+  const [minDeliveryPrice, setMinDeliveryPrice] = useState("0");
+  const [maxDeliveryPrice, setMaxDeliveryPrice] = useState("0");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [locationRadius, setLocationRadius] = useState(50); // Default 50 km
+  const [locationCenter, setLocationCenter] = useState(null);
 
-  // Fetch products when filters, pagination, tab, or search query changes
+  const { toast } = useToast();
+
+  const categories = [
+    { id: "all", name: "All Categories" },
+    { id: "category_1", name: "Electronics" },
+    { id: "category_2", name: "Clothing" },
+    { id: "category_3", name: "Home & Garden" },
+    { id: "category_4", name: "Beauty" },
+    { id: "category_5", name: "Toys" },
+    { id: "category_6", name: "Sports" },
+  ];
+  
+
+  const deliveryTypes = [
+    { id: "all", name: "All Types" },
+    { id: "flat", name: "Flat Rate" },
+    { id: "perPiece", name: "Per Piece" },
+    { id: "perKg", name: "Per Kilogram" },
+    { id: "free", name: "Free Shipping" },
+  ];
+
+  // Debounced filter application
+  const debouncedFetchProducts = useMemo(
+    () =>
+      debounce(async () => {
+        setIsLoadingData(true);
+        try {
+          const filters = {
+            isDeleted: selectedTab === "deleted",
+            phrase: searchQuery,
+            categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
+            minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+            maxPrice: priceRange[1] > 0 ? priceRange[1] : undefined,
+            minQuantity: quantityRange[0] > 0 ? quantityRange[0] : undefined,
+            maxQuantity: quantityRange[1] > 0 ? quantityRange[1] : undefined,
+            minAvgReview: ratingRange[0] > 0 ? ratingRange[0] : undefined,
+            maxAvgReview: ratingRange[1] < 5 ? ratingRange[1] : undefined,
+            delivery: deliveryType !== "all" ? deliveryType : undefined,
+            minDeliveryPrice: deliveryPriceRange[0] > 0 ? deliveryPriceRange[0] : undefined,
+            maxDeliveryPrice: deliveryPriceRange[1] > 0 ? deliveryPriceRange[1] : undefined,
+            center: locationCenter ? `${locationCenter.lat}-${locationCenter.lng}` : undefined,
+            radius: locationRadius * 1000, // Convert km to meters, always sent
+          };
+
+          const response = await fetchProducts(currentPage, 15, filters);
+          setProducts(response.products);
+          setTotalProducts(response.total);
+          setTotalPages(response.pagination.totalPages);
+        } catch (error) {
+          console.error("Error fetching products:", error);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to load products. Please try again.",
+          });
+        } finally {
+          setIsLoadingData(false);
+        }
+      }, 300),
+    [
+      currentPage,
+      selectedTab,
+      searchQuery,
+      selectedCategory,
+      priceRange,
+      quantityRange,
+      ratingRange,
+      deliveryType,
+      deliveryPriceRange,
+      locationCenter,
+      locationRadius,
+      toast,
+    ]
+  );
+
   useEffect(() => {
-    const loadProducts = async () => {
-      setIsLoadingData(true)
-      try {
-        const response = await fetchProducts(currentPage, 15, {
-          ...filters,
-          isDeleted: selectedTab === "deleted",
-          phrase: searchQuery,
-        })
-        setProducts(response.products)
-        setTotalProducts(response.total)
-        setTotalPages(response.pagination.totalPages)
-      } catch (error) {
-        console.error("Error fetching products:", error)
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load products. Please try again.",
-        })
-      } finally {
-        setIsLoadingData(false)
-      }
-    }
+    debouncedFetchProducts();
+    return () => debouncedFetchProducts.cancel();
+  }, [debouncedFetchProducts]);
 
-    loadProducts()
-  }, [currentPage, filters, selectedTab, searchQuery, toast])
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
+  };
 
-  // Handle search input change with debouncing
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value)
-    debouncedSearch(e.target.value)
-  }
+  const handleTabChange = (value) => {
+    setSelectedTab(value);
+    setCurrentPage(1);
+  };
 
-  // Handle tab change and trigger fetch
-  const handleTabChange = (value: string) => {
-    setSelectedTab(value)
-    setCurrentPage(1)
-    setFilters((prev) => ({ ...prev, isDeleted: value === "deleted" }))
-  }
+  const handleResetFilters = () => {
+    setPriceRange([0, 0]);
+    setMinPrice("0");
+    setMaxPrice("0");
+    setQuantityRange([0, 0]);
+    setMinQuantity("0");
+    setMaxQuantity("0");
+    setRatingRange([0, 5]);
+    setMinRating("0");
+    setMaxRating("5");
+    setDeliveryType("all");
+    setDeliveryPriceRange([0, 0]);
+    setMinDeliveryPrice("0");
+    setMaxDeliveryPrice("0");
+    setSelectedCategory("all");
+    setLocationRadius(50);
+    setLocationCenter(null);
+  };
 
-  // Handle filter application and trigger fetch
-  const handleApplyFilters = (newFilters: any) => {
-    setCurrentPage(1)
-    setFilters((prev) => ({ ...prev, ...newFilters }))
-  }
+  const handleLocationChange = ({ radius, center }) => {
+    setLocationRadius(Math.round(radius / 1000)); // Convert meters to km
+    setLocationCenter(center);
+  };
 
-  // Handle product actions (ban, unban, delete, etc.)
-  const handleProductAction = async (type: string, productId: string) => {
-    setIsLoading(true)
+  const handleProductAction = async (type, productId) => {
+    setIsLoading(true);
     try {
-      let response
+      let response;
       switch (type) {
         case "ban":
-          response = await banProduct(productId)
-          break
+          response = await banProduct(productId);
+          break;
         case "unban":
-          response = await unbanProduct(productId)
-          break
+          response = await unbanProduct(productId);
+          break;
         case "delete":
-          response = await deleteProduct(productId)
-          break
+          response = await deleteProduct(productId);
+          break;
         case "restore":
-          response = await restoreProduct(productId)
-          break
+          response = await restoreProduct(productId);
+          break;
         case "permanent-delete":
-          response = await permanentDeleteProduct(productId)
-          break
+          response = await permanentDeleteProduct(productId);
+          break;
         default:
-          throw new Error("Invalid action type")
+          throw new Error("Invalid action type");
       }
 
       toast({
         title: "Success",
         description: response.message,
-      })
+      });
 
-      // Refresh product list after action
-      const updatedResponse = await fetchProducts(currentPage, 15, {
-        ...filters,
-        isDeleted: selectedTab === "deleted",
-        phrase: searchQuery,
-      })
-      setProducts(updatedResponse.products)
-      setTotalProducts(updatedResponse.total)
-      setTotalPages(updatedResponse.pagination.totalPages)
+      debouncedFetchProducts();
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
         description: `Failed to ${type} product. Please try again.`,
-      })
+      });
     } finally {
-      setIsLoading(false)
-      setSelectedProduct(null)
+      setIsLoading(false);
+      setSelectedProduct(null);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -159,7 +220,7 @@ export default function ProductsPageClient() {
             </h1>
             <div className="flex items-center gap-4">
               <span className="text-sm md:text-base text-muted-foreground">
-                <span className="hidden md:inline">Total </span>Products: 
+                <span className="hidden md:inline">Total </span>Products:
                 <span className="font-medium text-gray-800 dark:text-gray-200"> {totalProducts}</span>
               </span>
               <Button
@@ -173,6 +234,7 @@ export default function ProductsPageClient() {
               </Button>
             </div>
           </div>
+
           <div className="flex gap-4 flex-row md:items-center md:justify-between">
             <div className="flex flex-1 items-center gap-2">
               <div className="relative flex-1 md:max-w-sm">
@@ -186,7 +248,6 @@ export default function ProductsPageClient() {
                 />
               </div>
             </div>
-
             <div className="flex items-center gap-2">
               <Select defaultValue="active" value={selectedTab} onValueChange={handleTabChange}>
                 <SelectTrigger className="w-[140px] md:w-[180px]">
@@ -202,19 +263,183 @@ export default function ProductsPageClient() {
           </div>
 
           {showFilters && (
-            <ProductFilters 
-              onApplyFilters={handleApplyFilters} 
-              productCount={totalProducts} 
-            />
+            <Card className="mb-4">
+              <CardContent className="p-4 md:p-6">
+                <h2 className="text-xl font-semibold mb-4">Filter Products</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Left Side - Filters */}
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="flex items-center">
+                        <DollarSign className="h-4 w-4 mr-1" /> Price Range
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          value={minPrice}
+                          onChange={(e) => {
+                            const value = Number(e.target.value) || 0;
+                            setMinPrice(e.target.value);
+                            setPriceRange([value, priceRange[1]]);
+                          }}
+                          placeholder="Min"
+                        />
+                        <Input
+                          type="number"
+                          value={maxPrice}
+                          onChange={(e) => {
+                            const value = Number(e.target.value) || 0;
+                            setMaxPrice(e.target.value);
+                            setPriceRange([priceRange[0], value]);
+                          }}
+                          placeholder="Max"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="flex items-center">
+                        <Box className="h-4 w-4 mr-1" /> Stock Quantity
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          value={minQuantity}
+                          onChange={(e) => {
+                            const value = Number(e.target.value) || 0;
+                            setMinQuantity(e.target.value);
+                            setQuantityRange([value, quantityRange[1]]);
+                          }}
+                          placeholder="Min"
+                        />
+                        <Input
+                          type="number"
+                          value={maxQuantity}
+                          onChange={(e) => {
+                            const value = Number(e.target.value) || 0;
+                            setMaxQuantity(e.target.value);
+                            setQuantityRange([quantityRange[0], value]);
+                          }}
+                          placeholder="Max"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="flex items-center">
+                        <Star className="h-4 w-4 mr-1" /> Average Rating
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="number"
+                          value={minRating}
+                          onChange={(e) => {
+                            const value = Math.min(5, Math.max(0, Number(e.target.value) || 0));
+                            setMinRating(e.target.value);
+                            setRatingRange([value, ratingRange[1]]);
+                          }}
+                          placeholder="Min"
+                          min={0}
+                          max={5}
+                        />
+                        <Input
+                          type="number"
+                          value={maxRating}
+                          onChange={(e) => {
+                            const value = Math.min(5, Math.max(0, Number(e.target.value) || 0));
+                            setMaxRating(e.target.value);
+                            setRatingRange([ratingRange[0], value]);
+                          }}
+                          placeholder="Max"
+                          min={0}
+                          max={5}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="gap-2 flex flex-row">
+                      <div className="flex-1">
+                        <Label className="flex items-center">
+                          <Tag className="h-4 w-4 mr-1" /> Category
+                        </Label>
+                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="flex-1">
+                        <Label className="flex items-center">
+                          <Truck className="h-4 w-4 mr-1" /> Delivery Type
+                        </Label>
+                        <Select value={deliveryType} onValueChange={setDeliveryType}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select delivery type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {deliveryTypes.map((delivery) => (
+                              <SelectItem key={delivery.id} value={delivery.id}>
+                                {delivery.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <Button variant="outline" onClick={handleResetFilters}>
+                      Reset Filters
+                    </Button>
+                  </div>
+
+                  {/* Right Side - Map */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 justify-between">
+                      <Label className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-1 text-red-500" /> Location
+                      </Label>
+                      <div className="flex items-center gap-2">
+                        <Label className="hidden md:block">Distance (km)</Label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            value={locationRadius}
+                            onChange={(e) => setLocationRadius(Number(e.target.value) || 50)}
+                            min={1}
+                            max={1000}
+                            className="w-24"
+                          />
+                          <span className="text-sm text-muted-foreground">KM</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="border rounded-md p-2">
+                      <DistancePicker
+                        onChange={handleLocationChange}
+                        defaultRadius={locationRadius * 1000}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           <Card className="-ml-5 md:ml-0 -mr-4 md:mr-0 overflow-x-hidden">
             <CardHeader className="p-4 text-sm md:text-base lg:text-lg">
-             <CardTitle>
-                {selectedTab === "active" 
-                  ? "All Products" 
-                  : selectedTab === "banned" 
-                  ? "Banned Products" 
+              <CardTitle>
+                {selectedTab === "active"
+                  ? "All Products"
+                  : selectedTab === "banned"
+                  ? "Banned Products"
                   : "Deleted Products (Trash)"}
               </CardTitle>
               <CardDescription className="hidden md:block">
@@ -318,5 +543,5 @@ export default function ProductsPageClient() {
       )}
       <Toaster />
     </div>
-  )
+  );
 }
