@@ -1,6 +1,6 @@
 import Category from "@/models/Category";
 
-import { checkSession,isAdminOrSuperAdmin, connectToDB, isAdmin, userInfo, isSuperAdmin } from "../../../utils/functions";
+import { isAdminOrSuperAdmin, connectToDB, isAdmin, userInfo, isSuperAdmin } from "../../../utils/functions";
 
 export async function POST(req) {
     try {

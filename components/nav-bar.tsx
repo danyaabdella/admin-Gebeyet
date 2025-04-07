@@ -20,10 +20,10 @@ import { useSidebar } from "./sidebar-provider";
 
 export function NavBar() {
   const { data: session, status } = useSession();
+  // console.log("session: ", session);
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isOpen, toggleSidebar } = useSidebar();
 
   // Navigation links
   const navLinks = [

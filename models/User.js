@@ -3,64 +3,41 @@ import mongoose, { Schema } from "mongoose";
 const UserSchema = new Schema(
   {
     fullName: { type: String, required: true },
-    email: { 
-      type: String, 
-      required: true, 
-      unique: true
-    }, 
+    email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    role: { 
-      type: String, 
-      enum: ['customer', 'merchant'],
-      default: 'customer' 
-    },
+    role: { type: String, enum: ["customer", "merchant"], default: "customer" },
     image: { type: String, default: " " },
     isBanned: { type: Boolean, default: false },
-    bannedBy: { type: String, required: function() { return this.isBanned === true; } },
+    bannedBy: { type: String, required: function () { return this.isBanned; } },
     isEmailVerified: { type: Boolean, default: false },
-    stateName: { type: String, required: false },
-    cityName: { type: String, required: false },
+    address: {
+      state: { type: String, required: false },
+      city: { type: String, required: false },
+    },
     phoneNumber: { type: String, required: false },
     isDeleted: { type: Boolean, default: false },
-    trashDate: { 
+    trashDate: {
       type: Date,
       default: null,
-      expires: 30 * 24 * 60 * 60, // 30 days in seconds
+      expires: 2592000, // 30 days in seconds
     },
-    approvalStatus: {     
-      type: String, 
-      enum: ['pending', 'approved', 'rejected'],
-      default: 'pending',
-      required: function() { return this.role === "merchant"; } 
-    },
-    rejectionReason: { 
+    approvalStatus: {
       type: String,
-      required: function() { return this.approvalStatus === "rejected"; }
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+      required: function () { return this.role === "merchant"; },
     },
+    rejectionReason: { type: String, required: function () { return this.approvalStatus === "rejected"; } },
     approvedBy: { type: String },
-    tinNumber: { 
-      type: String, 
-      required: function() { return this.role === "merchant"; } 
-    },
-    uniqueTinNumber: { 
-      type: String, 
-      required: function() { return this.role === "merchant"; } 
-    },
-    nationalId: { 
-      type: String, 
-      required: function() { return this.role === "merchant"; } 
-    },
-    account_name: {
-      type: String, 
-      required: function() { return this.role === "merchant"; } 
-    },
-    account_number: { 
-      type: String, 
-      required: function() { return this.role === "merchant"; } 
-    },
-    bank_code: { 
-      type: String, 
-      required: function() { return this.role === "merchant"; } 
+    merchantDetails: {
+      tinNumber: { type: String, required: function () { return this.role === "merchant"; } },
+      uniqueTinNumber: { type: String, required: false },
+      nationalId: { type: String, required: function () { return this.role === "merchant"; } },
+      account: {
+        name: { type: String, required: function () { return this.role === "merchant"; } },
+        number: { type: String, required: function () { return this.role === "merchant"; } },
+        bankCode: { type: String, required: function () { return this.role === "merchant"; } },
+      },
     },
     otp: { type: String, default: null },
     otpExpires: { type: Date, default: null },

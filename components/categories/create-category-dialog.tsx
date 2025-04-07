@@ -48,25 +48,36 @@ export function CreateCategoryDialog({ onCategoryAdded, open, onOpenChange }: Cr
   }
 
   const handleSubmit = async () => {
-    if (!validateForm()) return
-
-    setIsSubmitting(true)
+    if (!validateForm()) return;
+  
+    setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 800))
-
-      const newCategory = {
-        name,
-        description,
+      const response = await fetch("/api/manageCategory", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, description }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create category");
       }
-
-      onCategoryAdded(newCategory)
-      setDialogOpen(false)
-      resetForm()
+  
+      const newCategory = await response.json();
+  
+      onCategoryAdded(newCategory);
+      setDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      console.error("Error creating category:", error.message);
+      // Optionally show an error message to user here
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
+  
 
   const resetForm = () => {
     setName("")

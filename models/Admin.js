@@ -11,6 +11,7 @@ const adminSchema = new mongoose.Schema({
   trashDate: { type: Date, default: null, expires: 30 * 24 * 60 * 60 },
   otp: { type: String, default: null },
   otpExpiry: { type: Date, default: null },
+  banReason: { type: String},
 }, { timestamps: true });
 
 const Admin = mongoose.models.Admin || mongoose.model('Admin', adminSchema);
