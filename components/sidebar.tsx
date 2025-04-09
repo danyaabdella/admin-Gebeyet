@@ -11,6 +11,7 @@ import {
   CreditCard,
   Shield,
   Home,
+  Package
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +27,7 @@ export function Sidebar() {
             { href: "/users", label: "User", icon: Users },
             { href: "/admins", label: "Admin", icon: Shield },
             { href: "/auctions", label: "Auction", icon: Gavel },
+            { href: "/orders", label: "Order", icon: Package },  // Using Package icon
             { href: "/products", label: "Product", icon: ShoppingBag },
             { href: "/categories", label: "Category", icon: Tag },
             { href: "/transactions", label: "Transactions", icon: CreditCard },

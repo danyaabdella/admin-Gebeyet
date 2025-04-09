@@ -56,9 +56,7 @@ export async function PUT(req) {
         }
 
         const user = await userInfo();
-        console.log("Admin user info: ", user);
         const userEmail = user.email;
-        console.log("Admin user email: ", userEmail);
 
         // Check if the user is either the creator or a superAdmin
         if (category.createdBy !== userEmail) {
@@ -90,37 +88,58 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
-  await connectToDB();
-
-  try {
+    await connectToDB();
+  
+    try {
       const { _id } = await req.json();
+  
       const category = await Category.findById(_id);
-
+      console.log("Category to delete: ", category);
+  
       if (!category) {
-          return new Response(JSON.stringify({ error: 'Category not found' }), { status: 404 });
+        return new Response(JSON.stringify({ error: 'Category not found' }), { status: 404 });
       }
-
+  
       const user = await userInfo();
       const userEmail = user.email;
-
+  
       // Check if the user is either the creator or a superAdmin
       if (category.createdBy !== userEmail) {
-          try {
-              await isSuperAdmin(); 
-          } catch (error) {
-              return new Response(JSON.stringify({ error: 'Unauthorized: You must be the creator or a superAdmin' }), { status: 403 });
-          }
+        try {
+          await isSuperAdmin();
+        } catch (error) {
+          return new Response(
+            JSON.stringify({ error: 'Unauthorized: You must be the creator or a superAdmin' }),
+            { status: 403 }
+          );
+        }
       }
-
-      // Mark as deleted instead of actual deletion (soft delete)
-      category.isDeleted = true;
-      category.trashDate = new Date();
-      await category.save();
-
-      return new Response(JSON.stringify({ message: 'Category moved to trash' }), { status: 200 });
-
-  } catch (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 400 });
-  }
+  
+      if (!category.isDeleted) {
+        // Soft delete
+        category.isDeleted = true;
+        category.trashDate = new Date();
+        await category.save();
+  
+        return new Response(
+          JSON.stringify({ message: 'Category moved to trash' }),
+          { status: 200 }
+        );
+      } else {
+        // Permanent delete
+        await Category.findByIdAndDelete(_id); // ✅ awaited!
+        return new Response(
+          JSON.stringify({ message: 'Category permanently deleted' }),
+          { status: 200 }
+        );
+      }
+  
+    } catch (error) {
+      console.error("Delete error:", error);
+      return new Response(
+        JSON.stringify({ error: error.message || 'Something went wrong' }),
+        { status: 400 }
+      );
+    }
 }
-
+  

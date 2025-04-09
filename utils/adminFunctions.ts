@@ -14,7 +14,7 @@ export async function fetchUsers(page: number, limit: number, filters: any) {
     return response.json();
   }
   
-  export async function banUser(userId: string) {
+  export async function banUser(userId: string, banData: { reason: string; description: string; } | undefined) {
     const response = await fetch('/api/manageUsers', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

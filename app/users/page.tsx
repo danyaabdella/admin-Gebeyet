@@ -8,10 +8,14 @@ import { Sidebar } from "@/components/sidebar"
 import { UserTable } from "@/components/users/user-table"
 import { UserFilters } from "@/components/users/user-filters"
 import { PaginationControls } from "@/components/users/pagination-controls"
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/toaster"
 import { banUser, deleteUser, permanentlyDeleteUser, restoreUser, unbanUser, verifyUser } from "@/utils/adminFunctions"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
 
 export default function UsersPage() {
   // State definitions
@@ -28,10 +32,19 @@ export default function UsersPage() {
     limit: 15,
     totalPages: 1,
   })
-  const [confirmAction, setConfirmAction] = useState<{
-    type: "verify" | "ban" | "unban" | "delete" | "restore" | "permanent-delete" | null
-    userId: string | null
-  }>({ type: null, userId: null })
+  const [showBanDialog, setShowBanDialog] = useState<string | null>(null)
+  const [showRestoreDialog, setShowRestoreDialog] = useState<string | null>(null)
+  const [showPermanentDeleteDialog, setShowPermanentDeleteDialog] = useState<string | null>(null)
+  const [selectedBanReason, setSelectedBanReason] = useState("")
+  const [banDescription, setBanDescription] = useState("")
+
+  // Predefined ban reasons
+  const banReasons = [
+    "Inappropriate behavior",
+    "Spam",
+    "Policy violation",
+    "Other",
+  ]
 
   // Fetch users on component mount
   useEffect(() => {
@@ -58,8 +71,6 @@ export default function UsersPage() {
   // Filter users based on current state
   const getFilteredUsers = () => {
     let filtered = [...allUsers]
-
-    // Apply search filter
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase()
       filtered = filtered.filter(user =>
@@ -68,17 +79,12 @@ export default function UsersPage() {
          user.address?.city?.toLowerCase().includes(lowerSearch))
       )
     }
-
-    // Apply role filter
     if (roleFilter !== "all") {
       filtered = filtered.filter(user => user.role === roleFilter)
     }
-
-    // Apply approval status filter for merchants
     if (approvalStatusFilter !== "all" && roleFilter === "merchant") {
       filtered = filtered.filter(user => user.role === "merchant" && user.approvalStatus === approvalStatusFilter)
     } else {
-      // Apply status filter
       if (statusFilter === "verified") {
         filtered = filtered.filter(user => user.isEmailVerified && !user.isBanned && !user.isDeleted)
       } else if (statusFilter === "unverified") {
@@ -87,14 +93,11 @@ export default function UsersPage() {
         filtered = filtered.filter(user => user.isBanned && !user.isDeleted)
       }
     }
-
-    // Apply tab-specific filtering
     if (activeTab === "active") {
       filtered = filtered.filter(user => !user.isDeleted)
     } else if (activeTab === "trash") {
       filtered = filtered.filter(user => user.isDeleted)
     }
-
     return filtered
   }
 
@@ -113,7 +116,7 @@ export default function UsersPage() {
       ...prev,
       total: totalFiltered,
       totalPages: totalPages,
-      page: 1 // Reset to page 1 when filters change
+      page: 1
     }))
   }, [searchTerm, roleFilter, statusFilter, approvalStatusFilter, activeTab, allUsers])
 
@@ -127,14 +130,31 @@ export default function UsersPage() {
     type: "verify" | "ban" | "unban" | "delete" | "restore" | "permanent-delete",
     userId: string
   ) => {
-    setConfirmAction({ type, userId })
+    switch (type) {
+      case "ban":
+        setShowBanDialog(userId)
+        setSelectedBanReason("")
+        setBanDescription("")
+        break
+      case "restore":
+        setShowRestoreDialog(userId)
+        break
+      case "permanent-delete":
+        setShowPermanentDeleteDialog(userId)
+        break
+      default:
+        // For other actions, you could use a generic dialog if needed
+        handleConfirmAction(type, userId)
+        break
+    }
   }
 
   // Execute confirmed user action
-  const handleConfirmAction = async () => {
-    if (!confirmAction.userId || !confirmAction.type) return
-
-    const { type, userId } = confirmAction
+  const handleConfirmAction = async (
+    type: "verify" | "ban" | "unban" | "delete" | "restore" | "permanent-delete",
+    userId: string,
+    banData?: { reason: string; description: string }
+  ) => {
     try {
       let result
       switch (type) {
@@ -147,10 +167,16 @@ export default function UsersPage() {
           }
           break
         case "ban":
-          result = await banUser(userId)
+          result = await banUser(userId, banData)
           if (result.success) {
             setAllUsers(prev => prev.map(user =>
-              user._id === userId ? { ...user, isBanned: true } : user
+              user._id === userId ? {
+                ...user,
+                isBanned: true,
+                banReason: { reason: banData?.reason, description: banData?.description },
+                bannedAt: new Date(),
+                // bannedBy will be set by the server
+              } : user
             ))
           }
           break
@@ -158,7 +184,7 @@ export default function UsersPage() {
           result = await unbanUser(userId)
           if (result.success) {
             setAllUsers(prev => prev.map(user =>
-              user._id === userId ? { ...user, isBanned: false } : user
+              user._id === userId ? { ...user, isBanned: false, banReason: null, bannedAt: null, bannedBy: null } : user
             ))
           }
           break
@@ -185,45 +211,30 @@ export default function UsersPage() {
           }
           break
       }
-
       if (result?.success) {
         toast({
           title: "Success",
           description: result.message,
         })
+      } else {
+        throw new Error(result?.message || `Failed to ${type} user`)
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to ${type} user. Please try again.`,
-      })
-    } finally {
-      setConfirmAction({ type: null, userId: null })
+        if (error instanceof Error) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: error.message || `Failed to ${type} user. Please try again.`,
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: `Failed to ${type} user. Please try again.`,
+          });
+        }
     }
   }
-
-  // Define confirmation dialog content
-  const getConfirmationContent = () => {
-    switch (confirmAction.type) {
-      case "verify":
-        return { title: "Verify User", description: "Are you sure you want to verify this user?", variant: "default" }
-      case "ban":
-        return { title: "Ban User", description: "Are you sure you want to ban this user?", variant: "destructive" }
-      case "unban":
-        return { title: "Unban User", description: "Are you sure you want to unban this user?", variant: "default" }
-      case "delete":
-        return { title: "Delete User", description: "Are you sure you want to delete this user?", variant: "destructive" }
-      case "restore":
-        return { title: "Restore User", description: "Are you sure you want to restore this user?", variant: "default" }
-      case "permanent-delete":
-        return { title: "Permanently Delete User", description: "This action cannot be undone.", variant: "destructive" }
-      default:
-        return { title: "", description: "", variant: "default" }
-    }
-  }
-
-  const confirmationContent = getConfirmationContent()
 
   // Render the UI
   return (
@@ -245,7 +256,6 @@ export default function UsersPage() {
               <TabsTrigger value="trash">Trash</TabsTrigger>
             </TabsList>
 
-            {/* All Users Tab */}
             <TabsContent value="all" className="space-y-4">
               <UserFilters
                 searchTerm={searchTerm}
@@ -281,7 +291,6 @@ export default function UsersPage() {
               />
             </TabsContent>
 
-            {/* Active Users Tab */}
             <TabsContent value="active" className="space-y-4">
               <UserFilters
                 searchTerm={searchTerm}
@@ -317,7 +326,6 @@ export default function UsersPage() {
               />
             </TabsContent>
 
-            {/* Trash Tab */}
             <TabsContent value="trash" className="space-y-4">
               <UserFilters
                 searchTerm={searchTerm}
@@ -349,15 +357,125 @@ export default function UsersPage() {
             </TabsContent>
           </Tabs>
 
-          {/* Confirmation Dialog */}
-          <ConfirmationDialog
-            open={confirmAction.type !== null}
-            onOpenChange={(open) => !open && setConfirmAction({ type: null, userId: null })}
-            title={confirmationContent.title}
-            description={confirmationContent.description}
-            onConfirm={handleConfirmAction}
-            variant={confirmationContent.variant}
-          />
+          {/* Ban Confirmation Dialog */}
+          {showBanDialog && (
+            <Dialog open={!!showBanDialog} onOpenChange={() => setShowBanDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Ban</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to ban this user? Please provide a reason and additional details.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="banReason">Ban Reason</Label>
+                    <Select value={selectedBanReason} onValueChange={setSelectedBanReason}>
+                      <SelectTrigger id="banReason">
+                        <SelectValue placeholder="Select a reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {banReasons.map((reason) => (
+                          <SelectItem key={reason} value={reason}>
+                            {reason}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="banDescription">Additional Details</Label>
+                    <Textarea
+                      id="banDescription"
+                      value={banDescription}
+                      onChange={(e) => setBanDescription(e.target.value)}
+                      placeholder="Enter additional details about the ban"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowBanDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      if (!selectedBanReason) {
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: "Please select a ban reason.",
+                        })
+                        return
+                      }
+                      await handleConfirmAction("ban", showBanDialog, { reason: selectedBanReason, description: banDescription })
+                      setShowBanDialog(null)
+                    }}
+                    disabled={!selectedBanReason || isLoading}
+                  >
+                    Confirm Ban
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Restore Confirmation Dialog */}
+          {showRestoreDialog && (
+            <Dialog open={!!showRestoreDialog} onOpenChange={() => setShowRestoreDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Restore</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to restore this user?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowRestoreDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      await handleConfirmAction("restore", showRestoreDialog)
+                      setShowRestoreDialog(null)
+                    }}
+                    disabled={isLoading}
+                  >
+                    Confirm
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Permanent Delete Confirmation Dialog */}
+          {showPermanentDeleteDialog && (
+            <Dialog open={!!showPermanentDeleteDialog} onOpenChange={() => setShowPermanentDeleteDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Permanent Delete</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to permanently delete this user? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowPermanentDeleteDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      await handleConfirmAction("permanent-delete", showPermanentDeleteDialog)
+                      setShowPermanentDeleteDialog(null)
+                    }}
+                    disabled={isLoading}
+                  >
+                    Confirm Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </main>
       </div>
       <Toaster />

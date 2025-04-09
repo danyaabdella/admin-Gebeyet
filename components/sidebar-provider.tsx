@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
-import { isBrowser } from "@/lib/environment"
+import { isBrowser } from "@/utils/environment"
 
 type SidebarContextType = {
   isOpen: boolean

@@ -8,6 +8,11 @@ const UserSchema = new Schema(
     role: { type: String, enum: ["customer", "merchant"], default: "customer" },
     image: { type: String, default: " " },
     isBanned: { type: Boolean, default: false },
+    banReason: { 
+          reason: { type: String },
+          description: { type: String }
+      },
+    bannedAt: { type: Date },
     bannedBy: { type: String, required: function () { return this.isBanned; } },
     isEmailVerified: { type: Boolean, default: false },
     address: {

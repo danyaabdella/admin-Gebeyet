@@ -559,11 +559,11 @@ export async function fetchProducts(page: number, limit: number, filters: { isDe
 
 // Other functions (banProduct, unbanProduct, etc.) remain unchanged
 
-export async function banProduct(productId: string) {
+export async function banProduct(productId: string, banReason: object) {
   const response = await fetch(`/api/products`, {
-    method: "PATCH",
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ _id: productId, isBanned: true }),
+    body: JSON.stringify({ _id: productId, isBanned: true, banReason }),
   });
 
   if (!response.ok) throw new Error("Failed to ban product");
@@ -572,7 +572,7 @@ export async function banProduct(productId: string) {
 
 export async function unbanProduct(productId: string) {
   const response = await fetch(`/api/products`, {
-    method: "PATCH",
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ _id: productId, isBanned: false }),
   });
@@ -582,28 +582,7 @@ export async function unbanProduct(productId: string) {
 }
 
 export async function deleteProduct(productId: string) {
-  const response = await fetch(`/api/products`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ _id: productId, isDeleted: true }),
-  });
-
-  if (!response.ok) throw new Error("Failed to delete product");
-  return response.json();
-}
-
-export async function restoreProduct(productId: string) {
-  const response = await fetch(`/api/products`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ _id: productId, isDeleted: false }),
-  });
-
-  if (!response.ok) throw new Error("Failed to restore product");
-  return response.json();
-}
-
-export async function permanentDeleteProduct(productId: string) {
+  console.log("Product ID: ", productId);
   const response = await fetch(`/api/products?_id=${productId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },

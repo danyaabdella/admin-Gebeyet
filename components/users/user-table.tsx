@@ -19,7 +19,7 @@ interface UserTableProps {
   isLoading: boolean
   isTrash?: boolean
   onViewUser: (user: any) => void
-  onAction: (type: "verify" | "ban" | "unban" | "delete" | "restore" | "permanent-delete", userId: string) => void
+  onAction: (type: "ban" | "unban" | "delete" | "restore" | "permanent-delete", userId: string) => void
 }
 
 export function UserTable({ users, isLoading, isTrash = false, onViewUser, onAction }: UserTableProps) {

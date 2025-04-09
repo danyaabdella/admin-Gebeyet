@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react"
 import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { approveAuction, rejectAuction } from "@/lib/data-fetching"
+import { approveAuction, rejectAuction } from "@/utils/data-fetching"
 
 interface AuctionDetailsDialogProps {
   auction: any

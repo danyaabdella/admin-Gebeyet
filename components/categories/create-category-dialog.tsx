@@ -15,8 +15,11 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Session } from "next-auth"
+import { toast } from "../ui/use-toast"
 
 interface CreateCategoryDialogProps {
+  userSession: Session;
   onCategoryAdded: (category: any) => void
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -70,15 +73,34 @@ export function CreateCategoryDialog({ onCategoryAdded, open, onOpenChange }: Cr
       onCategoryAdded(newCategory);
       setDialogOpen(false);
       resetForm();
-    } catch (error) {
-      console.error("Error creating category:", error.message);
-      // Optionally show an error message to user here
+  
+      // Show success toast
+      toast({
+        title: "Success",
+        description: "Category successfully created!",
+      });
+  
+    } catch (error: unknown) {
+      let errorMessage = "An unexpected error occurred";
+      
+      // Handle the unknown error type
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+  
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to create category: ${errorMessage}`,
+      });
+  
+      console.error("Error creating category:", errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
   
-
+  
   const resetForm = () => {
     setName("")
     setDescription("")

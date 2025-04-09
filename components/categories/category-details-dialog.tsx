@@ -37,17 +37,16 @@ export function CategoryDetailsDialog({
   }
 
   const canPerformAction = () => {
-    // Super admins can perform any action
     if (userSession.user.role === "superAdmin") return true
 
-    // Regular admins can only perform actions on categories they created
     return category.createdBy === userSession.user.email
   }
 
   const handleAction = async (type: string) => {
     setIsLoading(true)
     try {
-      await onAction(type, category._id)
+      console.log("Category actions: ", type, category._id);
+      onAction(type, category._id)
     } finally {
       setIsLoading(false)
       onOpenChange(false)

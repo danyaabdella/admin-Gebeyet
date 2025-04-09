@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, SetStateAction } from "react";
 import { Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -36,9 +36,14 @@ export function CategoryPageClient() {
       try {
         const response = await fetch("/api/manageCategory");
         if (!response.ok) throw new Error("Failed to fetch categories");
-        const data = await response.json();
+        const data: { createdBy: string }[] = await response.json(); 
         const uniqueCreators = [...new Set(data.map((cat) => cat.createdBy))];
-        const creators = uniqueCreators.map((email) => ({ id: email, name: email }));
+    
+        const creators: { id: string; name: string }[] = uniqueCreators.map((email) => ({
+          id: email,
+          name: email
+        }));
+    
         setCategoryCreators([{ id: "all", name: "All Creators" }, ...creators]);
       } catch (error) {
         toast({
@@ -48,7 +53,9 @@ export function CategoryPageClient() {
         });
       }
     };
+    
     fetchCreators();
+    
   }, []);
 
   // **Fetch categories with filtering and client-side pagination**
@@ -64,9 +71,7 @@ export function CategoryPageClient() {
       const allCategories = await response.json();
 
       // Filter categories based on isDeleted status
-      const filteredCategories = allCategories.filter(
-        (cat) => (cat.isDeleted || false) === (selectedTab === "deleted")
-      );
+      const filteredCategories = allCategories.filter((cat: { isDeleted?: boolean }) => (cat.isDeleted || false) === (selectedTab === "deleted"));
 
       // Implement client-side pagination
       const startIndex = (currentPage - 1) * itemsPerPage;
@@ -101,19 +106,19 @@ export function CategoryPageClient() {
   };
 
   // **Handle tab change (active/deleted)**
-  const handleTabChange = (value) => {
+  const handleTabChange = (value: SetStateAction<string>) => {
     setSelectedTab(value);
     setCurrentPage(1);
   };
 
   // **Handle creator filter change**
-  const handleCreatorChange = (value) => {
+  const handleCreatorChange = (value: SetStateAction<string>) => {
     setSelectedCreator(value);
     setCurrentPage(1);
   };
 
   // **Handle category actions (delete, restore, edit)**
-  const handleCategoryAction = async (type, categoryId, data) => {
+  const handleCategoryAction = async (type: any, categoryId: any, data?: any) => {
     setIsLoading(true);
     try {
       let message = "";
@@ -128,6 +133,16 @@ export function CategoryPageClient() {
           });
           if (!response.ok) throw new Error(await response.text());
           message = "Category moved to trash";
+          break;
+          
+          case "permanent-delete":
+          response = await fetch(`/api/manageCategory`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ _id: categoryId }),
+          });
+          if (!response.ok) throw new Error(await response.text());
+          message = "Category Deleted successfully";
           break;
 
         case "restore":
@@ -156,13 +171,22 @@ export function CategoryPageClient() {
 
       toast({ title: "Success", description: message });
       await fetchCategories();
-    } catch (error) {
-      const errorMessage = JSON.parse(error.message).error || "An unexpected error occurred";
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to ${type} category: ${errorMessage}`,
-      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        const errorMessage = JSON.parse(error.message).error || "An unexpected error occurred";
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Failed to ${type} category: ${errorMessage}`,
+        });
+      } else {
+        // Handle the case where error is not an instance of Error
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Failed to ${type} category: An unexpected error occurred`,
+        });
+      }    
     } finally {
       setIsLoading(false);
     }
@@ -278,7 +302,6 @@ export function CategoryPageClient() {
             onPageChange={setCurrentPage}
           />
         )}
-
         <Toaster />
       </main>
     </div>

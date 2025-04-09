@@ -28,10 +28,11 @@ export function NavBar() {
   // Navigation links
   const navLinks = [
     { name: "Dashboard", href: "/dashboard" },
-    { name: "Products", href: "/products" },
     { name: "User", href: "/users" },
     { name: "Admin", href: "/admins" },
     { name: "Auction", href: "/auctions" },
+    { name: "Order", href: "/orders" },
+    { name: "Products", href: "/products" },
     { name: "Category", href: "/categories" },
     { name: "Transactions", href: "/transactions" },
   ];

@@ -27,7 +27,7 @@ import { CategoryRevenueChart } from "@/components/charts/category-revenue-chart
 import { ProductSalesChart } from "@/components/charts/product-sales-chart"
 import { AuctionPerformanceChart } from "@/components/charts/auction-performance-chart"
 import { ExportReportButton } from "@/components/export-report-button"
-import { fetchDashboardStats, fetchTopProducts } from "@/lib/data-fetching"
+import { fetchDashboardStats, fetchTopProducts } from "@/utils/data-fetching"
 import { Toaster } from "@/components/toaster"
 import { TransactionTypesChart } from "@/components/transactions/transaction-types-chart"
 
