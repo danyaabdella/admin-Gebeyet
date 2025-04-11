@@ -8,7 +8,7 @@ export async function POST(req) {
     try {
         await isAdminOrSuperAdmin();
 
-        const { tx_ref, reason } = await req.json();
+        const { tx_ref, reason, amount } = await req.json();
         console.log("Data from client: ", tx_ref, reason);
 
         if (!tx_ref || !reason) {
@@ -28,11 +28,12 @@ export async function POST(req) {
             },
             body: new URLSearchParams({
                 reason: reason,
-                amount: "", // If not provided, full amount is refunded
+                amount: amount, // If not provided, full amount is refunded
             }),
         });
-
+        console.log("Response: ", response);
         const result = await response.json();
+        console.log("Result: ", result);
 
         // Fetch the order using transactionRef
         const order = await Order.findOne({ transactionRef: tx_ref });
@@ -70,7 +71,7 @@ export async function POST(req) {
 
             // Update order status
             order.paymentStatus = "Refunded";
-            order.refundReason = reason; // Optionally store the refund reason
+            order.refundReason = reason; 
             await order.save();
 
             return new Response(

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { ArrowLeft, MapPin, Package, User } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -11,31 +10,54 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { OrderStatusTimeline } from "@/components/orders/order-status-timeline"
 import { RefundDialog } from "@/components/orders/refund-dialogue"
-import { fetchOrderById } from "@/utils/api"
+import { PayMerchantDialog } from "@/components/orders/pay-merchant-dialogue"
+import { useParams } from "next/navigation"
+import { OrderDocument } from "@/utils/typeDefinitions"
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
-  const [order, setOrder] = useState<any>(null)
+export default function OrderDetailPage() {
+  const [order, setOrder] = useState<OrderDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null);
+
+  const params = useParams()
 
   useEffect(() => {
     const loadOrder = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
+      setError(null);
       try {
-        const data = await fetchOrderById(params.id)
-        setOrder(data)
-      } catch (error) {
-        console.error("Failed to fetch order:", error)
+        const response = await fetch(`/api/order?id=${params.id}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.message || 'Failed to fetch order');
+        }
+        setOrder(data.order);
+      } catch (err) {
+        console.error('Failed to fetch order:', err);
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Something went wrong');
+        }
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
+    };
+
+    if (params.id) {
+      loadOrder();
     }
+  }, [params.id]);
 
-    loadOrder()
-  }, [params.id])
-
+  // Determine which action button to show
   const showRefundButton = order?.paymentStatus === "Pending Refund"
+  const showPayMerchantButton =
+    order?.status === "Received" && (order?.paymentStatus === "Paid" || order?.paymentStatus === "Pending")
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | number | Date) => {
     const date = new Date(dateString)
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
@@ -46,14 +68,14 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     }).format(date)
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: string | number | bigint) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
     }).format(amount)
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: any) => {
     switch (status) {
       case "Pending":
         return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
@@ -110,8 +132,20 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     )
   }
 
+  if (error) {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center">
+        <h2 className="text-xl font-semibold text-red-600">Error</h2>
+        <p>{error}</p>
+        <Button asChild className="mt-4">
+          <Link href="/orders">Back to Orders</Link>
+        </Button>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex min-h-screen w-full flex-col -mt-10 sm:-mt-0">
+    <div className="flex min-h-screen w-full flex-col">
       <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" asChild>
@@ -121,11 +155,25 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             </Link>
           </Button>
           <div>
-            <h1 className="text-xl font-semibold md:text-2xl">Order #{order.transactionRef}</h1>
-            <p className="text-sm text-muted-foreground">Placed on {formatDate(order.orderDate)}</p>
+            <h1 className="text-xl font-semibold md:text-2xl">Order #{order?.transactionRef}</h1>
+            <p className="text-sm text-muted-foreground">
+              Placed on {order?.orderDate ? formatDate(order.orderDate) : 'N/A'}
+            </p>          
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {showRefundButton && <RefundDialog orderId={order.id} />}
+            {showRefundButton && <RefundDialog orderId={order.id} amount={order.totalPrice} transactionRef={order.transactionRef} />}
+            {showPayMerchantButton && (
+              <PayMerchantDialog
+                orderId={order._id}
+                merchantDetails={{
+                  account_name: order.merchantDetail.account_name,
+                  account_number: order.merchantDetail.account_number,
+                  amount: order.totalPrice,
+                  currency: "ETB", 
+                  bank_code: order.merchantDetail.bank_code,
+                }}
+              />
+            )}
             <Button variant="outline">Update Status</Button>
           </div>
         </div>
@@ -136,22 +184,22 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
               <CardTitle className="text-sm font-medium">Order Status</CardTitle>
               <div className="flex items-center space-x-2">
                 <Badge variant="outline" className={getStatusColor(order.status)}>
-                  {order.status}
+                  {order?.status}
                 </Badge>
-                <Badge variant="outline" className={getPaymentStatusColor(order.paymentStatus)}>
-                  {order.paymentStatus}
+                <Badge variant="outline" className={getPaymentStatusColor(order?.paymentStatus || "Pending")}>
+                  {order?.paymentStatus}
                 </Badge>
               </div>
             </CardHeader>
             <CardContent>
-              <OrderStatusTimeline status={order.status} />
+            <OrderStatusTimeline status={order?.status ?? 'Pending'} />
             </CardContent>
           </Card>
 
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
-              <CardDescription>Transaction Reference: {order.transactionRef}</CardDescription>
+              <CardDescription>Transaction Reference: {order?.transactionRef}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -159,7 +207,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                   <table className="w-full">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="p-3 text-left font-medium">Product</th>
+                        <th className="p-3 text-left font-medium">Item</th>
                         <th className="p-3 text-center font-medium">Quantity</th>
                         <th className="p-3 text-center font-medium">Price</th>
                         <th className="p-3 text-center font-medium">Delivery</th>
@@ -167,43 +215,78 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                       </tr>
                     </thead>
                     <tbody>
-                      {order.products.map((product, index) => (
-                        <tr key={product.productId} className={index !== order.products.length - 1 ? "border-b" : ""}>
-                          <td className="p-3 text-left">{product.productName}</td>
-                          <td className="p-3 text-center">{product.quantity}</td>
-                          <td className="p-3 text-center">{formatCurrency(product.price)}</td>
+                      {order?.products && order?.products.length > 0 ? (
+                        order.products.map((product, index) => (
+                          <tr key={product.productId.toString()} className={index !== order.products.length - 1 ? "border-b" : ""}>
+                            <td className="p-3 text-left">{product.productName}</td>
+                            <td className="p-3 text-center">{product.quantity}</td>
+                            <td className="p-3 text-center">{formatCurrency(product.price)}</td>
+                            <td className="p-3 text-center">
+                              {product.delivery === "FREE" ? (
+                                <span className="text-green-600">Free</span>
+                              ) : (
+                                <>
+                                  {product.delivery}: {formatCurrency(product.deliveryPrice)}
+                                </>
+                              )}
+                            </td>
+                            <td className="p-3 text-right">
+                              {formatCurrency(
+                                product.price * product.quantity +
+                                  (product.delivery === "PERPIECS"
+                                    ? product.deliveryPrice * product.quantity
+                                    : product.delivery === "FLAT"
+                                      ? product.deliveryPrice
+                                      : 0),
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : order?.auction && order.auction.auctionId ? (
+                        <tr>
+                           <td className="p-3 text-left">
+                             Auction Item (ID: {order?.auction.auctionId?.toString()})
+                           </td>
+                          <td className="p-3 text-center">1</td>
+                          <td className="p-3 text-center">{formatCurrency(order?.totalPrice)}</td>
                           <td className="p-3 text-center">
-                            {product.delivery === "FREE" ? (
+                            {order?.auction.delivery === "FREE" ? (
                               <span className="text-green-600">Free</span>
                             ) : (
                               <>
-                                {product.delivery}: {formatCurrency(product.deliveryPrice)}
+                               {formatCurrency(order?.auction.deliveryPrice ?? 0)}
                               </>
                             )}
                           </td>
                           <td className="p-3 text-right">
                             {formatCurrency(
-                              product.price * product.quantity +
-                                (product.delivery === "PERPIECS"
-                                  ? product.deliveryPrice * product.quantity
-                                  : product.delivery === "FLAT"
-                                    ? product.deliveryPrice
-                                    : 0),
+                              (order?.totalPrice ?? 0) + ((order?.auction?.delivery === "PAID") ? (order?.auction?.deliveryPrice ?? 0) : 0)
                             )}
                           </td>
                         </tr>
-                      ))}
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="p-3 text-center">
+                            No items found
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                     <tfoot>
                       <tr className="border-t">
                         <td colSpan={4} className="p-3 text-right font-medium">
                           Total
                         </td>
-                        <td className="p-3 text-right font-bold">{formatCurrency(order.totalPrice)}</td>
+                        <td className="p-3 text-right font-bold">{formatCurrency(order?.totalPrice || 0)}</td>
                       </tr>
                     </tfoot>
                   </table>
                 </div>
+                {order?.refundReason && (
+                  <div className="text-sm text-red-600">
+                    <strong>Refund Reason:</strong> {order?.refundReason}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -218,17 +301,22 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold">{order.customerDetail.customerName}</h3>
-                  <p className="text-sm">{order.customerDetail.customerEmail}</p>
-                  <p className="text-sm">{order.customerDetail.phoneNumber}</p>
+                  <h3 className="font-semibold">{order?.customerDetail.customerName}</h3>
+                  <p className="text-sm">{order?.customerDetail.customerEmail}</p>
+                  <p className="text-sm">{order?.customerDetail.phoneNumber}</p>
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold flex items-center gap-2">
                     <MapPin className="h-4 w-4" /> Shipping Address
                   </h4>
                   <p className="text-sm">
-                    {order.customerDetail.address.city}, {order.customerDetail.address.state}
+                    {order?.customerDetail.address.city}, {order?.customerDetail.address.state}
                   </p>
+                  {order?.location && order?.location.coordinates && (
+                    <p className="text-sm text-muted-foreground">
+                      Coordinates: {order?.location.coordinates.join(", ")}
+                    </p>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -244,24 +332,24 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold">{order.merchantDetail.merchantName}</h3>
-                  <p className="text-sm">{order.merchantDetail.merchantEmail}</p>
-                  <p className="text-sm">{order.merchantDetail.phoneNumber}</p>
+                  <h3 className="font-semibold">{order?.merchantDetail.merchantName}</h3>
+                  <p className="text-sm">{order?.merchantDetail.merchantEmail}</p>
+                  <p className="text-sm">{order?.merchantDetail.phoneNumber}</p>
                 </div>
                 <Separator />
                 <div className="space-y-2">
                   <h4 className="text-sm font-semibold">Payment Details</h4>
                   <div className="grid grid-cols-2 gap-1 text-sm">
                     <span className="text-muted-foreground">Account Name:</span>
-                    <span>{order.merchantDetail.account_name}</span>
+                    <span>{order?.merchantDetail.account_name}</span>
                     <span className="text-muted-foreground">Account Number:</span>
-                    <span>{order.merchantDetail.account_number}</span>
+                    <span>{order?.merchantDetail.account_number}</span>
                     <span className="text-muted-foreground">Bank Code:</span>
-                    <span>{order.merchantDetail.bank_code}</span>
-                    {order.merchantDetail.merchantRefernce && (
+                    <span>{order?.merchantDetail.bank_code}</span>
+                    {order?.merchantDetail.merchantRefernce && (
                       <>
                         <span className="text-muted-foreground">Reference:</span>
-                        <span>{order.merchantDetail.merchantRefernce}</span>
+                        <span>{order?.merchantDetail.merchantRefernce}</span>
                       </>
                     )}
                   </div>

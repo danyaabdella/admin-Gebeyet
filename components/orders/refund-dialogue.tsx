@@ -15,13 +15,14 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { processRefund } from "@/utils/api"
 
 interface RefundDialogProps {
   orderId: string
+  amount: number
+  transactionRef: string
 }
 
-export function RefundDialog({ orderId }: RefundDialogProps) {
+export function RefundDialog({ orderId, amount, transactionRef }: RefundDialogProps) {
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -29,21 +30,39 @@ export function RefundDialog({ orderId }: RefundDialogProps) {
 
   const handleRefund = async () => {
     setIsSubmitting(true)
-
+  
     try {
-      const result = await processRefund(orderId, reason)
-
-      toast({
-        title: "Refund processed successfully",
-        description: `Order #${orderId} has been refunded.`,
+      const response = await fetch("/api/refund", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tx_ref: transactionRef,
+          reason: reason,
+          amount: amount
+        }),
       })
-
+  
+      const data = await response.json()
+  
+      if (!response.ok) {
+        throw new Error(data.error || "Refund failed")
+      }
+  
+      toast({
+        title: "Refund processed",
+        description: data.message || `Order #${transactionRef} has been refunded.`,
+      })
+  
       setOpen(false)
       setReason("")
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Refund error:", error)
+  
       toast({
         title: "Refund failed",
-        description: "There was an error processing the refund. Please try again.",
+        description: error.message || "Something went wrong during refund.",
         variant: "destructive",
       })
     } finally {
@@ -63,7 +82,7 @@ export function RefundDialog({ orderId }: RefundDialogProps) {
         <DialogHeader>
           <DialogTitle>Process Refund</DialogTitle>
           <DialogDescription>
-            You are about to process a refund for order #{orderId}. This action cannot be undone.
+            You are about to process a refund for order #{transactionRef}. This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">

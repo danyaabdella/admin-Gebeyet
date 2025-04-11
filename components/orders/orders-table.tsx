@@ -31,25 +31,29 @@ export function OrdersTable() {
 
   useEffect(() => {
     const loadOrders = async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
-        const result = await fetchOrders({ ...filters, page })
-        setOrders(result.orders)
-        setTotalPages(result.totalPages)
+        const response = await fetch("/api/order");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const result = await response.json();
+        setOrders(result.orders);
+        setTotalPages(result.totalPages);
       } catch (error) {
-        console.error("Failed to fetch orders:", error)
+        console.error("Failed to fetch orders:", error);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-
+    };
+  
     const timer = setTimeout(() => {
-      loadOrders()
-    }, 0)
-
-    return () => clearTimeout(timer)
-  }, [filters, page])
-
+      loadOrders();
+    }, 0);
+  
+    return () => clearTimeout(timer);
+  }, [filters, page]);
+  
   const handleFilterChange = (newFilters: OrderFilters) => {
     setFilters(newFilters)
     setPage(1)
@@ -202,14 +206,14 @@ export function OrdersTable() {
               orders.map((order) => (
                 <TableRow
                   key={order.id}
-                  onClick={() => handleRowClick(order.id)}
+                  onClick={() => handleRowClick(order._id)}
                   className="cursor-pointer hover:bg-muted/50"
                 >
                   {/* Transaction Ref: Hidden on small screens */}
                   <TableCell className="hidden sm:table-cell font-medium">{order.transactionRef}</TableCell>
-                  <TableCell>{order.customerName}</TableCell>
+                  <TableCell>{order.customerDetail.customerName}</TableCell>
                   {/* Merchant: Hidden on small screens */}
-                  <TableCell className="hidden sm:table-cell">{order.merchantName}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{order.merchantDetail.merchantName}</TableCell>
                   <TableCell>{formatCurrency(order.totalPrice)}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={getStatusColor(order.status)}>
