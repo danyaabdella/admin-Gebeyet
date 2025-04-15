@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
 import { useEffect, useState } from "react"
@@ -18,39 +19,53 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<OrderDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null);
+  const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
+  const [isPayMerchantDialogOpen, setIsPayMerchantDialogOpen] = useState(false);
 
   const params = useParams()
 
-  useEffect(() => {
-    const loadOrder = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const response = await fetch(`/api/order?id=${params.id}`);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.message || 'Failed to fetch order');
-        }
-        setOrder(data.order);
-      } catch (err) {
-        console.error('Failed to fetch order:', err);
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError('Something went wrong');
-        }
-      } finally {
-        setIsLoading(false);
+  const loadOrder = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/order?id=${params.id}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch order');
+      }
+      setOrder(data.order);
+    } catch (err) {
+      console.error('Failed to fetch order:', err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Something went wrong');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (params.id) {
       loadOrder();
     }
   }, [params.id]);
+
+  // Handle successful refund
+  const handleRefundSuccess = () => {
+    setIsRefundDialogOpen(false);
+    loadOrder(); // Refetch order data
+  };
+
+  // Handle successful pay to merchant
+  const handlePayMerchantSuccess = () => {
+    setIsPayMerchantDialogOpen(false);
+    loadOrder(); // Refetch order data
+  };
 
   // Determine which action button to show
   const showRefundButton = order?.paymentStatus === "Pending Refund"
@@ -161,7 +176,16 @@ export default function OrderDetailPage() {
             </p>          
           </div>
           <div className="ml-auto flex items-center gap-2">
-            {showRefundButton && <RefundDialog orderId={order.id} amount={order.totalPrice} transactionRef={order.transactionRef} />}
+            {showRefundButton && (
+              <RefundDialog
+                orderId={order.id}
+                amount={order.totalPrice}
+                transactionRef={order.transactionRef}
+                open={isRefundDialogOpen}
+                onOpenChange={setIsRefundDialogOpen}
+                onSuccess={handleRefundSuccess}
+              />
+            )}
             {showPayMerchantButton && (
               <PayMerchantDialog
                 orderId={order._id}
@@ -169,9 +193,12 @@ export default function OrderDetailPage() {
                   account_name: order.merchantDetail.account_name,
                   account_number: order.merchantDetail.account_number,
                   amount: order.totalPrice,
-                  currency: "ETB", 
+                  currency: "ETB",
                   bank_code: order.merchantDetail.bank_code,
                 }}
+                open={isPayMerchantDialogOpen}
+                onOpenChange={setIsPayMerchantDialogOpen}
+                onSuccess={handlePayMerchantSuccess}
               />
             )}
             <Button variant="outline">Update Status</Button>
@@ -192,7 +219,7 @@ export default function OrderDetailPage() {
               </div>
             </CardHeader>
             <CardContent>
-            <OrderStatusTimeline status={order?.status ?? 'Pending'} />
+              <OrderStatusTimeline status={order?.status ?? 'Pending'} />
             </CardContent>
           </Card>
 
@@ -244,9 +271,9 @@ export default function OrderDetailPage() {
                         ))
                       ) : order?.auction && order.auction.auctionId ? (
                         <tr>
-                           <td className="p-3 text-left">
-                             Auction Item (ID: {order?.auction.auctionId?.toString()})
-                           </td>
+                          <td className="p-3 text-left">
+                            Auction Item (ID: {order?.auction.auctionId?.toString()})
+                          </td>
                           <td className="p-3 text-center">1</td>
                           <td className="p-3 text-center">{formatCurrency(order?.totalPrice)}</td>
                           <td className="p-3 text-center">
@@ -254,7 +281,7 @@ export default function OrderDetailPage() {
                               <span className="text-green-600">Free</span>
                             ) : (
                               <>
-                               {formatCurrency(order?.auction.deliveryPrice ?? 0)}
+                                {formatCurrency(order?.auction.deliveryPrice ?? 0)}
                               </>
                             )}
                           </td>

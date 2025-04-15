@@ -33,7 +33,6 @@ export async function GET(req) {
 
         return new Response(JSON.stringify(user), { status: 200 });
     } catch (error) {
-        console.error('Error fetching user data:', error);
         return new Response(JSON.stringify({ error: 'Internal server error' }), { status: 500 });
     }
 }

@@ -162,8 +162,11 @@ const mockOrders = [
     maxPrice?: number
     page?: number
     limit?: number
+    state?: string;
+    city?: string;
+    country?: string;
   }
-  
+
   // API functions
   export async function fetchOrders(filters: OrderFilters = {}) {
     // In a real implementation, this would be an API call with filters

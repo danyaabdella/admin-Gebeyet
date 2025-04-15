@@ -8,13 +8,26 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { OrderFilters } from "@/utils/api"
+import {
+  CitySelect,
+  CountrySelect,
+  StateSelect,
+  LanguageSelect,
+  RegionSelect,
+  PhonecodeSelect
+} from "react-country-state-city";
 
 interface OrdersFilterProps {
   onFilterChange: (filters: OrderFilters) => void
-  isLoading: boolean
+  isLoading: boolean;
+  merchants: string[];
 }
 
-export function OrdersFilter({ onFilterChange, isLoading }: OrdersFilterProps) {
+export function OrdersFilter({
+  onFilterChange,
+  isLoading,
+  merchants,
+}: OrdersFilterProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [status, setStatus] = useState("")
   const [paymentStatus, setPaymentStatus] = useState("")
@@ -22,7 +35,6 @@ export function OrdersFilter({ onFilterChange, isLoading }: OrdersFilterProps) {
   const [minPrice, setMinPrice] = useState<string>("")
   const [maxPrice, setMaxPrice] = useState<string>("")
 
-  // Only apply filters when the user explicitly submits them or after a debounce period
   const applyFilters = () => {
     const filters: OrderFilters = {
       searchTerm: searchTerm || undefined,
@@ -36,7 +48,8 @@ export function OrdersFilter({ onFilterChange, isLoading }: OrdersFilterProps) {
     onFilterChange(filters)
   }
 
-  // Use a debounced version of applyFilters for search input
+  console.log("Merchants: ", merchants);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       applyFilters()
@@ -45,12 +58,10 @@ export function OrdersFilter({ onFilterChange, isLoading }: OrdersFilterProps) {
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  // Apply filters when select inputs change
   useEffect(() => {
     applyFilters()
   }, [status, paymentStatus, merchantName])
 
-  // Apply filters when price inputs change, with debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       applyFilters()
@@ -133,11 +144,11 @@ export function OrdersFilter({ onFilterChange, isLoading }: OrdersFilterProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Merchants</SelectItem>
-                  <SelectItem value="Tech Store">Tech Store</SelectItem>
-                  <SelectItem value="Fashion Outlet">Fashion Outlet</SelectItem>
-                  <SelectItem value="Home Goods">Home Goods</SelectItem>
-                  <SelectItem value="Electronics Hub">Electronics Hub</SelectItem>
-                  <SelectItem value="Sports Gear">Sports Gear</SelectItem>
+                  {merchants.map((merchant) => (
+                    <SelectItem key={merchant} value={merchant}>
+                      {merchant}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

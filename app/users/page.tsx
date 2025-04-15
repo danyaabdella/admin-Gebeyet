@@ -10,12 +10,13 @@ import { UserFilters } from "@/components/users/user-filters"
 import { PaginationControls } from "@/components/users/pagination-controls"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/toaster"
-import { banUser, deleteUser, permanentlyDeleteUser, restoreUser, unbanUser, verifyUser } from "@/utils/adminFunctions"
+import { banUser, deleteUser, permanentlyDeleteUser, restoreUser, unbanUser, approveUser, rejectUser } from "@/utils/adminFunctions"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 
 export default function UsersPage() {
   // State definitions
@@ -33,15 +34,28 @@ export default function UsersPage() {
     totalPages: 1,
   })
   const [showBanDialog, setShowBanDialog] = useState<string | null>(null)
+  const [showApproveDialog, setShowApproveDialog] = useState<string | null>(null)
+  const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null)
   const [showRestoreDialog, setShowRestoreDialog] = useState<string | null>(null)
   const [showPermanentDeleteDialog, setShowPermanentDeleteDialog] = useState<string | null>(null)
+  const [showConfirmDialog, setShowConfirmDialog] = useState<{ type: string, userId: string, message: string } | null>(null)
   const [selectedBanReason, setSelectedBanReason] = useState("")
   const [banDescription, setBanDescription] = useState("")
+  const [selectedRejectionReason, setSelectedRejectionReason] = useState("")
+  const [rejectionDescription, setRejectionDescription] = useState("")
+  const [uniqueTin, setUniqueTin] = useState<string | null>(null);
 
-  // Predefined ban reasons
+  // Predefined reasons
   const banReasons = [
     "Inappropriate behavior",
     "Spam",
+    "Policy violation",
+    "Other",
+  ]
+
+  const rejectionReasons = [
+    "Incomplete profile",
+    "Invalid documents",
     "Policy violation",
     "Other",
   ]
@@ -68,38 +82,50 @@ export default function UsersPage() {
     loadAllUsers()
   }, [])
 
-  // Filter users based on current state
   const getFilteredUsers = () => {
-    let filtered = [...allUsers]
+    let filtered = [...allUsers];
+  
+    // Apply search term filter
     if (searchTerm) {
-      const lowerSearch = searchTerm.toLowerCase()
+      const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter(user =>
         (user.fullName?.toLowerCase().includes(lowerSearch) ||
          user.address?.state?.toLowerCase().includes(lowerSearch) ||
          user.address?.city?.toLowerCase().includes(lowerSearch))
-      )
+      );
     }
+  
+    // Apply role filter
     if (roleFilter !== "all") {
-      filtered = filtered.filter(user => user.role === roleFilter)
+      filtered = filtered.filter(user => user.role === roleFilter);
     }
-    if (approvalStatusFilter !== "all" && roleFilter === "merchant") {
-      filtered = filtered.filter(user => user.role === "merchant" && user.approvalStatus === approvalStatusFilter)
-    } else {
+  
+    // Apply approval status filter for merchants
+    if (roleFilter === "merchant" && approvalStatusFilter !== "all") {
+      filtered = filtered.filter(user => user.approvalStatus === approvalStatusFilter);
+    }
+  
+    // Apply verification status filter
+    if (statusFilter !== "all") {
       if (statusFilter === "verified") {
-        filtered = filtered.filter(user => user.isEmailVerified && !user.isBanned && !user.isDeleted)
+        filtered = filtered.filter(user => user.isEmailVerified && !user.isBanned && !user.isDeleted);
       } else if (statusFilter === "unverified") {
-        filtered = filtered.filter(user => !user.isEmailVerified && !user.isBanned && !user.isDeleted)
+        filtered = filtered.filter(user => !user.isEmailVerified && !user.isBanned && !user.isDeleted);
       } else if (statusFilter === "banned") {
-        filtered = filtered.filter(user => user.isBanned && !user.isDeleted)
+        filtered = filtered.filter(user => user.isBanned && !user.isDeleted);
       }
     }
+  
+    // Apply tab filter
     if (activeTab === "active") {
-      filtered = filtered.filter(user => !user.isDeleted)
+      filtered = filtered.filter(user => !user.isDeleted);
     } else if (activeTab === "trash") {
-      filtered = filtered.filter(user => user.isDeleted)
+      filtered = filtered.filter(user => user.isDeleted);
     }
-    return filtered
-  }
+    // Note: "all" tab shows all users regardless of isDeleted status
+  
+    return filtered;
+  };
 
   // Compute filtered and paginated users
   const filteredUsers = getFilteredUsers()
@@ -127,10 +153,15 @@ export default function UsersPage() {
 
   // Initiate a user action with confirmation
   const handleUserAction = (
-    type: "verify" | "ban" | "unban" | "delete" | "restore" | "permanent-delete",
+    type: "approve" | "reject" | "ban" | "unban" | "delete" | "restore" | "permanent-delete",
     userId: string
   ) => {
     switch (type) {
+      case "reject":
+        setShowRejectDialog(userId)
+        setSelectedRejectionReason("")
+        setRejectionDescription("")
+        break
       case "ban":
         setShowBanDialog(userId)
         setSelectedBanReason("")
@@ -142,41 +173,54 @@ export default function UsersPage() {
       case "permanent-delete":
         setShowPermanentDeleteDialog(userId)
         break
-      default:
-        // For other actions, you could use a generic dialog if needed
-        handleConfirmAction(type, userId)
+      case "approve":
+        setShowApproveDialog(userId)
+        setUniqueTin("")
+        break
+      case "unban":
+        setShowConfirmDialog({ type, userId, message: "Are you sure you want to unban this user?" })
+        break
+      case "delete":
+        setShowConfirmDialog({ type, userId, message: "Are you sure you want to delete this user?" })
         break
     }
   }
 
   // Execute confirmed user action
   const handleConfirmAction = async (
-    type: "verify" | "ban" | "unban" | "delete" | "restore" | "permanent-delete",
+    type: "approve" | "reject" | "ban" | "unban" | "delete" | "restore" | "permanent-delete",
     userId: string,
-    banData?: { reason: string; description: string }
+    actionData?: Record<string, any>
   ) => {
     try {
       let result
       switch (type) {
-        case "verify":
-          result = await verifyUser(userId)
+        case "approve":
+          if (uniqueTin) {
+            result = await approveUser(userId, uniqueTin);
           if (result.success) {
             setAllUsers(prev => prev.map(user =>
-              user._id === userId ? { ...user, isEmailVerified: true } : user
+              user._id === userId ? { ...user, approvalStatus: "approved", rejectionReason: null } : user
+            ))
+          }} else {
+            console.error("Unique TIN is required to approve user.");
+          }
+          break
+        case "reject":
+          if (!actionData) throw new Error("Rejection reason is required")
+            result = await rejectUser(userId, actionData as { reason: string; description: string });
+          if (result.success) {
+            setAllUsers(prev => prev.map(user =>
+              user._id === userId ? { ...user, approvalStatus: "rejected", rejectionReason: actionData } : user
             ))
           }
           break
         case "ban":
-          result = await banUser(userId, banData)
+          if (!actionData) throw new Error("Ban reason is required")
+          result = await banUser(userId, actionData as { reason: string; description: string })
           if (result.success) {
             setAllUsers(prev => prev.map(user =>
-              user._id === userId ? {
-                ...user,
-                isBanned: true,
-                banReason: { reason: banData?.reason, description: banData?.description },
-                bannedAt: new Date(),
-                // bannedBy will be set by the server
-              } : user
+              user._id === userId ? { ...user, isBanned: true, banReason: actionData } : user
             ))
           }
           break
@@ -184,7 +228,7 @@ export default function UsersPage() {
           result = await unbanUser(userId)
           if (result.success) {
             setAllUsers(prev => prev.map(user =>
-              user._id === userId ? { ...user, isBanned: false, banReason: null, bannedAt: null, bannedBy: null } : user
+              user._id === userId ? { ...user, isBanned: false, banReason: null, bannedBy: null } : user
             ))
           }
           break
@@ -220,19 +264,19 @@ export default function UsersPage() {
         throw new Error(result?.message || `Failed to ${type} user`)
       }
     } catch (error) {
-        if (error instanceof Error) {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: error.message || `Failed to ${type} user. Please try again.`,
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: `Failed to ${type} user. Please try again.`,
-          });
-        }
+      if (error instanceof Error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || `Failed to ${type} user. Please try again.`,
+        })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Failed to ${type} user. Please try again.`,
+        })
+      }
     }
   }
 
@@ -308,7 +352,7 @@ export default function UsersPage() {
               <Card className="overflow-hidden">
                 <CardHeader className="p-4 bg-muted/50">
                   <CardTitle>Active Users</CardTitle>
-                  <CardDescription>Manage active users</CardDescription>
+                  <CardDescription>Manage active users in the marketplace system</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                   <UserTable
@@ -330,20 +374,25 @@ export default function UsersPage() {
               <UserFilters
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
-                showRoleFilter={false}
-                showStatusFilter={false}
-                showApprovalStatusFilter={false}
+                roleFilter={roleFilter}
+                setRoleFilter={setRoleFilter}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                approvalStatusFilter={approvalStatusFilter}
+                setApprovalStatusFilter={setApprovalStatusFilter}
+                showRoleFilter={true}
+                showStatusFilter={true}
+                showApprovalStatusFilter={roleFilter === "merchant"}
               />
               <Card className="overflow-hidden">
                 <CardHeader className="p-4 bg-muted/50">
-                  <CardTitle>Deleted Users</CardTitle>
-                  <CardDescription>Manage deleted users</CardDescription>
+                  <CardTitle>Trash</CardTitle>
+                  <CardDescription>Manage deleted users in the marketplace system</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                   <UserTable
                     users={paginatedUsers}
                     isLoading={isLoading}
-                    isTrash={true}
                     onViewUser={() => {}}
                     onAction={handleUserAction}
                   />
@@ -420,6 +469,144 @@ export default function UsersPage() {
             </Dialog>
           )}
 
+          {showApproveDialog && (
+              <Dialog open={!!showApproveDialog} onOpenChange={() => setShowApproveDialog(null)}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Confirm Approve</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to approve this user? Please provide a unique TIN number.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="uniqueTin">Unique TIN Number</Label>
+                      <Input
+                        id="uniqueTin"
+                        value={uniqueTin ?? ""}
+                        onChange={(e) => setUniqueTin(e.target.value)}
+                        placeholder="Enter unique TIN number"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowApproveDialog(null)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={async () => {
+                        if (!uniqueTin) {
+                          toast({
+                            variant: "destructive",
+                            title: "Error",
+                            description: "Please enter unique TIN number.",
+                          });
+                          return;
+                        }
+                        await handleConfirmAction("approve", showApproveDialog, { uniqueTin });
+                        setShowApproveDialog(null);
+                      }}
+                      disabled={!uniqueTin || isLoading}
+                    >
+                      Confirm Approve
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+          )}
+
+          {/* Reject Confirmation Dialog */}
+          {showRejectDialog && (
+            <Dialog open={!!showRejectDialog} onOpenChange={() => setShowRejectDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Rejection</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to reject this user? Please provide a reason and additional details.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="rejectionReason">Rejection Reason</Label>
+                    <Select value={selectedRejectionReason} onValueChange={setSelectedRejectionReason}>
+                      <SelectTrigger id="rejectionReason">
+                        <SelectValue placeholder="Select a reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rejectionReasons.map((reason) => (
+                          <SelectItem key={reason} value={reason}>
+                            {reason}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="rejectionDescription">Additional Details</Label>
+                    <Textarea
+                      id="rejectionDescription"
+                      value={rejectionDescription}
+                      onChange={(e) => setRejectionDescription(e.target.value)}
+                      placeholder="Enter additional details about the rejection"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowRejectDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      if (!selectedRejectionReason) {
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: "Please select a rejection reason.",
+                        })
+                        return
+                      }
+                      await handleConfirmAction("reject", showRejectDialog, { reason: selectedRejectionReason, description: rejectionDescription })
+                      setShowRejectDialog(null)
+                    }}
+                    disabled={!selectedRejectionReason || isLoading}
+                  >
+                    Confirm Rejection
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Generic Confirmation Dialog */}
+          {showConfirmDialog && (
+            <Dialog open={!!showConfirmDialog} onOpenChange={() => setShowConfirmDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Action</DialogTitle>
+                  <DialogDescription>
+                    {showConfirmDialog.message}
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowConfirmDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      await handleConfirmAction(showConfirmDialog.type as "approve" | "reject" | "ban" | "unban" | "delete" | "restore" | "permanent-delete", showConfirmDialog.userId);
+                      setShowConfirmDialog(null)
+                    }}
+                    disabled={isLoading}
+                  >
+                    Confirm
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
           {/* Restore Confirmation Dialog */}
           {showRestoreDialog && (
             <Dialog open={!!showRestoreDialog} onOpenChange={() => setShowRestoreDialog(null)}>
@@ -482,3 +669,4 @@ export default function UsersPage() {
     </div>
   )
 }
+

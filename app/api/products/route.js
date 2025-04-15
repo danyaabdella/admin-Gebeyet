@@ -40,6 +40,8 @@ export async function GET(req) {
   if (minDeliveryPrice) filter.deliveryPrice = { ...filter.deliveryPrice, $gte: minDeliveryPrice };
   if (maxDeliveryPrice) filter.deliveryPrice = { ...filter.deliveryPrice, $lte: maxDeliveryPrice };
   if (categoryId && categoryId !== "all") filter["category.categoryId"] = categoryId;
+  
+  console.log("Filters: ", filter)
 
   let aggregationSteps = [];
 
@@ -91,8 +93,8 @@ export async function PUT(req) {
     );
   }
 
-  const { _id, isBanned, banReason } = await req.json();
-  console.log("Update infos: ", _id, isBanned, banReason);
+  const { _id, isBanned, banReason, banDescription } = await req.json();
+  console.log("Update infos: ", _id, isBanned, banReason, banDescription);
 
   if (!_id) {
     return new Response(JSON.stringify({ error: "Product ID is required" }), { status: 400 });
@@ -109,8 +111,8 @@ export async function PUT(req) {
 
       if (isBanned) {
         product.banReason = {
-          reason: banReason.reason || "No reason provided",
-          description: banReason.description || "",
+          reason: banReason || "No reason provided",
+          description: banDescription || "",
         };
         product.bannedAt = new Date();
       } else {
@@ -140,7 +142,6 @@ export async function PUT(req) {
     );
   }
 }
-
 
 export async function DELETE(req) {
   await isAdminOrSuperAdmin();

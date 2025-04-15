@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
-import Order from '../../../models/Order';
-import {isAdminOrSuperAdmin } from '../../../utils/functions';
+import Order from '@/models/Order';
+import { isAdminOrSuperAdmin } from '@/utils/functions';
 import { NextResponse } from 'next/server';
 
 const CHAPA_SECRET_KEY = "CHASECK_TEST-s6oBbGS04bRkcXLT7P6x2do2EKcCXfJ6";
@@ -39,7 +39,6 @@ export async function POST(req) {
 
         // Handle Chapa's response
         if (result.status === "success") {
-            console.log("ID: ", _id);
             const order = await Order.findById(_id);
             console.log("Order: ", order);
       

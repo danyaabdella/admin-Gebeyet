@@ -30,7 +30,7 @@ export function Sidebar() {
             { href: "/orders", label: "Order", icon: Package },  // Using Package icon
             { href: "/products", label: "Product", icon: ShoppingBag },
             { href: "/categories", label: "Category", icon: Tag },
-            { href: "/transactions", label: "Transactions", icon: CreditCard },
+            // { href: "/transactions", label: "Transactions", icon: CreditCard },
           ].map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} passHref>
               <Button

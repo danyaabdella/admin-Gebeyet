@@ -16,18 +16,20 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Skeleton } from "@/components/ui/skeleton"
-import { type OrderFilters, fetchOrders } from "@/utils/api"
+import { type OrderFilters } from "@/utils/api"
 import { OrdersFilter } from "@/components/orders/orders-filter"
 
 export function OrdersTable() {
   const router = useRouter()
   const [orders, setOrders] = useState<any[]>([])
+  const [filteredOrders, setFilteredOrders] = useState<any[]>([])
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [filters, setFilters] = useState<OrderFilters>({})
-  // Add state to control filter visibility
   const [isFilterVisible, setIsFilterVisible] = useState(false)
+  const [merchants, setMerchants] = useState<string[]>([]);
+  const ordersPerPage = 10
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -39,24 +41,91 @@ export function OrdersTable() {
         }
         const result = await response.json();
         setOrders(result.orders);
-        setTotalPages(result.totalPages);
+        setFilteredOrders(result.orders);
+        setTotalPages(Math.ceil(result.orders.length / ordersPerPage));
+    
+        const uniqueMerchants = Array.from(
+          new Set(result.orders.map((order: { merchantDetail: { merchantName: any } }) => order.merchantDetail.merchantName))
+        ) as string[];
+    
+        setMerchants(uniqueMerchants); 
       } catch (error) {
         console.error("Failed to fetch orders:", error);
       } finally {
         setIsLoading(false);
       }
     };
+    
+
+    loadOrders()
+  }, [])
+
+  useEffect(() => {
+    // Apply filters to the orders array
+    const applyFilters = () => {
+      let filtered = [...orders]
   
-    const timer = setTimeout(() => {
-      loadOrders();
-    }, 0);
+      if (filters.searchTerm) {
+        const term = filters.searchTerm.toLowerCase()
+        filtered = filtered.filter(
+          (order) =>
+            order.customerDetail.customerName.toLowerCase().includes(term) ||
+            order.transactionRef.toLowerCase().includes(term) ||
+            order.merchantDetail.merchantName.toLowerCase().includes(term) ||
+            order.products.some(
+              (product: any) =>
+                product.productName.toLowerCase().includes(term) ||
+                product.delivery.toLowerCase().includes(term)
+            )
+        )
+      }
   
-    return () => clearTimeout(timer);
-  }, [filters, page]);
+      if (filters.city) {
+        filtered = filtered.filter(
+          (order) => order.customerDetail.address.city === filters.city
+        )
+      }
   
+      if (filters.state) {
+        filtered = filtered.filter(
+          (order) => order.customerDetail.address.state === filters.state
+        )
+      }
+  
+      if (filters.status && filters.status !== "all") {
+        filtered = filtered.filter((order) => order.status === filters.status)
+      }
+  
+      if (filters.paymentStatus && filters.paymentStatus !== "all") {
+        filtered = filtered.filter(
+          (order) => order.paymentStatus === filters.paymentStatus
+        )
+      }
+  
+      if (filters.merchantName && filters.merchantName !== "all") {
+        filtered = filtered.filter(
+          (order) => order.merchantDetail.merchantName === filters.merchantName
+        )
+      }
+  
+      if (filters?.minPrice !== undefined) {
+        filtered = filtered.filter((order) => order.totalPrice >= filters.minPrice!);
+      }
+      
+      if (filters?.maxPrice !== undefined) {
+        filtered = filtered.filter((order) => order.totalPrice <= filters.maxPrice!);
+      }      
+  
+      setFilteredOrders(filtered)
+      setTotalPages(Math.ceil(filtered.length / ordersPerPage))
+      setPage(1)
+    }
+
+    applyFilters()
+  }, [filters, orders])
+
   const handleFilterChange = (newFilters: OrderFilters) => {
     setFilters(newFilters)
-    setPage(1)
   }
 
   const handleRowClick = (orderId: string) => {
@@ -107,13 +176,19 @@ export function OrdersTable() {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "ETB",
     }).format(amount)
   }
 
+  // Calculate orders to display for current page
+  const startIndex = (page - 1) * ordersPerPage
+  const paginatedOrders = filteredOrders.slice(
+    startIndex,
+    startIndex + ordersPerPage
+  )
+
   return (
     <div className="space-y-4">
-      {/* Checkbox to toggle filter visibility, visible only on small screens */}
       <div className="block sm:hidden">
         <label>
           <input
@@ -124,16 +199,18 @@ export function OrdersTable() {
           Show Filters
         </label>
       </div>
-      {/* Filter component: hidden on small screens by default, visible on larger screens */}
       <div className={`sm:block ${isFilterVisible ? "block" : "hidden"}`}>
-        <OrdersFilter onFilterChange={handleFilterChange} isLoading={isLoading} />
+        <OrdersFilter
+          onFilterChange={handleFilterChange}
+          isLoading={isLoading}
+          merchants={merchants}
+        />      
       </div>
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              {/* Transaction Ref: Hidden on small screens */}
               <TableHead className="hidden sm:table-cell w-[180px]">
                 <div className="flex items-center space-x-1">
                   <span>Transaction Ref</span>
@@ -143,7 +220,6 @@ export function OrdersTable() {
                 </div>
               </TableHead>
               <TableHead>Customer</TableHead>
-              {/* Merchant: Hidden on small screens */}
               <TableHead className="hidden sm:table-cell">Merchant</TableHead>
               <TableHead>
                 <div className="flex items-center space-x-1">
@@ -155,7 +231,6 @@ export function OrdersTable() {
               </TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden sm:table-cell">Payment</TableHead>
-              {/* Date: Hidden on small screens */}
               <TableHead className="hidden sm:table-cell">
                 <div className="flex items-center space-x-1">
                   <span>Date</span>
@@ -168,7 +243,6 @@ export function OrdersTable() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              // Loading skeleton with hidden columns on small screens
               Array(5)
                 .fill(null)
                 .map((_, index) => (
@@ -196,24 +270,26 @@ export function OrdersTable() {
                     </TableCell>
                   </TableRow>
                 ))
-            ) : orders.length === 0 ? (
+            ) : paginatedOrders.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
                   No orders found.
                 </TableCell>
               </TableRow>
             ) : (
-              orders.map((order) => (
+              paginatedOrders.map((order) => (
                 <TableRow
                   key={order.id}
                   onClick={() => handleRowClick(order._id)}
                   className="cursor-pointer hover:bg-muted/50"
                 >
-                  {/* Transaction Ref: Hidden on small screens */}
-                  <TableCell className="hidden sm:table-cell font-medium">{order.transactionRef}</TableCell>
+                  <TableCell className="hidden sm:table-cell font-medium">
+                    {order.transactionRef}
+                  </TableCell>
                   <TableCell>{order.customerDetail.customerName}</TableCell>
-                  {/* Merchant: Hidden on small screens */}
-                  <TableCell className="hidden sm:table-cell">{order.merchantDetail.merchantName}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {order.merchantDetail.merchantName}
+                  </TableCell>
                   <TableCell>{formatCurrency(order.totalPrice)}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={getStatusColor(order.status)}>
@@ -221,12 +297,16 @@ export function OrdersTable() {
                     </Badge>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
-                    <Badge variant="outline" className={getPaymentStatusColor(order.paymentStatus)}>
+                    <Badge
+                      variant="outline"
+                      className={getPaymentStatusColor(order.paymentStatus)}
+                    >
                       {order.paymentStatus}
                     </Badge>
                   </TableCell>
-                  {/* Date: Hidden on small screens */}
-                  <TableCell className="hidden sm:table-cell">{formatDate(order.orderDate)}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {formatDate(order.orderDate)}
+                  </TableCell>
                 </TableRow>
               ))
             )}
@@ -245,7 +325,10 @@ export function OrdersTable() {
                 const pageNumber = i + 1
                 return (
                   <PaginationItem key={pageNumber}>
-                    <PaginationLink onClick={() => setPage(pageNumber)} isActive={page === pageNumber}>
+                    <PaginationLink
+                      onClick={() => setPage(pageNumber)}
+                      isActive={page === pageNumber}
+                    >
                       {pageNumber}
                     </PaginationLink>
                   </PaginationItem>
@@ -254,7 +337,9 @@ export function OrdersTable() {
               <PaginationItem>
                 <PaginationNext
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  className={page >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  className={
+                    page >= totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
             </PaginationContent>
@@ -264,3 +349,4 @@ export function OrdersTable() {
     </div>
   )
 }
+

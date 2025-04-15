@@ -3,6 +3,7 @@
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useEffect, useState } from "react"
 
 interface UserFiltersProps {
   searchTerm: string
@@ -29,8 +30,25 @@ export function UserFilters({
   setApprovalStatusFilter,
   showRoleFilter,
   showStatusFilter,
-  showApprovalStatusFilter,
+  showApprovalStatusFilter
 }: UserFiltersProps) {
+  const [defaultRoleFilter, setDefaultRoleFilter] = useState<string>('all'); // Set default as 'all'
+
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roleParam = urlParams.get('role'); // Look for the 'role' query paramete
+
+    if (roleParam) {
+      setDefaultRoleFilter(roleParam); // Set defaultRoleFilter to 'merchants' or 'customers'
+    }
+  }, []);
+
+  useEffect(() => {
+    if (setRoleFilter) {
+      setRoleFilter(defaultRoleFilter); // Set the role filter to the determined default value
+    }
+  }, [defaultRoleFilter, setRoleFilter]);
+
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div className="relative w-full md:w-auto">
@@ -67,11 +85,12 @@ export function UserFilters({
               <SelectItem value="all">All Verification</SelectItem>
               <SelectItem value="verified">Verified</SelectItem>
               <SelectItem value="unverified">Unverified</SelectItem>
-            </SelectContent>
+              <SelectItem value="banned">Banned</SelectItem>
+           </SelectContent>
           </Select>
         )}
 
-        { approvalStatusFilter && setApprovalStatusFilter && (
+        {showApprovalStatusFilter && approvalStatusFilter && setApprovalStatusFilter && (
           <Select value={approvalStatusFilter} onValueChange={setApprovalStatusFilter}>
             <SelectTrigger className="w-[140px]">
               <SelectValue placeholder="Approval Status" />

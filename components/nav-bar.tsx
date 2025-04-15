@@ -34,7 +34,7 @@ export function NavBar() {
     { name: "Order", href: "/orders" },
     { name: "Products", href: "/products" },
     { name: "Category", href: "/categories" },
-    { name: "Transactions", href: "/transactions" },
+    // { name: "Transactions", href: "/transactions" },
   ];
 
   // Redirect to /signin if there's no session

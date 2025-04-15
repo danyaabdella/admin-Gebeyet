@@ -161,6 +161,11 @@ export async function checkSession(email) {
         subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Restored`;
         text = `Hello,\n\nYour ${userType} account has been successfully restored by the administrators. You can now log in as usual.\n\nBest regards,\nSupport Team`;
         break;
+
+        case "unbanned":
+          subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Unbanned`;
+          text = `Hello,\n\nYour ${userType} account has been successfully Unbanned by the administrators. You can now log in as usual.\n\nBest regards,\nSupport Team`;
+          break;
   
       case "approved":
         if (userType === "user") {
@@ -170,6 +175,14 @@ export async function checkSession(email) {
           throw new Error("Invalid action for admin");
         }
         break;
+        case "rejected":
+          if (userType === "user") {
+            subject = "Your Account Has Been Rejected!";
+            text = `Hello,\n\nYour account has been rejected! You can now access all seller features.\n\nBest regards,\nSupport Team`;
+          } else {
+            throw new Error("Invalid action for admin");
+          }
+          break;
   
       default:
         throw new Error("Invalid action type");

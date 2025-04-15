@@ -55,49 +55,6 @@ export async function GET(req) {
   }
 }
 
-// // POST: Create a new admin
-export async function POST(req) {
-  try {
-    await connectToDB();
-
-    await isSuperAdmin(); 
-
-    const { email, fullname, password, phone, createdBy } = await req.json();
-
-    // Check if admin already exists
-    const existingAdmin = await Admin.findOne({ email });
-    if (existingAdmin) {
-      console.log("Admin already exists: ", existingAdmin);
-      return new Response(JSON.stringify({ message: "Admin already exists" }), { status: 400 });
-    }
-
-    // Hash the password
-    const hashedPassword = await argon2.hash(password); 
-
-    const newAdmin = await Admin.create({
-      email,
-      fullname,
-      password: hashedPassword,
-      phone,
-      createdBy,
-    });
-    console.log("New admin created: ", newAdmin);
-
-    // Send notification
-    await sendNotification(newAdmin.email, "admin", "created", password);
-    console.log("Notification sent successfully.");
-
-    return new Response(JSON.stringify(newAdmin), { status: 201 });
-  } catch (error) {
-    return new Response(
-      JSON.stringify({
-        message: error.message || "Error creating admin",
-      }),
-      { status: error.message === "Unauthorized: Only superAdmins can perform this operation" ? 403 : 500 }
-    );
-  }
-}
-
 // Update Admin
 export async function PUT(req) {
   try {
@@ -166,6 +123,49 @@ export async function PUT(req) {
     return new Response(
       JSON.stringify({ message: error.message || "Error updating admin" }),
       { status: error.message.includes("Unauthorized") ? 403 : 500 }
+    );
+  }
+}
+
+// // POST: Create a new admin
+export async function POST(req) {
+  try {
+    await connectToDB();
+
+    await isSuperAdmin(); 
+
+    const { email, fullname, password, phone, createdBy } = await req.json();
+
+    // Check if admin already exists
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+      console.log("Admin already exists: ", existingAdmin);
+      return new Response(JSON.stringify({ message: "Admin already exists" }), { status: 400 });
+    }
+
+    // Hash the password
+    const hashedPassword = await argon2.hash(password); 
+
+    const newAdmin = await Admin.create({
+      email,
+      fullname,
+      password: hashedPassword,
+      phone,
+      createdBy,
+    });
+    console.log("New admin created: ", newAdmin);
+
+    // Send notification
+    await sendNotification(newAdmin.email, "admin", "created", password);
+    console.log("Notification sent successfully.");
+
+    return new Response(JSON.stringify(newAdmin), { status: 201 });
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        message: error.message || "Error creating admin",
+      }),
+      { status: error.message === "Unauthorized: Only superAdmins can perform this operation" ? 403 : 500 }
     );
   }
 }

@@ -10,7 +10,6 @@ export async function GET(req) {
   
       if (id) {
         const order = await Order.findById(id);
-        console.log("Orders: ", order);
         if (!order) {
           return new Response(JSON.stringify({ success: false, message: "Order not found" }), { status: 404 });
         }

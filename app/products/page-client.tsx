@@ -16,9 +16,6 @@ import { Toaster } from "@/components/toaster";
 import DistancePicker from "@/components/DistancePicker";
 import {
   fetchProducts,
-  banProduct,
-  unbanProduct,
-  deleteProduct,
 } from "@/utils/data-fetching";
 import debounce from "lodash.debounce";
 import { ProductType, LocationData, LatLng } from "@/utils/typeDefinitions";
@@ -50,20 +47,23 @@ export default function ProductsPageClient() {
   const [minDeliveryPrice, setMinDeliveryPrice] = useState("0");
   const [maxDeliveryPrice, setMaxDeliveryPrice] = useState("0");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [locationRadius, setLocationRadius] = useState(5000); // Default 50 km
+  const [locationRadius, setLocationRadius] = useState(50); // Default 50 km
   const [locationCenter, setLocationCenter] = useState<LatLng | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const { toast } = useToast();
 
-  const categories = [
-    { id: "all", name: "All Categories" },
-    { id: "category_1", name: "Electronics" },
-    { id: "category_2", name: "Clothing" },
-    { id: "category_3", name: "Home & Garden" },
-    { id: "category_4", name: "Beauty" },
-    { id: "category_5", name: "Toys" },
-    { id: "category_6", name: "Sports" },
-  ];
+  const fetchCategories = async () => {
+    const res = await fetch("/api/manageCategory");
+    const data = await res.json();
+    
+    const formatted = [{ id: "all", name: "All Categories" }, ...data.map((cat: { _id: any; name: any; }) => ({
+      id: cat._id,
+      name: cat.name,
+    }))];
+  
+    return formatted;
+  };  
 
   const deliveryTypes = [
     { id: "all", name: "All Types" },
@@ -79,8 +79,9 @@ export default function ProductsPageClient() {
         setIsLoadingData(true);
         try {
           const filters = {
-            isDeleted: selectedTab === "deleted",
-            phrase: searchQuery,
+            isDeleted: selectedTab === "deleted" ? true : undefined,
+            isBanned: selectedTab === "banned" ? true : undefined,
+            phrase: searchQuery || undefined,
             categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
             minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
             maxPrice: priceRange[1] > 0 ? priceRange[1] : undefined,
@@ -130,6 +131,14 @@ export default function ProductsPageClient() {
     debouncedFetchProducts();
     return () => debouncedFetchProducts.cancel();
   }, [debouncedFetchProducts]);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      const fetched = await fetchCategories();
+      setCategories(fetched);
+    };
+    loadCategories();
+  }, []);  
 
   const handleSearchChange = (e: { target: { value: SetStateAction<string>; }; }) => {
     setSearchQuery(e.target.value);
@@ -279,11 +288,12 @@ const handleProductAction = async (
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Select defaultValue="active" value={selectedTab} onValueChange={handleTabChange}>
+              <Select defaultValue="all" value={selectedTab} onValueChange={handleTabChange}>
                 <SelectTrigger className="w-[140px] md:w-[180px]">
                   <SelectValue placeholder="View" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Products</SelectItem>
                   <SelectItem value="active">Active Products</SelectItem>
                   <SelectItem value="banned">Banned Products</SelectItem>
                   <SelectItem value="deleted">Deleted Products</SelectItem>

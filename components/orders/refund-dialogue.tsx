@@ -26,7 +26,7 @@ export function RefundDialog({ orderId, amount, transactionRef }: RefundDialogPr
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toast } = useToast()
+  const { toast } = useToast();
 
   const handleRefund = async () => {
     setIsSubmitting(true)

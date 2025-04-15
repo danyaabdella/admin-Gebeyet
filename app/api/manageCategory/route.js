@@ -9,7 +9,6 @@ export async function POST(req) {
       
       const { name, description } = await req.json();
       const user = await userInfo();
-      console.log("User info: ", user);
       const email = user.email;
   
       const newCategory = await Category.create({ name, description, createdBy: email });
