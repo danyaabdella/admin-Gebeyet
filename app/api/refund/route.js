@@ -31,7 +31,6 @@ export async function POST(req) {
                 amount: amount, // If not provided, full amount is refunded
             }),
         });
-        console.log("Response: ", response);
         const result = await response.json();
         console.log("Result: ", result);
 

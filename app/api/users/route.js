@@ -1,20 +1,23 @@
-import mongoose from "mongoose";
 import { options } from "../auth/[...nextauth]/options";
 import { getServerSession } from "next-auth";
-import SuperAdmin from "../../../models/SuperAdmin";
-import Admin from "../../../models/Admin";
+import SuperAdmin from "@/models/SuperAdmin";
+import Admin from "@/models/Admin";
 import {role} from "../auth/[...nextauth]/route";
 import User from "@/models/User";
+import { connectToDB } from "@/utils/functions";
 
 export async function GET(req) {
-    const role1 = await role();
     try {
-        mongoose.connect(process.env.MONGO_URL);
+        await connectToDB();
 
         const url = new URL(req.url);
         const _id = url.searchParams.get('_id');
+        const email = url.searchParams.get("email");
 
         let filterUser = {};
+        if (email) {
+            filterUser = { email };
+        }
         if (_id) {
             filterUser = { _id };
         } else {

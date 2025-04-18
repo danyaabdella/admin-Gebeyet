@@ -113,6 +113,27 @@ export interface OrderDocument extends Document {
   refundReason?: string;
 }
 
+export type Sale = {
+  _id: string;
+  customerDetail?: {
+    customerName?: string;
+    customerEmail?: string;
+  };
+  totalPrice?: number | string;
+};
+
+export interface OrderFilters {
+  searchTerm?: string
+  status?: string
+  paymentStatus?: string
+  merchantName?: string
+  minPrice?: number
+  maxPrice?: number
+  page?: number
+  limit?: number
+  state?: string
+  city?: string
+}
 
   // Initialize filter object
         // let filter = {};

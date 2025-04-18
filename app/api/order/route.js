@@ -22,7 +22,7 @@ export async function GET(req) {
       console.error(error);
       return new Response(JSON.stringify({ success: false, message: "Server error" }), { status: 500 });
     }
-  }
+}
   
 export async function PUT(req) {
     try {

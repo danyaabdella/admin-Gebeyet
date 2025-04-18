@@ -1,8 +1,6 @@
 import { connectToDB, isAdminOrSuperAdmin } from "@/utils/functions";
 import Auction from "@/models/Auction";
-import { ObjectId } from "mongodb";
 
-// PUT: Update auction status
 export async function PUT(req) {
   try {
     await connectToDB();
@@ -31,7 +29,6 @@ export async function PUT(req) {
   }
 }
 
-// GET: Fetch all auctions (admin/superadmin)
 export async function GET(req) {
   try {
     await connectToDB();

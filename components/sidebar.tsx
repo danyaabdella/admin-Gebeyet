@@ -1,5 +1,8 @@
 'use client'
 
+import { useEffect, useState } from "react";
+import { getUserRole } from "@/utils/adminFunctions";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -8,30 +11,47 @@ import {
   ShoppingBag,
   Tag,
   Gavel,
-  CreditCard,
   Shield,
   Home,
   Package
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: React.ElementType;
+};
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [role, setRole] = useState<"admin" | "superAdmin" | null>(null);
+
+  useEffect(() => {
+    async function fetchRole() {
+      const r = await getUserRole();
+      const normalizedRole = r === "superadmin" ? "superAdmin" : r;
+      setRole(normalizedRole as "admin" | "superAdmin" | null);
+    }
+    fetchRole();
+  }, []);
+
+  const navItems: (NavItem | false)[] = [
+    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/users", label: "User", icon: Users },
+    role === "superAdmin" && { href: "/admins", label: "Admin", icon: Shield },
+    { href: "/auctions", label: "Auction", icon: Gavel },
+    { href: "/orders", label: "Order", icon: Package },
+    { href: "/products", label: "Product", icon: ShoppingBag },
+    { href: "/categories", label: "Category", icon: Tag },
+  ];
+
+  const filteredNavItems = navItems.filter(Boolean) as NavItem[];
 
   return (
     <div className="fixed top-0 left-0 z-30 h-screen w-[var(--sidebar-width)] border-r bg-background mt-16 hidden md:block -ml-4">
       <div className="flex flex-col gap-2 p-4">
         <nav className="grid gap-1">
-          {[
-            { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-            { href: "/users", label: "User", icon: Users },
-            { href: "/admins", label: "Admin", icon: Shield },
-            { href: "/auctions", label: "Auction", icon: Gavel },
-            { href: "/orders", label: "Order", icon: Package },  // Using Package icon
-            { href: "/products", label: "Product", icon: ShoppingBag },
-            { href: "/categories", label: "Category", icon: Tag },
-            // { href: "/transactions", label: "Transactions", icon: CreditCard },
-          ].map(({ href, label, icon: Icon }) => (
+          {filteredNavItems.map(({ href, label, icon: Icon }) => (
             <Link key={href} href={href} passHref>
               <Button
                 variant={pathname === href ? "secondary" : "ghost"}
@@ -44,7 +64,6 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* Back Home Button */}
         <div className="mt-64">
           <Link href="/" passHref>
             <Button variant="ghost" className="justify-start w-full flex-grow text-left">

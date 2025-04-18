@@ -1,55 +1,29 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
-import {
-  BarChart3,
-  Users,
-  ShoppingCart,
-  Package,
-  Layers,
-  Gavel,
-  ArrowUpRight,
-  ArrowDownRight,
-  DollarSign,
-  ShieldCheck,
-  Bell,
-} from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Sidebar } from "@/components/sidebar"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { RevenueChart } from "@/components/charts/revenue-chart"
-import { UserGrowthChart } from "@/components/charts/user-growth-chart"
-import { UserDistributionChart } from "@/components/charts/user-distribution-chart"
-import { RevenueDistributionChart } from "@/components/charts/revenue-distribution-chart"
-import { CategoryRevenueChart } from "@/components/charts/category-revenue-chart"
-import { ProductSalesChart } from "@/components/charts/product-sales-chart"
-import { AuctionPerformanceChart } from "@/components/charts/auction-performance-chart"
-import { ExportReportButton } from "@/components/export-report-button"
-import { fetchDashboardStats } from "@/utils/data-fetching"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Toaster } from "@/components/toaster"
+import { fetchDashboardStats } from "@/utils/data-fetching"
+import { Sale } from "@/utils/typeDefinitions"
+import { Overview } from "@/components/dashboard/Overview"
+import { Analytics } from "@/components/dashboard/Analytics"
+import { Reports } from "@/components/dashboard/Reports"
 
-import { RevenueBarChart } from "@/components/charts/revenur-bar-chart"
-import { UserGrowthBarChart } from "@/components/charts/user-grouth-bar-chart"
-import { CategoryRevenueBarChart } from "@/components/charts/category-revenue-bar-chart"
-import { OrderDistributionBarChart } from "@/components/charts/order-bar-chart"
-import { MonthlyReportsBarChart } from "@/components/charts/monthly-report-bar-chart"
-import { TransactionTypeDistributionChart } from "@/components/charts/transaction-type-chart"
-import { OrderDistributionPieChart } from "@/components/charts/order-distribution-chart"
+const currentYear = new Date().getFullYear()
+const currentMonth = new Date().getMonth() + 1
 
 export default function DashboardClient() {
   const [stats, setStats] = useState<any>(null)
-  // const [topProducts, setTopProducts] = useState<any[]>([])
-  const [analyticsYear, setAnalyticsYear] = useState("2023")
-  const [analyticsMonth, setAnalyticsMonth] = useState("all")
-  const [reportYear, setReportYear] = useState("2023")
-  const [reportMonth, setReportMonth] = useState("all")
-  const [reportPeriod, setReportPeriod] = useState("year")
-  const [recentSales, setRecentSales] = useState([]);
-  const [salesThisMonth, setSalesThisMonth] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [recentSales, setRecentSales] = useState<Sale[]>([])
+  const [salesThisMonth, setSalesThisMonth] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>("")
+  const [analyticsYear, setAnalyticsYear] = useState("")
+  const [currentYearState, setCurrentYearState] = useState("")
+  const [reportYear, setReportYear] = useState(currentYear.toString())
+  const [reportMonth, setReportMonth] = useState(currentMonth.toString())
+  const [reportPeriod, setReportPeriod] = useState("last30days")
 
   useEffect(() => {
     async function loadData() {
@@ -62,48 +36,72 @@ export default function DashboardClient() {
   useEffect(() => {
     const fetchRecentSales = async () => {
       try {
-        setLoading(true);
-        const response = await fetch("/api/order");
+        setLoading(true)
+        const response = await fetch("/api/order")
         if (!response.ok) {
-          throw new Error("Failed to fetch orders");
+          throw new Error("Failed to fetch orders")
         }
-        const data = await response.json();
-        const orders = Array.isArray(data.orders) ? data.orders : [];
+        const data = await response.json()
+        const orders = Array.isArray(data.orders) ? data.orders : []
 
-        // Get current month and year
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+        const now = new Date()
+        const currentMonth = now.getMonth()
+        const currentYear = now.getFullYear()
 
-        // Filter sales for this month (Paid or Paid To Merchant)
-        const salesThisMonth = orders.filter((order: { orderDate: string | number | Date; paymentStatus: string }) => {
-          const orderDate = new Date(order.orderDate);
-          return (
-            !isNaN(orderDate.getTime()) &&
-            orderDate.getMonth() === currentMonth &&
-            orderDate.getFullYear() === currentYear &&
-            ["Paid", "Paid To Merchant"].includes(order.paymentStatus)
-          );
-        }).length;
+        const salesThisMonth = orders.filter(
+          (order: { orderDate: string | number | Date; paymentStatus: string }) => {
+            const orderDate = new Date(order.orderDate)
+            return (
+              !isNaN(orderDate.getTime()) &&
+              orderDate.getMonth() === currentMonth &&
+              orderDate.getFullYear() === currentYear &&
+              ["Paid", "Paid To Merchant"].includes(order.paymentStatus)
+            )
+          }
+        ).length
 
-        // Get 10 most recent sales, sorted by orderDate descending
         const recentSales = orders
-          .filter((order: { paymentStatus: string }) => ["Paid", "Paid To Merchant"].includes(order.paymentStatus))
-          .sort((a: { orderDate: string | number | Date }, b: { orderDate: string | number | Date }) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime())
-          .slice(0, 10);
+          .filter((order: { paymentStatus: string }) =>
+            ["Paid", "Paid To Merchant"].includes(order.paymentStatus)
+          )
+          .sort(
+            (a: { orderDate: string | number | Date }, b: { orderDate: string | number | Date }) =>
+              new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
+          )
+          .slice(0, 10)
 
-        setSalesThisMonth(salesThisMonth);
-        setRecentSales(recentSales);
+        setSalesThisMonth(salesThisMonth)
+        setRecentSales(recentSales)
       } catch (err) {
-        console.error("Error fetching recent sales:", err);
-        setError(err.message || "Failed to load sales");
+        console.error("Error fetching recent sales:", err)
+        if (err instanceof Error) {
+          setError(err.message)
+        } else {
+          setError("Failed to load sales")
+        }
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
-    fetchRecentSales();
-  }, []);
+    fetchRecentSales()
+  }, [])
+
+  useEffect(() => {
+    const year = new Date().getFullYear().toString()
+    setCurrentYearState(year)
+    setAnalyticsYear(year)
+  }, [])
+
+  useEffect(() => {
+    if (reportYear !== currentYearState) {
+      setReportMonth("1")
+    } else {
+      setReportMonth(currentMonth.toString())
+    }
+  }, [reportYear, currentYearState])
+
+  const shouldShowPeriod = reportYear === currentYearState && reportMonth === currentMonth.toString()
 
   if (!stats) {
     return (
@@ -126,334 +124,6 @@ export default function DashboardClient() {
     )
   }
 
-  // Function to render the stats cards grid
-  const renderStatsCards = () => (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {/* Total Transactions */}
-      <Link href="/transactions" className="block">
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Transactions</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${stats.transactions.total.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              <span
-                className={`flex items-center ${stats.transactions.isIncrease ? "text-green-500" : "text-red-500"}`}
-              >
-                {stats.transactions.isIncrease ? "+" : "-"}
-                {stats.transactions.percentChange}%{" "}
-                {stats.transactions.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* System Revenue */}
-      <Link href="/transactions?revenue" className="block">
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">System Revenue</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${stats.revenue.total.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className={`flex items-center ${stats.revenue.isIncrease ? "text-green-500" : "text-red-500"}`}>
-                {stats.revenue.isIncrease ? "+" : "-"}
-                {stats.revenue.percentChange}%{" "}
-                {stats.revenue.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Total Merchants */}
-      <Link href="/users?role=merchant" className="block relative">
-        {stats.merchants.pendingApproval > 0 && (
-          <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
-            {stats.merchants.pendingApproval}
-          </span>
-        )}
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Merchants
-              {stats.merchants.pendingApproval > 0 && (
-                <span className="ml-2 text-red-500">
-                  <Bell className="inline h-3 w-3" />
-                </span>
-              )}
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{stats.merchants.total}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className={`flex items-center ${stats.merchants.isIncrease ? "text-green-500" : "text-red-500"}`}>
-                {stats.merchants.isIncrease ? "+" : "-"}
-                {stats.merchants.percentChange}%{" "}
-                {stats.merchants.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Total Customers */}
-      <Link href="/users?role=customer" className="block">
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{stats.customers.total}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className={`flex items-center ${stats.customers.isIncrease ? "text-green-500" : "text-red-500"}`}>
-                {stats.customers.isIncrease ? "+" : "-"}
-                {stats.customers.percentChange}%{" "}
-                {stats.customers.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Total System Users */}
-      <Link href="/users" className="block">
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total System Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.users.total}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className={`flex items-center ${stats.users.isIncrease ? "text-green-500" : "text-red-500"}`}>
-                {stats.users.isIncrease ? "+" : "-"}
-                {stats.users.percentChange}%{" "}
-                {stats.users.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Total Products */}
-      <Link href="/products" className="block">
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.products.total.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className={`flex items-center ${stats.products.isIncrease ? "text-green-500" : "text-red-500"}`}>
-                {stats.products.isIncrease ? "+" : "-"}
-                {stats.products.percentChange}%{" "}
-                {stats.products.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Total Orders */}
-      <Link href="/orders" className="block relative">
-        {stats.orders.pendingRefunds > 0 && (
-          <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
-            {stats.orders.pendingRefunds}
-          </span>
-        )}
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Orders
-              {stats.orders.pendingRefunds > 0 && (
-                <span className="ml-2 text-red-500">
-                  <Bell className="inline h-3 w-3" />
-                </span>
-              )}
-            </CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{stats.orders.total.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className={`flex items-center ${stats.orders.isIncrease ? "text-green-500" : "text-red-500"}`}>
-                {stats.orders.isIncrease ? "+" : "-"}
-                {stats.orders.percentChange}%{" "}
-                {stats.orders.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Total Auctions */}
-      <Link href="/auctions" className="block relative">
-        {stats.auctions.pendingApproval > 0 && (
-          <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white z-10">
-            {stats.auctions.pendingApproval}
-          </span>
-        )}
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Auctions
-              {stats.auctions.pendingApproval > 0 && (
-                <span className="ml-2 text-red-500">
-                  <Bell className="inline h-3 w-3" />
-                </span>
-              )}
-            </CardTitle>
-            <Gavel className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+{stats.auctions.total}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className={`flex items-center ${stats.auctions.isIncrease ? "text-green-500" : "text-red-500"}`}>
-                {stats.auctions.isIncrease ? "+" : "-"}
-                {Math.abs(stats.auctions.percentChange)}%{" "}
-                {stats.auctions.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Total Categories */}
-      <Link href="/categories" className="block">
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Categories</CardTitle>
-            <Layers className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.categories.total}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className={`flex items-center ${stats.categories.isIncrease ? "text-green-500" : "text-red-500"}`}>
-                {stats.categories.isIncrease ? "+" : "-"}
-                {stats.categories.percentChange}{" "}
-                {stats.categories.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-
-      {/* Total Admins */}
-      <Link href="/admins" className="block">
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Admins</CardTitle>
-            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.admins.total}</div>
-            <p className="text-xs text-muted-foreground">
-              <span className={`flex items-center ${stats.admins.isIncrease ? "text-green-500" : "text-red-500"}`}>
-                {stats.admins.isIncrease ? "+" : "-"}
-                {stats.admins.percentChange}{" "}
-                {stats.admins.isIncrease ? (
-                  <ArrowUpRight className="ml-1 h-3 w-3" />
-                ) : (
-                  <ArrowDownRight className="ml-1 h-3 w-3" />
-                )}
-              </span>{" "}
-              from last month
-            </p>
-          </CardContent>
-        </Card>
-      </Link>
-    </div>
-  )
-
-  // Function to render recent sales
-  const renderRecentSales = () => (
-    <Card>
-      <CardHeader>
-        <CardTitle>Recent Sales</CardTitle>
-        <CardDescription>
-          You made {salesThisMonth} {salesThisMonth === 1 ? "sale" : "sales"} this month.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 justify-end">
-          {recentSales.length > 0 ? (
-            recentSales.map((sale, i) => (
-              <div className="flex items-center space-x-4 justify-between" key={sale._id || i}>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {sale.customerDetail?.customerName || "Unknown Customer"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {sale.customerDetail?.customerEmail || "No email"}
-                  </p>
-                </div>
-                <div className="ml-auto font-medium">
-                  +${(Number(sale.totalPrice) || 0).toFixed(2)}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-sm text-muted-foreground col-span-2">No recent sales found.</p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  )
-
   return (
     <div className="flex min-h-screen flex-col">
       <Sidebar />
@@ -462,7 +132,9 @@ export default function DashboardClient() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl md:text-3xl font-bold tracking-tight">Dashboard</h1>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</span>
+              <span className="text-sm text-muted-foreground">
+                Last updated: {new Date().toLocaleDateString()}
+              </span>
             </div>
           </div>
 
@@ -480,317 +152,23 @@ export default function DashboardClient() {
             </TabsList>
 
             <TabsContent value="overview" className="space-y-4">
-              {renderStatsCards()}
-
-              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-                <Card className="">
-                  <CardHeader>
-                    <CardTitle>Revenue Overview</CardTitle>
-                    <CardDescription>Monthly revenue and order trends</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                    <RevenueChart />
-                  </CardContent>
-                </Card>
-
-                <Card className="">
-                  <CardHeader>
-                    <CardTitle>User Distribution</CardTitle>
-                    <CardDescription>Breakdown by user type</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <UserDistributionChart />
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenue Distribution</CardTitle>
-                    <CardDescription>Breakdown by revenue source</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <RevenueDistributionChart />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Transaction Distribution</CardTitle>
-                    <CardDescription>Breakdown by transaction types</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <TransactionTypeDistributionChart />
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Revenue by Category</CardTitle>
-                    <CardDescription>Top performing categories</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <CategoryRevenueChart />
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Order Distribution</CardTitle>
-                    <CardDescription>Order classification</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <OrderDistributionPieChart />
-                  </CardContent>
-                </Card>
-              </div>
-
-              {renderRecentSales()}
+              <Overview stats={stats} recentSales={recentSales} salesThisMonth={salesThisMonth} />
             </TabsContent>
 
             <TabsContent value="analytics" className="space-y-4">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="flex flex-wrap gap-2">
-                  <Select value={analyticsYear} onValueChange={setAnalyticsYear}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2023">2023</SelectItem>
-                      <SelectItem value="2022">2022</SelectItem>
-                      <SelectItem value="2021">2021</SelectItem>
-                      <SelectItem value="2020">2020</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={analyticsMonth} onValueChange={setAnalyticsMonth}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="Select month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Months</SelectItem>
-                      <SelectItem value="1">January</SelectItem>
-                      <SelectItem value="2">February</SelectItem>
-                      <SelectItem value="3">March</SelectItem>
-                      <SelectItem value="4">April</SelectItem>
-                      <SelectItem value="5">May</SelectItem>
-                      <SelectItem value="6">June</SelectItem>
-                      <SelectItem value="7">July</SelectItem>
-                      <SelectItem value="8">August</SelectItem>
-                      <SelectItem value="9">September</SelectItem>
-                      <SelectItem value="10">October</SelectItem>
-                      <SelectItem value="11">November</SelectItem>
-                      <SelectItem value="12">December</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select defaultValue="last30days">
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Select period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="last7days">Last 7 days</SelectItem>
-                      <SelectItem value="last30days">Last 30 days</SelectItem>
-                      <SelectItem value="last90days">Last 90 days</SelectItem>
-                      <SelectItem value="lastyear">Last year</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>User Growth</CardTitle>
-                    <CardDescription>New user registrations over time</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                    <UserGrowthChart />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Sales Performance</CardTitle>
-                    <CardDescription>Revenue and order trends</CardDescription>
-                  </CardHeader>
-                  <CardContent className="pl-2">
-                    <div className="h-[300px] w-full">
-                      <RevenueChart />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* New Product Sales Graph */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Product Sales</CardTitle>
-                  <CardDescription>Monthly product sales data compared to targets</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ProductSalesChart />
-                </CardContent>
-              </Card>
-
-              {/* New Auction Performance Graph */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Auction Performance</CardTitle>
-                  <CardDescription>Monthly auction activity breakdown</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AuctionPerformanceChart />
-                </CardContent>
-              </Card>
+              <Analytics initialYear={analyticsYear} />
             </TabsContent>
 
             <TabsContent value="reports" className="space-y-4">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div className="grid gap-2 grid-cols-2 lg:grid-cols-4">
-                  <Select value={reportYear} onValueChange={setReportYear}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Select year" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="2023">2023</SelectItem>
-                      <SelectItem value="2022">2022</SelectItem>
-                      <SelectItem value="2021">2021</SelectItem>
-                      <SelectItem value="2020">2020</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={reportMonth} onValueChange={setReportMonth}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Select month" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Months</SelectItem>
-                      <SelectItem value="1">January</SelectItem>
-                      <SelectItem value="2">February</SelectItem>
-                      <SelectItem value="3">March</SelectItem>
-                      <SelectItem value="4">April</SelectItem>
-                      <SelectItem value="5">May</SelectItem>
-                      <SelectItem value="6">June</SelectItem>
-                      <SelectItem value="7">July</SelectItem>
-                      <SelectItem value="8">August</SelectItem>
-                      <SelectItem value="9">September</SelectItem>
-                      <SelectItem value="10">October</SelectItem>
-                      <SelectItem value="11">November</SelectItem>
-                      <SelectItem value="12">December</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={reportPeriod} onValueChange={setReportPeriod}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Select period" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="last7days">Last 7 days</SelectItem>
-                      <SelectItem value="last30days">Last 30 days</SelectItem>
-                      <SelectItem value="last90days">Last 90 days</SelectItem>
-                      <SelectItem value="year">Full Year</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <ExportReportButton period={reportPeriod} />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 ">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Monthly Financial Reports</CardTitle>
-                  <CardDescription>Revenue, profit, and expenses breakdown by month</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MonthlyReportsBarChart />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue Report</CardTitle>
-                  <CardDescription>Monthly revenue trends</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <RevenueBarChart />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>User Growth Report</CardTitle>
-                  <CardDescription>Monthly user growth by type</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <UserGrowthBarChart />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Product Sales Report</CardTitle>
-                  <CardDescription>Monthly product sales data compared to targets</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ProductSalesChart />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Auction Performance Report</CardTitle>
-                  <CardDescription>Monthly auction activity breakdown</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AuctionPerformanceChart />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Revenue by Category</CardTitle>
-                  <CardDescription>Top performing categories</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <CategoryRevenueBarChart />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Order Distribution</CardTitle>
-                  <CardDescription>Breakdown of Order Distribution</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <OrderDistributionBarChart />
-                </CardContent>
-              </Card>
-              </div>
-
-              {/* Top Products Table */}
-              {/* <Card>
-                <CardHeader>
-                  <CardTitle>Top Performing Products</CardTitle>
-                  <CardDescription>Products with highest revenue</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {topProducts.map((product, i) => (
-                      <div className="flex items-center" key={i}>
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium leading-none">{product.name}</p>
-                          <p className="text-sm text-muted-foreground">{product.category}</p>
-                        </div>
-                        <div className="ml-auto font-medium">${product.revenue.toLocaleString()}</div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card> */}
+              <Reports
+                reportYear={reportYear}
+                setReportYear={setReportYear}
+                reportMonth={reportMonth}
+                setReportMonth={setReportMonth}
+                reportPeriod={reportPeriod}
+                setReportPeriod={setReportPeriod}
+                shouldShowPeriod={shouldShowPeriod}
+              />
             </TabsContent>
           </Tabs>
         </main>
@@ -799,4 +177,3 @@ export default function DashboardClient() {
     </div>
   )
 }
-

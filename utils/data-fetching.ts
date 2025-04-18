@@ -171,7 +171,6 @@ export async function unbanProduct(productId: string) {
 }
 
 export async function deleteProduct(productId: string) {
-  console.log("Product ID: ", productId);
   const response = await fetch(`/api/products?_id=${productId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
@@ -203,15 +202,6 @@ export async function fetchDashboardStats() {
     const productsData = await productsRes.json();
     const categoriesData = await categoriesRes.json();
     const adminsData = await adminsRes.json();
-
-    // Log fetched data for debugging
-    console.log("Fetched data from API:", {
-      orders: ordersData,
-      users: usersData,
-      products: productsData,
-      categories: categoriesData,
-      admins: adminsData,
-    });
 
     // Handle data with fallback to empty arrays
     const orders = Array.isArray(ordersData.orders) ? ordersData.orders : [];
@@ -298,16 +288,12 @@ export async function fetchDashboardStats() {
     const revenueStats = calculateGrowth(currentRevenue, previousRevenue);
 
     // Users calculation
-    const filterByRole = (role) => {
+    const filterByRole = (role: string) => {
       return users.filter((user) => user.role === role);
     };
 
     const customers = filterByRole('customer');
     const merchants = filterByRole('merchant');
-
-    // Log counts for debugging
-    console.log("Customers count:", customers.length);
-    console.log("Merchants count:", merchants.length);
 
     // Adjust pendingMerchantApprovals to handle API's approvalStatus behavior
     const pendingMerchantApprovals = merchants.filter(m => m.approvalStatus === 'pending').length;

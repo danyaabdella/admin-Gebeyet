@@ -1,13 +1,52 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Chart, registerables } from "chart.js"
 
 Chart.register(...registerables)
 
-export function UserGrowthChart() {
-  const chartRef = useRef<HTMLCanvasElement>(null)
+export function UserGrowthChart({ year }: { year: number }) {
+  const chartRef = useRef<HTMLCanvasElement | null>(null);
   const chartInstance = useRef<Chart | null>(null)
+  const [chartData, setChartData] = useState({
+    customerData: new Array(12).fill(0),
+    merchantData: new Array(12).fill(0)
+  })
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch('/api/manageUsers')
+        const users = await response.json()
+
+        // Initialize arrays for monthly counts
+        const customerCounts = new Array(12).fill(0)
+        const merchantCounts = new Array(12).fill(0)
+
+        // Process users by creation date and role
+        users.forEach((user: { createdAt: string | number | Date; role: string }) => {
+          const createdDate = new Date(user.createdAt)
+          if (createdDate.getFullYear() === year) {
+            const month = createdDate.getMonth() // 0-11
+            if (user.role === 'customer') {
+              customerCounts[month]++
+            } else if (user.role === 'merchant') {
+              merchantCounts[month]++
+            }
+          }
+        })
+
+        setChartData({
+          customerData: customerCounts,
+          merchantData: merchantCounts
+        })
+      } catch (error) {
+        console.error('Error fetching user data:', error)
+      }
+    }
+
+    fetchUserData()
+  }, [year])
 
   useEffect(() => {
     if (!chartRef.current) return
@@ -17,10 +56,7 @@ export function UserGrowthChart() {
       chartInstance.current.destroy()
     }
 
-    // Sample data
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    const customerData = [120, 150, 180, 210, 250, 300, 350, 400, 450, 500, 550, 600]
-    const merchantData = [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75]
 
     // Create new chart
     const ctx = chartRef.current.getContext("2d")
@@ -32,14 +68,14 @@ export function UserGrowthChart() {
           datasets: [
             {
               label: "New Customers",
-              data: customerData,
+              data: chartData.customerData,
               backgroundColor: "rgba(59, 130, 246, 0.7)",
               borderColor: "rgb(59, 130, 246)",
               borderWidth: 1,
             },
             {
               label: "New Merchants",
-              data: merchantData,
+              data: chartData.merchantData,
               backgroundColor: "rgba(16, 185, 129, 0.7)",
               borderColor: "rgb(16, 185, 129)",
               borderWidth: 1,
@@ -83,7 +119,7 @@ export function UserGrowthChart() {
         chartInstance.current.destroy()
       }
     }
-  }, [])
+  }, [chartData])
 
   return (
     <div className="h-[300px] w-full">
@@ -91,4 +127,3 @@ export function UserGrowthChart() {
     </div>
   )
 }
-

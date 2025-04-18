@@ -21,7 +21,7 @@ const auctionSchema = new mongoose.Schema({
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'
     },
-    paymentDuration: { type: Number, default: 24 }, // in hours
+    paymentDuration: { type: Number, default: 24 }, 
     totalQuantity: { type: Number, default: 1 },
     remainingQuantity: { type: Number },
     buyByParts: { type: Boolean, default: false },

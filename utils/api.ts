@@ -167,6 +167,61 @@ const mockOrders = [
     country?: string;
   }
 
+  // Mock admin profiles
+const mockAdminProfile = {
+  id: "admin_123",
+  email: "admin@example.com",
+  fullname: "John Admin",
+  phone: "+1 (555) 123-4567",
+  role: "admin",
+  image: "https://i.pravatar.cc/300?img=68",
+  isBanned: false,
+  isDeleted: false,
+  createdAt: "2023-01-15T09:30:00Z",
+  updatedAt: "2023-04-10T14:45:00Z",
+}
+
+const mockSuperAdminProfile = {
+  id: "superadmin_456",
+  email: "superadmin@example.com",
+  fullname: "Sarah Super",
+  phone: "+1 (555) 987-6543",
+  role: "superAdmin",
+  image: "https://i.pravatar.cc/300?img=48",
+  createdAt: "2022-06-20T10:00:00Z",
+  updatedAt: "2023-03-15T11:20:00Z",
+}
+
+const mockBannedAdminProfile = {
+  id: "admin_789",
+  email: "banned@example.com",
+  fullname: "Banned User",
+  phone: "+1 (555) 555-5555",
+  role: "admin",
+  image: "https://i.pravatar.cc/300?img=60",
+  isBanned: true,
+  isDeleted: false,
+  banReason: "Violation of platform policies",
+  createdAt: "2023-02-10T08:15:00Z",
+  updatedAt: "2023-05-01T16:30:00Z",
+}
+
+const mockDeletedAdminProfile = {
+  id: "admin_101",
+  email: "deleted@example.com",
+  fullname: "Deleted User",
+  phone: "+1 (555) 444-3333",
+  role: "admin",
+  image: null,
+  isBanned: false,
+  isDeleted: true,
+  trashDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+  createdAt: "2023-03-05T13:45:00Z",
+  updatedAt: "2023-05-10T09:20:00Z",
+}
+
+// Filter interface
+
   // API functions
   export async function fetchOrders(filters: OrderFilters = {}) {
     // In a real implementation, this would be an API call with filters
@@ -249,4 +304,50 @@ const mockOrders = [
     // Return success for demo
     return { success: true, message: `Order status updated to ${status}` }
   }
-  
+
+  // Admin Profile API functions
+export async function fetchAdminProfile() {
+  // In a real implementation, this would fetch the current admin's profile
+  console.log("Fetching admin profile")
+
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 800))
+
+  // For demo purposes, randomly return one of the mock profiles
+  // You can change this to always return a specific profile for testing
+  const profiles = [mockAdminProfile, mockSuperAdminProfile, mockBannedAdminProfile, mockDeletedAdminProfile]
+  const randomProfile = profiles[Math.floor(Math.random() * profiles.length)]
+
+  return randomProfile
+}
+
+export async function updateAdminProfile(profileData: any) {
+  // In a real implementation, this would update the admin's profile
+  console.log("Updating admin profile:", profileData)
+
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1200))
+
+  // Return the updated profile for demo
+  return {
+    ...mockAdminProfile,
+    ...profileData,
+    updatedAt: new Date().toISOString(),
+  }
+}
+
+export async function changeAdminPassword(passwordData: { currentPassword: string; newPassword: string }) {
+  // In a real implementation, this would change the admin's password
+  console.log("Changing admin password")
+
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  // Simulate validation of current password
+  if (passwordData.currentPassword !== "password123") {
+    throw new Error("Current password is incorrect")
+  }
+
+  // Return success for demo
+  return { success: true, message: "Password changed successfully" }
+}

@@ -41,8 +41,6 @@ export async function GET(req) {
   if (maxDeliveryPrice) filter.deliveryPrice = { ...filter.deliveryPrice, $lte: maxDeliveryPrice };
   if (categoryId && categoryId !== "all") filter["category.categoryId"] = categoryId;
   
-  console.log("Filters: ", filter)
-
   let aggregationSteps = [];
 
   if (center) {
@@ -94,7 +92,6 @@ export async function PUT(req) {
   }
 
   const { _id, isBanned, banReason, banDescription } = await req.json();
-  console.log("Update infos: ", _id, isBanned, banReason, banDescription);
 
   if (!_id) {
     return new Response(JSON.stringify({ error: "Product ID is required" }), { status: 400 });
@@ -124,7 +121,6 @@ export async function PUT(req) {
       }
 
       await product.save();
-      console.log("Updated product: ", product);
       return new Response(
         JSON.stringify({
           message: `Product ${isBanned ? "banned" : "unbanned"} successfully`,

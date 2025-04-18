@@ -34,6 +34,7 @@ export async function GET(req) {
       if (name) query.name = name;
       if (createdBy) query.createdBy = createdBy;
       if (createdAt) query.createdAt = { $gte: new Date(createdAt) };
+      console.log("Queries: ", query);
   
       const categories = await Category.find(query);
   
