@@ -2,8 +2,8 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import argon2 from 'argon2';
 import Admin from '@/models/Admin';
 import SuperAdmin from '@/models/SuperAdmin';
-import { connectToDB } from '../../../../utils/functions';
-import { verifyOtp } from '../../../../utils/sendOtp';
+import { connectToDB } from '@/utils/functions';
+import { verifyOtp } from '@/utils/sendOtp';
 
 export const options = {
   providers: [

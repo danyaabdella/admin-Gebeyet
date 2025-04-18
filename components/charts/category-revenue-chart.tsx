@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { Chart, registerables } from "chart.js"
-import { fetchCategoryRevenueData } from "@/lib/data-fetching"
+import { fetchCategoryRevenueData } from "@/utils/data-fetching"
 
 Chart.register(...registerables)
 

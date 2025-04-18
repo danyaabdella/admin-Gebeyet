@@ -5,6 +5,7 @@ const superAdminSchema = new mongoose.Schema({
   fullname: { type: String, required: true },
   password: { type: String, required: true },
   phone: { type: String, default: null },
+  image: { type: String, required: false },
   role: { type: String, default: 'superAdmin' },
   otp: { type: String, default: null },
   otpExpiry: { type: Date, default: null },

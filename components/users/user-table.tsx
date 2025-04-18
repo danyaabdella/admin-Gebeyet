@@ -1,17 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { CheckCircle, XCircle, Trash2, MoreHorizontal, AlertTriangle, Eye } from "lucide-react"
+import { CheckCircle, XCircle, AlertTriangle } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { UserDetailsDialog } from "@/components/users/user-details-dialog"
 
 interface UserTableProps {
@@ -19,7 +10,7 @@ interface UserTableProps {
   isLoading: boolean
   isTrash?: boolean
   onViewUser: (user: any) => void
-  onAction: (type: "verify" | "ban" | "unban" | "delete" | "restore" | "permanent-delete", userId: string) => void
+  onAction: (type: "approve" | "reject" | "ban" | "unban" | "delete" | "restore" | "permanent-delete", userId: string) => void
 }
 
 export function UserTable({ users, isLoading, isTrash = false, onViewUser, onAction }: UserTableProps) {

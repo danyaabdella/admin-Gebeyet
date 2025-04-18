@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AuctionTable } from "@/components/auctions/auction-table"
 import { AuctionPagination } from "@/components/auctions/auction-pagination"
 import { useToast } from "@/components/ui/use-toast"
-import { fetchAuctions, approveAuction, rejectAuction } from "@/lib/data-fetching"
+import { fetchAuctions, approveAuction, rejectAuction } from "@/utils/data-fetching"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Slider } from "@/components/ui/slider"
 import { Label } from "@/components/ui/label"

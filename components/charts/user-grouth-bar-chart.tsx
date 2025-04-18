@@ -1,29 +1,118 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { ReportBarChart } from "./report-bar-chart"
 
-// Sample data - in a real application, this would come from props or an API
-const data = [
-  { month: "Jan", customers: 120, merchants: 20, admins: 5 },
-  { month: "Feb", customers: 140, merchants: 22, admins: 5 },
-  { month: "Mar", customers: 170, merchants: 25, admins: 6 },
-  { month: "Apr", customers: 200, merchants: 28, admins: 6 },
-  { month: "May", customers: 220, merchants: 30, admins: 7 },
-  { month: "Jun", customers: 250, merchants: 32, admins: 7 },
-  { month: "Jul", customers: 280, merchants: 35, admins: 8 },
-  { month: "Aug", customers: 310, merchants: 38, admins: 8 },
-  { month: "Sep", customers: 340, merchants: 40, admins: 9 },
-  { month: "Oct", customers: 370, merchants: 42, admins: 9 },
-  { month: "Nov", customers: 400, merchants: 45, admins: 10 },
-  { month: "Dec", customers: 430, merchants: 48, admins: 10 },
-]
+export function UserGrowthBarChart({ year, month, period }: { year: number; month: string; period: string }) {
+  const [chartData, setChartData] = useState<any[]>([])
 
-export function UserGrowthBarChart() {
+  useEffect(() => {
+    async function fetchAndProcessData() {
+      try {
+        // Fetch users
+        const usersResponse = await fetch("/api/manageUsers")
+        if (!usersResponse.ok) {
+          console.error("Failed to fetch users:", usersResponse.statusText)
+          return
+        }
+        const usersData = await usersResponse.json()
+
+        // Fetch admins
+        const adminsResponse = await fetch("/api/manageAdmins")
+        if (!adminsResponse.ok) {
+          console.error("Failed to fetch admins:", adminsResponse.statusText)
+          // Continue with users data even if admins fetch fails
+        }
+        const adminsData = adminsResponse.ok ? await adminsResponse.json() : []
+
+        const selectedYear = year
+        const selectedMonth = month === "all" ? null : parseInt(month) - 1 // Convert to 0-based index
+        const isCurrentYear = selectedYear === new Date().getFullYear()
+        const isCurrentMonth = selectedMonth === new Date().getMonth()
+
+        // Initialize data for all months
+        const months = [
+          "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ]
+        const monthlyData = months.map(month => ({
+          month,
+          customers: 0,
+          merchants: 0,
+          admins: 0
+        }))
+
+        // Determine date range based on period
+        let startDate: Date
+        let endDate: Date = new Date()
+
+        if (period && isCurrentYear && isCurrentMonth) {
+          if (period === "last7days") {
+            startDate = new Date(endDate)
+            startDate.setDate(endDate.getDate() - 7)
+          } else if (period === "last30days") {
+            startDate = new Date(endDate)
+            startDate.setDate(endDate.getDate() - 30)
+          } else if (period === "last90days") {
+            startDate = new Date(endDate)
+            startDate.setDate(endDate.getDate() - 90)
+          } else if (period === "year") {
+            startDate = new Date(selectedYear, 0, 1)
+            endDate = new Date(selectedYear, 11, 31)
+          } else {
+            // Default to full year if period is invalid
+            startDate = new Date(selectedYear, 0, 1)
+            endDate = new Date(selectedYear, 11, 31)
+          }
+        } else if (selectedMonth !== null) {
+          startDate = new Date(selectedYear, selectedMonth, 1)
+          endDate = new Date(selectedYear, selectedMonth + 1, 0) // Last day of the month
+        } else {
+          startDate = new Date(selectedYear, 0, 1)
+          endDate = new Date(selectedYear, 11, 31)
+        }
+
+        // Process users
+        usersData.forEach((user: any) => {
+          const createdDate = new Date(user.createdAt)
+          if (createdDate >= startDate && createdDate <= endDate && createdDate.getFullYear() === selectedYear) {
+            const monthIndex = createdDate.getMonth() // 0-11
+            if (user.role === "customer") {
+              monthlyData[monthIndex].customers += 1
+            } else if (user.role === "merchant") {
+              monthlyData[monthIndex].merchants += 1
+            }
+          }
+        })
+
+        // Process admins
+        adminsData.forEach((admin: any) => {
+          const createdDate = new Date(admin.createdAt)
+          if (createdDate >= startDate && createdDate <= endDate && createdDate.getFullYear() === selectedYear) {
+            const monthIndex = createdDate.getMonth() // 0-11
+            monthlyData[monthIndex].admins += 1
+          }
+        })
+
+        // Filter data based on selected month
+        const filteredData = selectedMonth !== null && !period
+          ? [monthlyData[selectedMonth]]
+          : monthlyData
+
+        setChartData(filteredData)
+      } catch (error) {
+        console.error("Error fetching data:", error)
+      }
+    }
+
+    fetchAndProcessData()
+  }, [year, month, period])
+
   return (
     <div className="w-full overflow-x-auto">
       <div className="min-w-[600px] sm:min-w-full">
         <ReportBarChart
-          data={data}
+          data={chartData}
           dataKeys={["customers", "merchants", "admins"]}
           xAxisKey="month"
           colors={["#8884d8", "#82ca9d", "#ffc658"]}
@@ -33,4 +122,3 @@ export function UserGrowthBarChart() {
     </div>
   )
 }
-

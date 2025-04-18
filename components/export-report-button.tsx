@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Calendar, Download, FileText, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { generateReport } from "@/lib/data-fetching"
+import { generateReport } from "@/utils/data-fetching"
 import { toast } from "@/components/ui/use-toast"
 import { ToastAction } from "@/components/ui/toast"
 

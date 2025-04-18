@@ -40,7 +40,7 @@ export async function GET(req) {
   if (minDeliveryPrice) filter.deliveryPrice = { ...filter.deliveryPrice, $gte: minDeliveryPrice };
   if (maxDeliveryPrice) filter.deliveryPrice = { ...filter.deliveryPrice, $lte: maxDeliveryPrice };
   if (categoryId && categoryId !== "all") filter["category.categoryId"] = categoryId;
-
+  
   let aggregationSteps = [];
 
   if (center) {
@@ -80,17 +80,18 @@ export async function GET(req) {
   );
 }
 
-export async function PATCH(req) { // Changed from PUT to PATCH for partial updates
+export async function PUT(req) {
   await isAdminOrSuperAdmin();
   const adminInfo = await userInfo();
 
   if (adminInfo?.isBanned || adminInfo?.isDeleted) {
-    return new Response(JSON.stringify({ error: "You cannot perform this operation temporarily" }), {
-      status: 403,
-    });
+    return new Response(
+      JSON.stringify({ error: "You cannot perform this operation temporarily" }),
+      { status: 403 }
+    );
   }
 
-  const { _id, isBanned, isDeleted } = await req.json();
+  const { _id, isBanned, banReason, banDescription } = await req.json();
 
   if (!_id) {
     return new Response(JSON.stringify({ error: "Product ID is required" }), { status: 400 });
@@ -102,25 +103,28 @@ export async function PATCH(req) { // Changed from PUT to PATCH for partial upda
       return new Response(JSON.stringify({ error: "Product not found" }), { status: 404 });
     }
 
-    if (typeof isDeleted === "boolean") {
-      if (product.isDeleted && isDeleted === false) {
-        product.isDeleted = false;
-        product.trashDate = null;
-        await product.save();
-        return new Response(JSON.stringify({ message: "Product restored successfully" }), { status: 200 });
-      } else if (!product.isDeleted && isDeleted === true) {
-        product.isDeleted = true;
-        product.trashDate = new Date();
-        await product.save();
-        return new Response(JSON.stringify({ message: "Product moved to trash" }), { status: 200 });
-      }
-    }
-
-    if (typeof isBanned === "boolean") { // Fixed typo: `isBanned = typeof undefined`
+    if (typeof isBanned === "boolean") {
       product.isBanned = isBanned;
+
+      if (isBanned) {
+        product.banReason = {
+          reason: banReason || "No reason provided",
+          description: banDescription || "",
+        };
+        product.bannedAt = new Date();
+      } else {
+        product.banReason = {
+          reason: "",
+          description: "",
+        };
+        product.bannedAt = null;
+      }
+
       await product.save();
       return new Response(
-        JSON.stringify({ message: `Product ${isBanned ? "banned" : "unbanned"} successfully` }),
+        JSON.stringify({
+          message: `Product ${isBanned ? "banned" : "unbanned"} successfully`,
+        }),
         { status: 200 }
       );
     }
@@ -128,7 +132,10 @@ export async function PATCH(req) { // Changed from PUT to PATCH for partial upda
     return new Response(JSON.stringify({ error: "No valid update provided" }), { status: 400 });
   } catch (error) {
     console.error(error);
-    return new Response(JSON.stringify({ error: "Failed to update product" }), { status: 500 });
+    return new Response(
+      JSON.stringify({ error: "Failed to update product" }),
+      { status: 500 }
+    );
   }
 }
 
@@ -155,20 +162,21 @@ export async function DELETE(req) {
       return new Response(JSON.stringify({ error: "Product not found" }), { status: 404 });
     }
 
-    if (product.isDeleted && product.trashDate) {
+    // if (product.isDeleted && product.trashDate) {
       await Product.findByIdAndDelete(_id);
       return new Response(JSON.stringify({ message: "Product permanently deleted" }), { status: 200 });
-    } else {
-      product.isDeleted = true;
-      product.trashDate = new Date();
-      await product.save();
-      return new Response(
-        JSON.stringify({ message: "Product moved to trash. It will be permanently deleted after 30 days" }),
-        { status: 200 }
-      );
-    }
+    // } else {
+    //   product.isDeleted = true;
+    //   product.trashDate = new Date();
+    //   await product.save();
+    //   return new Response(
+    //     JSON.stringify({ message: "Product moved to trash. It will be permanently deleted after 30 days" }),
+    //     { status: 200 }
+    //   );
+    // }
   } catch (error) {
     console.error("Error in DELETE handler:", error.message);
     return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
   }
 }
+

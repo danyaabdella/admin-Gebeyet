@@ -16,9 +16,9 @@ const productSchema = new Schema({
     soldQuantity: { type: Number, default: 0 },
     description: { type: String, required: true },
     images: [{ type: String }],
-    variant: [{ type: String }], // Optional list of colors
-    size: [{ type: String }], // Optional list of sizes
-    brand: { type: String, default: "Hand Made" }, // Optional list of brand
+    variant: [{ type: String }],
+    size: [{ type: String }],
+    brand: { type: String, default: "Hand Made" },
     location: {
         type: { type: String, default: "Point" }, 
         coordinates: { type: [Number], required: true }
@@ -34,6 +34,11 @@ const productSchema = new Schema({
     delivery: { type: String, enum: ['FLAT', 'PERPIECE', 'PERKG', 'FREE', 'PERPIECS'], required: true },
     deliveryPrice: { type: Number, required: true },
     isBanned: { type: Boolean, default: false },
+    banReason: { 
+        reason: { type: String },
+        description: { type: String }
+     },
+    bannedAt: { type: Date },
     isDeleted: { type: Boolean, default: false }, 
     trashDate: { 
         type: Date, 

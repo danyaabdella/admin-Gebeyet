@@ -8,6 +8,11 @@ const UserSchema = new Schema(
     role: { type: String, enum: ["customer", "merchant"], default: "customer" },
     image: { type: String, default: " " },
     isBanned: { type: Boolean, default: false },
+    banReason: { 
+          reason: { type: String },
+          description: { type: String }
+      },
+    bannedAt: { type: Date },
     bannedBy: { type: String, required: function () { return this.isBanned; } },
     isEmailVerified: { type: Boolean, default: false },
     address: {
@@ -27,11 +32,14 @@ const UserSchema = new Schema(
       default: "pending",
       required: function () { return this.role === "merchant"; },
     },
-    rejectionReason: { type: String, required: function () { return this.approvalStatus === "rejected"; } },
+    rejectionReason: { 
+      reason: { type: String },
+      description: { type: String }
+    },
     approvedBy: { type: String },
     merchantDetails: {
       tinNumber: { type: String, required: function () { return this.role === "merchant"; } },
-      uniqueTinNumber: { type: String, required: false },
+      uniqueTinNumber: { type: String, unique: true, required: function () { return this.approvalStatus = "approved"; } },
       nationalId: { type: String, required: function () { return this.role === "merchant"; } },
       account: {
         name: { type: String, required: function () { return this.role === "merchant"; } },

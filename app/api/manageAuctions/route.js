@@ -1,37 +1,57 @@
-import { MongoClient, ObjectId } from 'mongodb';
-import { role } from '../auth/[...nextauth]/route';
+import { connectToDB, isAdminOrSuperAdmin } from "@/utils/functions";
+import Auction from "@/models/Auction";
 
-    export async function PUT(req) {
-        try {
-            const user = await role();
-            if(!user){
-                return new Response(JSON.stringify({message: "unauthorized"}),
-                {status: 401}
-            );      
-            }
-            const client = await MongoClient.connect("MONGO_URL", { useNewUrlParser: true, useUnifiedTopology: true });
-            const db = client.db("marketplace");
-            const auctionCollection = db.collection("auctions");
+export async function PUT(req) {
+  try {
+    await connectToDB();
+    await isAdminOrSuperAdmin();
 
-            const {auctionId, adminApproval} = await req.json();
-            
-            const auction = await auctionCollection.findOne({ _id: new ObjectId(auctionId) });
-            if (!auction) {
-                return new Response(JSON.stringify({ message: "No auction with specified ID" }), { status: 404 });
-            }
-    
-            const status = adminApproval === "approved" ? "active" : "cancelled";
-    
-            await auctionCollection.updateOne(
-                { _id: new ObjectId(auctionId) },
-                { $set: { adminApproval, status } }
-            );
-            return new Response(JSON.stringify({message: "auction status updated"}));
-        } catch (error) {
-            console.error("Error updating auction:", error.message);
-            return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
-        }
-        finally {
-            if (client) await client.close();
-        }
+    const { auctionId, adminApproval } = await req.json();
+
+    const auction = await Auction.findById(auctionId);
+    if (!auction) {
+      return new Response(JSON.stringify({ message: "Auction not found" }), { status: 404 });
     }
+
+    const status = adminApproval === "approved" ? "active" : "cancelled";
+
+    auction.adminApproval = adminApproval;
+    auction.status = status;
+    await auction.save();
+
+    return new Response(JSON.stringify({ message: "Auction status updated successfully" }), { status: 200 });
+
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ message: error.message || "Error updating auction" }),
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(req) {
+  try {
+    await connectToDB();
+    await isAdminOrSuperAdmin();
+
+    const url = new URL(req.url);
+    const _id = url.searchParams.get("_id");
+    const status = url.searchParams.get("status");
+    const adminApproval = url.searchParams.get("adminApproval");
+
+    let filter = {};
+
+    if (_id) filter._id = new ObjectId(_id);
+    if (status) filter.status = status;
+    if (adminApproval) filter.adminApproval = adminApproval;
+
+    const auctions = await Auction.find(filter);
+    return new Response(JSON.stringify(auctions), { status: 200 });
+
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ message: error.message || "Error fetching auctions" }),
+      { status: 500 }
+    );
+  }
+}

@@ -6,6 +6,7 @@ const adminSchema = new mongoose.Schema({
   password: { type: String, required: true },
   phone: { type: String, default: null },
   role: { type: String, default: 'admin' },
+  image: { type: String, required: false },
   isBanned: { type: Boolean, default: false },
   isDeleted: { type: Boolean, default: false },
   trashDate: { type: Date, default: null, expires: 30 * 24 * 60 * 60 },

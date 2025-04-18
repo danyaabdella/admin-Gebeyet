@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, SetStateAction } from "react";
 import { Search, Filter, CheckCircle, XCircle, Trash2, MapPin, DollarSign, Box, Star, Truck, Tag } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,22 +16,18 @@ import { Toaster } from "@/components/toaster";
 import DistancePicker from "@/components/DistancePicker";
 import {
   fetchProducts,
-  banProduct,
-  unbanProduct,
-  deleteProduct,
-  restoreProduct,
-  permanentDeleteProduct,
-} from "@/lib/data-fetching";
+} from "@/utils/data-fetching";
 import debounce from "lodash.debounce";
+import { ProductType, LocationData, LatLng } from "@/utils/typeDefinitions";
 
 export default function ProductsPageClient() {
   const [selectedTab, setSelectedTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -52,20 +48,22 @@ export default function ProductsPageClient() {
   const [maxDeliveryPrice, setMaxDeliveryPrice] = useState("0");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [locationRadius, setLocationRadius] = useState(50); // Default 50 km
-  const [locationCenter, setLocationCenter] = useState(null);
+  const [locationCenter, setLocationCenter] = useState<LatLng | null>(null);
+  const [categories, setCategories] = useState<any[]>([]);
 
   const { toast } = useToast();
 
-  const categories = [
-    { id: "all", name: "All Categories" },
-    { id: "category_1", name: "Electronics" },
-    { id: "category_2", name: "Clothing" },
-    { id: "category_3", name: "Home & Garden" },
-    { id: "category_4", name: "Beauty" },
-    { id: "category_5", name: "Toys" },
-    { id: "category_6", name: "Sports" },
-  ];
+  const fetchCategories = async () => {
+    const res = await fetch("/api/manageCategory");
+    const data = await res.json();
+    
+    const formatted = [{ id: "all", name: "All Categories" }, ...data.map((cat: { _id: any; name: any; }) => ({
+      id: cat._id,
+      name: cat.name,
+    }))];
   
+    return formatted;
+  };  
 
   const deliveryTypes = [
     { id: "all", name: "All Types" },
@@ -75,15 +73,15 @@ export default function ProductsPageClient() {
     { id: "free", name: "Free Shipping" },
   ];
 
-  // Debounced filter application
   const debouncedFetchProducts = useMemo(
     () =>
       debounce(async () => {
         setIsLoadingData(true);
         try {
           const filters = {
-            isDeleted: selectedTab === "deleted",
-            phrase: searchQuery,
+            isDeleted: selectedTab === "deleted" ? true : undefined,
+            isBanned: selectedTab === "banned" ? true : undefined,
+            phrase: searchQuery || undefined,
             categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
             minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
             maxPrice: priceRange[1] > 0 ? priceRange[1] : undefined,
@@ -95,7 +93,7 @@ export default function ProductsPageClient() {
             minDeliveryPrice: deliveryPriceRange[0] > 0 ? deliveryPriceRange[0] : undefined,
             maxDeliveryPrice: deliveryPriceRange[1] > 0 ? deliveryPriceRange[1] : undefined,
             center: locationCenter ? `${locationCenter.lat}-${locationCenter.lng}` : undefined,
-            radius: locationRadius * 1000, // Convert km to meters, always sent
+            radius: locationRadius * 1000, // Convert km to meters
           };
 
           const response = await fetchProducts(currentPage, 15, filters);
@@ -134,11 +132,19 @@ export default function ProductsPageClient() {
     return () => debouncedFetchProducts.cancel();
   }, [debouncedFetchProducts]);
 
-  const handleSearchChange = (e) => {
+  useEffect(() => {
+    const loadCategories = async () => {
+      const fetched = await fetchCategories();
+      setCategories(fetched);
+    };
+    loadCategories();
+  }, []);  
+
+  const handleSearchChange = (e: { target: { value: SetStateAction<string>; }; }) => {
     setSearchQuery(e.target.value);
   };
 
-  const handleTabChange = (value) => {
+  const handleTabChange = (value: SetStateAction<string>) => {
     setSelectedTab(value);
     setCurrentPage(1);
   };
@@ -162,52 +168,85 @@ export default function ProductsPageClient() {
     setLocationCenter(null);
   };
 
-  const handleLocationChange = ({ radius, center }) => {
-    setLocationRadius(Math.round(radius / 1000)); // Convert meters to km
+  const handleLocationChange = ({ radius, center }: LocationData) => {
+    setLocationRadius(Math.round(radius / 1000));
     setLocationCenter(center);
   };
 
-  const handleProductAction = async (type, productId) => {
-    setIsLoading(true);
-    try {
-      let response;
-      switch (type) {
-        case "ban":
-          response = await banProduct(productId);
-          break;
-        case "unban":
-          response = await unbanProduct(productId);
-          break;
-        case "delete":
-          response = await deleteProduct(productId);
-          break;
-        case "restore":
-          response = await restoreProduct(productId);
-          break;
-        case "permanent-delete":
-          response = await permanentDeleteProduct(productId);
-          break;
-        default:
-          throw new Error("Invalid action type");
-      }
+const handleProductAction = async (
+  type: "ban" | "unban" | "delete",
+  productId: string,
+  additionalData: Record<string, any> = {}
+) => {
+  console.log("Product actions: ", type);
+  setIsLoading(true);
+  try {
+    let response;
 
-      toast({
-        title: "Success",
-        description: response.message,
-      });
+    switch (type) {
+      case "ban":
+        response = await fetch("/api/products", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            _id: productId,
+            isBanned: true,
+            banReason: additionalData.reason,
+            banDescription: additionalData.description,
+          }),
+        }).then((res) => res.json());
+        break;
 
-      debouncedFetchProducts();
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to ${type} product. Please try again.`,
-      });
-    } finally {
-      setIsLoading(false);
-      setSelectedProduct(null);
+      case "unban":
+        response = await fetch("/api/products", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            _id: productId,
+            isBanned: false,
+          }),
+        }).then((res) => res.json());
+        break;
+
+      case "delete":
+        response = await fetch("/api/products", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            _id: productId,
+          }),
+        }).then((res) => res.json());
+        break;
+
+      default:
+        throw new Error("Invalid action type");
     }
-  };
+
+    console.log("Response: ", response);
+
+    toast({
+      title: "Success",
+      description: response.message,
+    });
+
+    debouncedFetchProducts();
+  } catch (error) {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: `Failed to ${type} product. Please try again.`,
+    });
+  } finally {
+    setIsLoading(false);
+    setSelectedProduct(null);
+  }
+};
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -249,11 +288,12 @@ export default function ProductsPageClient() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Select defaultValue="active" value={selectedTab} onValueChange={handleTabChange}>
+              <Select defaultValue="all" value={selectedTab} onValueChange={handleTabChange}>
                 <SelectTrigger className="w-[140px] md:w-[180px]">
                   <SelectValue placeholder="View" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="all">All Products</SelectItem>
                   <SelectItem value="active">Active Products</SelectItem>
                   <SelectItem value="banned">Banned Products</SelectItem>
                   <SelectItem value="deleted">Deleted Products</SelectItem>
@@ -267,7 +307,6 @@ export default function ProductsPageClient() {
               <CardContent className="p-4 md:p-6">
                 <h2 className="text-xl font-semibold mb-4">Filter Products</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Left Side - Filters */}
                   <div className="space-y-4">
                     <div>
                       <Label className="flex items-center">
@@ -400,7 +439,6 @@ export default function ProductsPageClient() {
                     </Button>
                   </div>
 
-                  {/* Right Side - Map */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 justify-between">
                       <Label className="flex items-center">
@@ -537,7 +575,12 @@ export default function ProductsPageClient() {
           product={selectedProduct}
           open={!!selectedProduct}
           onOpenChange={() => setSelectedProduct(null)}
-          onAction={handleProductAction}
+          onAction={(action) =>
+            handleProductAction(action.type as "ban" | "unban" | "delete", action.productId, {
+              reason: action.reason,
+              description: action.description,
+            })
+          }
           isLoading={isLoading}
         />
       )}

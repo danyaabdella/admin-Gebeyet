@@ -14,7 +14,7 @@ import { DateRangePicker } from "@/components/date-range-picker"
 import { useToast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/toaster"
 import { DateRange } from "react-day-picker"
-import { mockTransactions } from "@/lib/mock-transaction"
+import { mockTransactions } from "@/utils/mock-transaction"
 
 // Mock transaction types
 const transactionTypes = [

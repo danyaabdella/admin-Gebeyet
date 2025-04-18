@@ -18,7 +18,7 @@ import {
   deleteAdmin,
   restoreAdmin,
   permanentDeleteAdmin,
-} from "@/lib/data-fetching"
+} from "@/utils/data-fetching"
 
 export function AdminManagementContent() {
   const [isLoading, setIsLoading] = useState(true)

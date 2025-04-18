@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, SetStateAction } from "react";
 import { Search } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,13 +14,25 @@ import { Toaster } from "@/components/toaster";
 import { Sidebar } from "@/components/sidebar";
 import { useSession } from "next-auth/react";
 
+interface Category {
+  _id: string;
+  name: string;
+  description: string;
+  createdBy: string;
+  isDeleted: boolean;
+  trashDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export function CategoryPageClient() {
   const { data: session, status } = useSession();
   const [selectedTab, setSelectedTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCreator, setSelectedCreator] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([]);
   const [totalCategories, setTotalCategories] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -30,90 +42,78 @@ export function CategoryPageClient() {
 
   const itemsPerPage = 10;
 
-  // **Fetch category creators**
   useEffect(() => {
-    const fetchCreators = async () => {
+    if (status !== "authenticated") return;
+    const fetchCategories = async () => {
+      setIsLoadingData(true);
       try {
         const response = await fetch("/api/manageCategory");
         if (!response.ok) throw new Error("Failed to fetch categories");
         const data = await response.json();
-        const uniqueCreators = [...new Set(data.map((cat) => cat.createdBy))];
-        const creators = uniqueCreators.map((email) => ({ id: email, name: email }));
-        setCategoryCreators([{ id: "all", name: "All Creators" }, ...creators]);
+        setAllCategories(data);
       } catch (error) {
         toast({
           variant: "destructive",
           title: "Error",
-          description: "Failed to fetch category creators.",
+          description: "Failed to fetch categories.",
         });
+      } finally {
+        setIsLoadingData(false);
       }
     };
-    fetchCreators();
-  }, []);
-
-  // **Fetch categories with filtering and client-side pagination**
-  const fetchCategories = async () => {
-    setIsLoadingData(true);
-    try {
-      const queryParams = new URLSearchParams({
-        ...(searchQuery && { name: searchQuery }),
-        ...(selectedCreator !== "all" && { createdBy: selectedCreator }),
-      });
-      const response = await fetch(`/api/manageCategory?${queryParams}`);
-      if (!response.ok) throw new Error("Failed to fetch categories");
-      const allCategories = await response.json();
-
-      // Filter categories based on isDeleted status
-      const filteredCategories = allCategories.filter(
-        (cat) => (cat.isDeleted || false) === (selectedTab === "deleted")
-      );
-
-      // Implement client-side pagination
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const paginatedCategories = filteredCategories.slice(
-        startIndex,
-        startIndex + itemsPerPage
-      );
-
-      setCategories(paginatedCategories);
-      setTotalCategories(filteredCategories.length);
-      setTotalPages(Math.ceil(filteredCategories.length / itemsPerPage));
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch categories.",
-      });
-    } finally {
-      setIsLoadingData(false);
-    }
-  };
+    fetchCategories();
+  }, [status, toast]);
 
   useEffect(() => {
-    if (status === "authenticated") {
-      fetchCategories();
-    }
-  }, [currentPage, selectedTab, searchQuery, selectedCreator, status]);
+    const uniqueCreators = [...new Set(allCategories.map((cat) => cat.createdBy))];
+    setCategoryCreators([
+      { id: "all", name: "All Creators" },
+      ...uniqueCreators.map((email) => ({ id: email, name: email })),
+    ]);
 
-  // **Handle search button click**
+    let filtered = allCategories;
+    filtered = filtered.filter((cat) => (cat.isDeleted || false) === (selectedTab === "deleted"));
+
+    if (searchQuery) {
+      filtered = filtered.filter((cat) => {
+        const name = cat.name?.toLowerCase() || "";
+        const description = cat.description?.toLowerCase() || "";
+        const query = searchQuery.toLowerCase();
+        return name.includes(query) || description.includes(query);
+      });
+    }    
+
+    if (selectedCreator !== "all") {
+      filtered = filtered.filter((cat) => cat.createdBy === selectedCreator);
+    }
+
+    setTotalCategories(filtered.length);
+    const newTotalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+    setTotalPages(newTotalPages);
+
+    if (currentPage > newTotalPages) {
+      setCurrentPage(1);
+    }
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    setFilteredCategories(filtered.slice(startIndex, startIndex + itemsPerPage));
+  }, [allCategories, selectedTab, searchQuery, selectedCreator, currentPage]);
+
   const handleSearch = () => {
     setCurrentPage(1);
   };
 
-  // **Handle tab change (active/deleted)**
-  const handleTabChange = (value) => {
+  const handleTabChange = (value: SetStateAction<string>) => {
     setSelectedTab(value);
     setCurrentPage(1);
   };
 
-  // **Handle creator filter change**
-  const handleCreatorChange = (value) => {
+  const handleCreatorChange = (value: SetStateAction<string>) => {
     setSelectedCreator(value);
     setCurrentPage(1);
   };
 
-  // **Handle category actions (delete, restore, edit)**
-  const handleCategoryAction = async (type, categoryId, data) => {
+  const handleCategoryAction = async (type: string, categoryId: string, data?: any) => {
     setIsLoading(true);
     try {
       let message = "";
@@ -121,13 +121,13 @@ export function CategoryPageClient() {
 
       switch (type) {
         case "delete":
+        case "permanent-delete":
           response = await fetch(`/api/manageCategory`, {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ _id: categoryId }),
           });
-          if (!response.ok) throw new Error(await response.text());
-          message = "Category moved to trash";
+          message = type === "delete" ? "Category moved to trash" : "Category deleted successfully";
           break;
 
         case "restore":
@@ -136,7 +136,6 @@ export function CategoryPageClient() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ _id: categoryId, isDeleted: false }),
           });
-          if (!response.ok) throw new Error(await response.text());
           message = "Category restored successfully";
           break;
 
@@ -146,7 +145,6 @@ export function CategoryPageClient() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ _id: categoryId, ...data }),
           });
-          if (!response.ok) throw new Error(await response.text());
           message = "Category updated successfully";
           break;
 
@@ -154,30 +152,45 @@ export function CategoryPageClient() {
           throw new Error("Unknown action type");
       }
 
+      if (!response.ok) throw new Error(await response.text());
+
       toast({ title: "Success", description: message });
-      await fetchCategories();
-    } catch (error) {
-      const errorMessage = JSON.parse(error.message).error || "An unexpected error occurred";
+
+      const updatedResponse = await fetch("/api/manageCategory");
+      if (!updatedResponse.ok) throw new Error("Failed to refetch categories");
+      setAllCategories(await updatedResponse.json());
+    } catch (error: any) {
+      const errorMessage = error.message.includes("{")
+        ? JSON.parse(error.message).error
+        : error.message;
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to ${type} category: ${errorMessage}`,
+        description: `Failed to ${type} category: ${errorMessage || "An unexpected error occurred"}`,
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  // **Handle new category creation**
   const handleCategoryAdded = async () => {
-    await fetchCategories();
-    toast({
-      title: "Success",
-      description: "Category created successfully",
-    });
+    try {
+      const response = await fetch("/api/manageCategory");
+      if (!response.ok) throw new Error("Failed to fetch categories");
+      setAllCategories(await response.json());
+      toast({
+        title: "Success",
+        description: "Category created successfully",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to refresh categories.",
+      });
+    }
   };
 
-  // **Loading and authentication states**
   if (status === "loading") {
     return <div>Loading...</div>;
   }
@@ -262,7 +275,7 @@ export function CategoryPageClient() {
           </CardHeader>
           <CardContent className="p-0">
             <CategoryTable
-              categories={categories}
+              categories={filteredCategories}
               isLoading={isLoadingData}
               userSession={session}
               onCategoryAction={handleCategoryAction}
@@ -278,7 +291,6 @@ export function CategoryPageClient() {
             onPageChange={setCurrentPage}
           />
         )}
-
         <Toaster />
       </main>
     </div>
