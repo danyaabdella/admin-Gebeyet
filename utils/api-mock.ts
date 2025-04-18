@@ -444,7 +444,6 @@ export async function submitContactForm(formData: any) {
   }
 }
 
-// About Us API
 export async function fetchAboutUsContent() {
   console.log("Fetching About Us content from API")
 
@@ -709,7 +708,7 @@ export async function updateContactContent(data: any) {
   }
 }
 
-export async function updateAboutUsContent(data: any) {
+export async function updateAboutContent(data: any) {
   console.log("Updating About Us content:", data)
 
   // Simulate API delay
@@ -783,4 +782,20 @@ export async function fetchAdminProfile() {
   ]
 
   return profiles[Math.floor(Math.random() * profiles.length)]
+}
+
+export async function changeAdminPassword(passwordData: { currentPassword: string; newPassword: string }) {
+  // In a real implementation, this would change the admin's password
+  console.log("Changing admin password")
+
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  // Simulate validation of current password
+  if (passwordData.currentPassword !== "password123") {
+    throw new Error("Current password is incorrect")
+  }
+
+  // Return success for demo
+  return { success: true, message: "Password changed successfully" }
 }
