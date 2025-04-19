@@ -43,7 +43,7 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
     switch (status) {
       case "APPROVED":
         return (
-          <Badge variant="success" className="flex items-center gap-1">
+          <Badge className="flex items-center gap-1">
             <CheckCircle className="h-3 w-3" /> Approved
           </Badge>
         )
@@ -67,7 +67,7 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
     switch (status) {
       case "PAID":
         return (
-          <Badge variant="success" className="flex items-center gap-1">
+          <Badge className="flex items-center gap-1">
             <DollarSign className="h-3 w-3" /> Paid
           </Badge>
         )

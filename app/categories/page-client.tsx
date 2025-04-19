@@ -2,10 +2,22 @@
 
 import { useState, useEffect, SetStateAction } from "react";
 import { Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CategoryTable } from "@/components/categories/category-table";
 import { CreateCategoryDialog } from "@/components/categories/create-category-dialog";
 import { CategoryPagination } from "@/components/categories/category-pagination";
@@ -36,7 +48,9 @@ export function CategoryPageClient() {
   const [totalCategories, setTotalCategories] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [categoryCreators, setCategoryCreators] = useState([{ id: "all", name: "All Creators" }]);
+  const [categoryCreators, setCategoryCreators] = useState([
+    { id: "all", name: "All Creators" },
+  ]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -65,14 +79,18 @@ export function CategoryPageClient() {
   }, [status, toast]);
 
   useEffect(() => {
-    const uniqueCreators = [...new Set(allCategories.map((cat) => cat.createdBy))];
+    const uniqueCreators = [
+      ...new Set(allCategories.map((cat) => cat.createdBy)),
+    ];
     setCategoryCreators([
       { id: "all", name: "All Creators" },
       ...uniqueCreators.map((email) => ({ id: email, name: email })),
     ]);
 
     let filtered = allCategories;
-    filtered = filtered.filter((cat) => (cat.isDeleted || false) === (selectedTab === "deleted"));
+    filtered = filtered.filter(
+      (cat) => (cat.isDeleted || false) === (selectedTab === "deleted")
+    );
 
     if (searchQuery) {
       filtered = filtered.filter((cat) => {
@@ -81,14 +99,17 @@ export function CategoryPageClient() {
         const query = searchQuery.toLowerCase();
         return name.includes(query) || description.includes(query);
       });
-    }    
+    }
 
     if (selectedCreator !== "all") {
       filtered = filtered.filter((cat) => cat.createdBy === selectedCreator);
     }
 
     setTotalCategories(filtered.length);
-    const newTotalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+    const newTotalPages = Math.max(
+      1,
+      Math.ceil(filtered.length / itemsPerPage)
+    );
     setTotalPages(newTotalPages);
 
     if (currentPage > newTotalPages) {
@@ -96,7 +117,9 @@ export function CategoryPageClient() {
     }
 
     const startIndex = (currentPage - 1) * itemsPerPage;
-    setFilteredCategories(filtered.slice(startIndex, startIndex + itemsPerPage));
+    setFilteredCategories(
+      filtered.slice(startIndex, startIndex + itemsPerPage)
+    );
   }, [allCategories, selectedTab, searchQuery, selectedCreator, currentPage]);
 
   const handleSearch = () => {
@@ -113,7 +136,11 @@ export function CategoryPageClient() {
     setCurrentPage(1);
   };
 
-  const handleCategoryAction = async (type: string, categoryId: string, data?: any) => {
+  const handleCategoryAction = async (
+    type: string,
+    categoryId: string,
+    data?: any
+  ) => {
     setIsLoading(true);
     try {
       let message = "";
@@ -127,7 +154,10 @@ export function CategoryPageClient() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ _id: categoryId }),
           });
-          message = type === "delete" ? "Category moved to trash" : "Category deleted successfully";
+          message =
+            type === "delete"
+              ? "Category moved to trash"
+              : "Category deleted successfully";
           break;
 
         case "restore":
@@ -166,7 +196,9 @@ export function CategoryPageClient() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: `Failed to ${type} category: ${errorMessage || "An unexpected error occurred"}`,
+        description: `Failed to ${type} category: ${
+          errorMessage || "An unexpected error occurred"
+        }`,
       });
     } finally {
       setIsLoading(false);
@@ -204,10 +236,13 @@ export function CategoryPageClient() {
       <Sidebar />
       <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl md:text-3xl font-bold tracking-tight">Category Management</h1>
+          <h1 className="text-xl md:text-3xl font-bold tracking-tight">
+            Category Management
+          </h1>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">
-              <span className="hidden md:inline">Total </span>Categories: {totalCategories}
+              <span className="hidden md:inline">Total </span>Categories:{" "}
+              {totalCategories}
             </span>
           </div>
         </div>
@@ -238,7 +273,9 @@ export function CategoryPageClient() {
               <SelectContent>
                 {categoryCreators.map((creator) => (
                   <SelectItem key={creator.id} value={creator.id}>
-                    <span className="sm:hidden">{creator.name.split(" ")[0]}</span>
+                    <span className="sm:hidden">
+                      {creator.name.split(" ")[0]}
+                    </span>
                     <span className="hidden sm:inline">{creator.name}</span>
                   </SelectItem>
                 ))}
@@ -260,13 +297,20 @@ export function CategoryPageClient() {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <CreateCategoryDialog userSession={session} onCategoryAdded={handleCategoryAdded} />
+            <CreateCategoryDialog
+              userSession={session}
+              onCategoryAdded={handleCategoryAdded}
+            />
           </div>
         </div>
 
         <Card>
           <CardHeader className="p-2 md:p-4">
-            <CardTitle>{selectedTab === "active" ? "All Categories" : "Deleted Categories"}</CardTitle>
+            <CardTitle>
+              {selectedTab === "active"
+                ? "All Categories"
+                : "Deleted Categories"}
+            </CardTitle>
             <CardDescription className="hidden md:block">
               {selectedTab === "active"
                 ? "Manage all categories in the marketplace system"

@@ -1,25 +1,37 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ExportReportButton } from "@/components/export-report-button"
-import { RevenueBarChart } from "@/components/charts/revenur-bar-chart"
-import { UserGrowthBarChart } from "@/components/charts/user-grouth-bar-chart"
-import { CategoryRevenueBarChart } from "@/components/charts/category-revenue-bar-chart"
-import { OrderDistributionBarChart } from "@/components/charts/order-bar-chart"
-import { MonthlyReportsBarChart } from "@/components/charts/monthly-report-bar-chart"
-import { ProductSalesChart } from "@/components/charts/product-sales-chart"
-import { AuctionPerformanceChart } from "@/components/charts/auction-performance-chart"
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ExportReportButton } from "@/components/export-report-button";
+import { RevenueBarChart } from "@/components/charts/revenur-bar-chart";
+import { UserGrowthBarChart } from "@/components/charts/user-grouth-bar-chart";
+import { CategoryRevenueBarChart } from "@/components/charts/category-revenue-bar-chart";
+import { OrderDistributionBarChart } from "@/components/charts/order-bar-chart";
+import { MonthlyReportsBarChart } from "@/components/charts/monthly-report-bar-chart";
+import { ProductSalesChart } from "@/components/charts/product-sales-chart";
+import { AuctionPerformanceChart } from "@/components/charts/auction-performance-chart";
 
 interface ReportsProps {
-  reportYear: string
-  setReportYear: (year: string) => void
-  reportMonth: string
-  setReportMonth: (month: string) => void
-  reportPeriod: string
-  setReportPeriod: (period: string) => void
-  shouldShowPeriod: boolean
+  reportYear: string;
+  setReportYear: (year: string) => void;
+  reportMonth: string;
+  setReportMonth: (month: string) => void;
+  reportPeriod: string;
+  setReportPeriod: (period: string) => void;
+  shouldShowPeriod: boolean;
 }
 
 export function Reports({
@@ -97,10 +109,16 @@ export function Reports({
         <Card>
           <CardHeader>
             <CardTitle>Monthly Financial Reports</CardTitle>
-            <CardDescription>Revenue, profit, and expenses breakdown by month</CardDescription>
+            <CardDescription>
+              Revenue, profit, and expenses breakdown by month
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <MonthlyReportsBarChart year={parseInt(reportYear)} month={reportMonth} period={""} />
+            <MonthlyReportsBarChart
+              year={parseInt(reportYear)}
+              month={reportMonth}
+              period={""}
+            />
           </CardContent>
         </Card>
 
@@ -110,7 +128,11 @@ export function Reports({
             <CardDescription>Monthly revenue trends</CardDescription>
           </CardHeader>
           <CardContent>
-            <RevenueBarChart year={parseInt(reportYear)} month={reportMonth} period={""} />
+            <RevenueBarChart
+              year={parseInt(reportYear)}
+              month={reportMonth}
+              period={""}
+            />
           </CardContent>
         </Card>
 
@@ -120,27 +142,41 @@ export function Reports({
             <CardDescription>Monthly user growth by type</CardDescription>
           </CardHeader>
           <CardContent>
-            <UserGrowthBarChart year={parseInt(reportYear)} month={reportMonth} period={""} />
+            <UserGrowthBarChart
+              year={parseInt(reportYear)}
+              month={reportMonth}
+              period={""}
+            />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Product Sales Report</CardTitle>
-            <CardDescription>Monthly product sales data compared to targets</CardDescription>
+            <CardDescription>
+              Monthly product sales data compared to targets
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <ProductSalesChart year={parseInt(reportYear)} month={reportMonth} />
+            <ProductSalesChart
+              year={parseInt(reportYear)}
+              month={reportMonth}
+            />
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>Auction Performance Report</CardTitle>
-            <CardDescription>Monthly auction activity breakdown</CardDescription>
+            <CardDescription>
+              Monthly auction activity breakdown
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <AuctionPerformanceChart year={parseInt(reportYear)} month={reportMonth} />
+            <AuctionPerformanceChart
+              year={parseInt(reportYear)}
+              month={reportMonth}
+            />
           </CardContent>
         </Card>
 
@@ -150,19 +186,26 @@ export function Reports({
             <CardDescription>Breakdown of Order Distribution</CardDescription>
           </CardHeader>
           <CardContent>
-            <OrderDistributionBarChart year={parseInt(reportYear)} month={reportMonth} period={""} />
+            <OrderDistributionBarChart
+              year={parseInt(reportYear)}
+              month={reportMonth}
+              period={""}
+            />
           </CardContent>
         </Card>
       </div>
       <Card>
-          <CardHeader>
-            <CardTitle>Revenue by Category</CardTitle>
-            <CardDescription>Top performing categories</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CategoryRevenueBarChart year={parseInt(reportYear)} month={reportMonth} />
-          </CardContent>
-        </Card>
+        <CardHeader>
+          <CardTitle>Revenue by Category</CardTitle>
+          <CardDescription>Top performing categories</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CategoryRevenueBarChart
+            year={parseInt(reportYear)}
+            month={reportMonth}
+          />
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }

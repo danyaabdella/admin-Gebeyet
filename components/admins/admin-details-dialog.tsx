@@ -31,7 +31,12 @@ interface ConfirmDeleteDialogProps {
   isPermanent: boolean;
 }
 
-const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({ open, onOpenChange, onConfirm, isPermanent }) => {
+const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
+  open,
+  onOpenChange,
+  onConfirm,
+  isPermanent,
+}) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleConfirm = async () => {
@@ -50,7 +55,9 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({ open, onOpenC
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isPermanent ? "Permanently Delete Admin" : "Delete Admin"}</DialogTitle>
+          <DialogTitle>
+            {isPermanent ? "Permanently Delete Admin" : "Delete Admin"}
+          </DialogTitle>
           <DialogDescription>
             {isPermanent
               ? "Are you sure you want to permanently delete this admin? This action cannot be undone."
@@ -61,7 +68,11 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({ open, onOpenC
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleConfirm} disabled={isLoading}>
+          <Button
+            variant="destructive"
+            onClick={handleConfirm}
+            disabled={isLoading}
+          >
             {isLoading ? "Deleting..." : "Confirm"}
           </Button>
         </DialogFooter>
@@ -77,7 +88,11 @@ interface ConfirmBanDialogProps {
   onConfirm: (reason: string) => void;
 }
 
-const ConfirmBanDialog: React.FC<ConfirmBanDialogProps> = ({ open, onOpenChange, onConfirm }) => {
+const ConfirmBanDialog: React.FC<ConfirmBanDialogProps> = ({
+  open,
+  onOpenChange,
+  onConfirm,
+}) => {
   const [banReason, setBanReason] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -105,7 +120,8 @@ const ConfirmBanDialog: React.FC<ConfirmBanDialogProps> = ({ open, onOpenChange,
         <DialogHeader>
           <DialogTitle>Ban Admin</DialogTitle>
           <DialogDescription>
-            Are you sure you want to ban this admin? Please provide a reason for the ban.
+            Are you sure you want to ban this admin? Please provide a reason for
+            the ban.
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -142,7 +158,11 @@ interface ConfirmRestoreDialogProps {
   onConfirm: () => void;
 }
 
-const ConfirmRestoreDialog: React.FC<ConfirmRestoreDialogProps> = ({ open, onOpenChange, onConfirm }) => {
+const ConfirmRestoreDialog: React.FC<ConfirmRestoreDialogProps> = ({
+  open,
+  onOpenChange,
+  onConfirm,
+}) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleConfirm = async () => {
@@ -170,7 +190,11 @@ const ConfirmRestoreDialog: React.FC<ConfirmRestoreDialogProps> = ({ open, onOpe
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button variant="default" onClick={handleConfirm} disabled={isLoading}>
+          <Button
+            variant="default"
+            onClick={handleConfirm}
+            disabled={isLoading}
+          >
             {isLoading ? "Restoring..." : "Confirm Restore"}
           </Button>
         </DialogFooter>
@@ -179,7 +203,11 @@ const ConfirmRestoreDialog: React.FC<ConfirmRestoreDialogProps> = ({ open, onOpe
   );
 };
 
-export function AdminDetailsDialog({ admin, open, onOpenChange }: AdminDetailsDialogProps) {
+export function AdminDetailsDialog({
+  admin,
+  open,
+  onOpenChange,
+}: AdminDetailsDialogProps) {
   const [isBanning, setIsBanning] = useState(false);
   const [isUnbanning, setIsUnbanning] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -214,11 +242,19 @@ export function AdminDetailsDialog({ admin, open, onOpenChange }: AdminDetailsDi
   const handleBanAdmin = async (reason: string) => {
     setIsBanning(true);
     try {
-      await apiCall("/api/manageAdmins", "PUT", { _id: admin._id, isBanned: true, banReason: reason });
+      await apiCall("/api/manageAdmins", "PUT", {
+        _id: admin._id,
+        isBanned: true,
+        banReason: reason,
+      });
       toast({ title: "Success", description: "Admin banned successfully!" });
       onOpenChange(false);
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: (error as Error).message });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: (error as Error).message,
+      });
     } finally {
       setIsBanning(false);
     }
@@ -227,11 +263,18 @@ export function AdminDetailsDialog({ admin, open, onOpenChange }: AdminDetailsDi
   const handleUnbanAdmin = async () => {
     setIsUnbanning(true);
     try {
-      await apiCall("/api/manageAdmins", "PUT", { _id: admin._id, isBanned: false });
+      await apiCall("/api/manageAdmins", "PUT", {
+        _id: admin._id,
+        isBanned: false,
+      });
       toast({ title: "Success", description: "Admin unbanned successfully!" });
       onOpenChange(false);
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: (error as Error).message });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: (error as Error).message,
+      });
     } finally {
       setIsUnbanning(false);
     }
@@ -247,7 +290,11 @@ export function AdminDetailsDialog({ admin, open, onOpenChange }: AdminDetailsDi
       toast({ title: "Success", description: message });
       onOpenChange(false);
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: (error as Error).message });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: (error as Error).message,
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -256,11 +303,18 @@ export function AdminDetailsDialog({ admin, open, onOpenChange }: AdminDetailsDi
   const handleRestoreAdmin = async () => {
     setIsRestoring(true);
     try {
-      await apiCall("/api/manageAdmins", "PUT", { _id: admin._id, isDeleted: false });
+      await apiCall("/api/manageAdmins", "PUT", {
+        _id: admin._id,
+        isDeleted: false,
+      });
       toast({ title: "Success", description: "Admin restored successfully!" });
       onOpenChange(false);
     } catch (error) {
-      toast({ variant: "destructive", title: "Error", description: (error as Error).message });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: (error as Error).message,
+      });
     } finally {
       setIsRestoring(false);
     }
@@ -274,7 +328,10 @@ export function AdminDetailsDialog({ admin, open, onOpenChange }: AdminDetailsDi
             <DialogTitle className="flex items-center justify-between">
               <span>Admin Details</span>
               {admin.isBanned ? (
-                <Badge variant="destructive" className="flex items-center gap-1">
+                <Badge
+                  variant="destructive"
+                  className="flex items-center gap-1"
+                >
                   <XCircle className="h-3 w-3" />
                   Banned
                 </Badge>
@@ -288,7 +345,9 @@ export function AdminDetailsDialog({ admin, open, onOpenChange }: AdminDetailsDi
                 </Badge>
               )}
             </DialogTitle>
-            <DialogDescription>View and manage administrator information</DialogDescription>
+            <DialogDescription>
+              View and manage administrator information
+            </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
@@ -307,20 +366,28 @@ export function AdminDetailsDialog({ admin, open, onOpenChange }: AdminDetailsDi
               </div>
               <div>
                 <Label className="text-sm font-medium">Created</Label>
-                <div className="text-sm mt-1">{new Date(admin.createdAt).toLocaleString()}</div>
+                <div className="text-sm mt-1">
+                  {new Date(admin.createdAt).toLocaleString()}
+                </div>
               </div>
 
               {admin.isBanned && admin.banReason && (
                 <div>
-                  <Label className="text-sm font-medium text-red-600">Ban Reason</Label>
-                  <div className="text-sm mt-1 text-red-500">{admin.banReason}</div>
+                  <Label className="text-sm font-medium text-red-600">
+                    Ban Reason
+                  </Label>
+                  <div className="text-sm mt-1 text-red-500">
+                    {admin.banReason}
+                  </div>
                 </div>
               )}
 
               {admin.isDeleted && (
                 <div>
                   <Label className="text-sm font-medium">Deleted</Label>
-                  <div className="text-sm mt-1">{new Date(admin.trashDate).toLocaleString()}</div>
+                  <div className="text-sm mt-1">
+                    {new Date(admin.trashDate).toLocaleString()}
+                  </div>
                 </div>
               )}
             </div>

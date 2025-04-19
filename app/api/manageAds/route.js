@@ -83,98 +83,105 @@ export const POST = async (req) => {
 };
 
 export const GET = async (req) => {
-    await connectToDB();
-    // await isAdminOrSuperAdmin(req);
-  
-    const url = new URL(req.url);
-    const center = url.searchParams.get("center"); // e.g., "9.03-38.74"
-    const radius = parseInt(url.searchParams.get("radius")) || 50000; // default 50km
-    const page = parseInt(url.searchParams.get("page")) || 1;
-    const limit = parseInt(url.searchParams.get("limit")) || 15;
-    const status = url.searchParams.get("status");
-  
-    const filter = {};
-    if (status) filter.approvalStatus = status;
-  
-    try {
-      if (center) {
-        const [lat, lng] = center.split("-").map(Number);
-  
-        const result = await Ad.aggregate([
-          {
-            $geoNear: {
-              near: { type: "Point", coordinates: [lng, lat] }, // Note: [lng, lat]!
-              distanceField: "distance",
-              maxDistance: radius,
-              spherical: true,
-              query: filter,
-            }
-          },
-          { $sort: { createdAt: -1 } },
-          { $skip: (page - 1) * limit },
-          { $limit: limit },
-          {
-            $facet: {
-              metadata: [{ $count: "total" }],
-              data: [
-                { $sort: { createdAt: -1 } },
-                { $skip: (page - 1) * limit },
-                { $limit: limit }
-              ]
-            }
+  await connectToDB();
+  await isAdminOrSuperAdmin(req);
+
+  const url = new URL(req.url);
+  const center = url.searchParams.get("center"); // e.g., "9.03-38.74"
+  const radius = parseInt(url.searchParams.get("radius")) || 50000;
+  const page = parseInt(url.searchParams.get("page")) || 1;
+  const limit = parseInt(url.searchParams.get("limit")) || 15;
+  const status = url.searchParams.get("status");
+
+  console.log("Filters: ", center, radius, page, limit, status);
+
+  const filter = {};
+  if (status) filter.approvalStatus = status;
+
+  try {
+    if (center) {
+      const [lat, lng] = center.split("-").map(Number);
+
+      const result = await Ad.aggregate([
+        {
+          $geoNear: {
+            near: { type: "Point", coordinates: [lng, lat] }, // Note: [lng, lat]!
+            distanceField: "distance",
+            maxDistance: radius,
+            spherical: true,
+            query: filter,
           }
-        ]);
-  
-        const ads = result[0]?.data || [];
-        const total = result[0]?.metadata[0]?.total || 0;
-  
-        return new Response(
-          JSON.stringify({
-            ads,
-            pagination: {
-              currentPage: page,
-              totalPages: Math.ceil(total / limit),
-              totalAds: total,
-            },
-          }),
-          { status: 200 }
-        );
-  
-      } else {
-        const ads = await Ad.find(filter)
-          .sort({ createdAt: -1 })
-          .skip((page - 1) * limit)
-          .limit(limit);
-  
-        const total = await Ad.countDocuments(filter);
-  
-        return new Response(
-          JSON.stringify({
-            ads,
-            pagination: {
-              currentPage: page,
-              totalPages: Math.ceil(total / limit),
-              totalAds: total,
-            },
-          }),
-          { status: 200 }
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching ads:", error);
+        },
+        { $sort: { createdAt: -1 } },
+        { $skip: (page - 1) * limit },
+        { $limit: limit },
+        {
+          $facet: {
+            metadata: [{ $count: "total" }],
+            data: [
+              { $sort: { createdAt: -1 } },
+              { $skip: (page - 1) * limit },
+              { $limit: limit }
+            ]
+          }
+        }
+      ]);
+
+      const ads = result[0]?.data || [];
+      const total = result[0]?.metadata[0]?.total || 0;
+
+      console.log("total ads (geo):", total);
+
       return new Response(
-        JSON.stringify({ error: "Error fetching ads", details: error.message }),
-        { status: 500 }
+        JSON.stringify({
+          ads,
+          pagination: {
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
+            totalAds: total,
+          },
+        }),
+        { status: 200 }
+      );
+
+    } else {
+      const ads = await Ad.find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+
+      const total = await Ad.countDocuments(filter);
+
+      console.log("total ads (non-geo):", total);
+
+      return new Response(
+        JSON.stringify({
+          ads,
+          pagination: {
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
+            totalAds: total,
+          },
+        }),
+        { status: 200 }
       );
     }
-  };  
+  } catch (error) {
+    console.error("Error fetching ads:", error);
+    return new Response(
+      JSON.stringify({ error: "Error fetching ads", details: error.message }),
+      { status: 500 }
+    );
+  }
+};
 
 export const PUT = async (req) => {
   await connectToDB();
-
   await isAdminOrSuperAdmin();
 
-  const { _id, action, reason, tx_ref, amount } = await req.json();
+  const { _id, action, reason, description, tx_ref, amount } = await req.json();
+
+  console.log("update infos: ", _id, action, reason, description, tx_ref, amount);
 
   if (!_id) {
     return new Response(JSON.stringify({ error: "Missing ad ID" }), { status: 400 });
@@ -199,7 +206,7 @@ export const PUT = async (req) => {
   if (action === "REJECT") {
     // Mark as rejected
     ad.approvalStatus = "REJECTED";
-    ad.rejectionReason = { reason, description: reason };
+    ad.rejectionReason = { reason, description: description };
     ad.isActive = false;
 
     // Call refund API
@@ -219,8 +226,9 @@ export const PUT = async (req) => {
       const result = await refundRes.json();
 
       if (
-        result.message === "Refunds can only be processed in live mode" ||
-        result.message?.toLowerCase().includes("refund")
+        result.message 
+        // === "Refunds can only be processed in live mode" ||
+        // result.message?.toLowerCase().includes("refund")
       ) {
         await ad.save();
         return new Response(JSON.stringify({ message: "Ad rejected and refund initiated" }), { status: 200 });

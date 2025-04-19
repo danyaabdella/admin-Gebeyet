@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { fetchAboutUsContent, updateAboutUsContent } from "@/utils/api-mock"
+import { fetchAboutUsContent, updateAboutContent } from "@/utils/api-mock"
 
 export function AboutUsContentManager() {
   const { toast } = useToast()
@@ -68,7 +68,7 @@ export function AboutUsContentManager() {
 
     setIsSaving(true)
     try {
-      await updateAboutUsContent(content)
+      await updateAboutContent(content)
       toast({
         title: "Content updated",
         description: "About Us content has been successfully updated.",
