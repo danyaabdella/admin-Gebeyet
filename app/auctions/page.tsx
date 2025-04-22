@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Key } from "react";
 import {
   Search,
   Calendar,
@@ -45,26 +45,7 @@ import { format } from "date-fns";
 import { Sidebar } from "@/components/sidebar";
 import { AuctionDetailsDialog } from "@/components/auctions/auction-details-dialog";
 import { PaginationControls } from "@/components/auctions/pagination-controls";
-
-interface Auction {
-  id: string;
-  productId: string;
-  productName: string;
-  merchantName: string;
-  description: string;
-  condition: "new" | "used";
-  startTime: string;
-  endTime: string;
-  itemImg: string[];
-  startingPrice: number;
-  reservedPrice: number;
-  bidIncrement: number;
-  status: "pending" | "active" | "ended" | "cancelled";
-  adminApproval: "pending" | "approved" | "rejected";
-  currentBid: number;
-  bidCount: number;
-  category: string;
-}
+import { Auction } from "@/utils/typeDefinitions";
 
 export default function AuctionsPageClient() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -76,50 +57,50 @@ export default function AuctionsPageClient() {
   const [adminApproval, setAdminApproval] = useState("all");
   const [condition, setCondition] = useState("all");
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({});
-  const [priceRange, setPriceRange] = useState([0, 2000]);
+  const [priceRange, setPriceRange] = useState([0, 1000000000]);
   const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
 
   const itemsPerPage = 10;
 
-  // Generate mock data
+  const fetchAuctions = async () => {
+    try {
+      const res = await fetch("/api/manageAuctions");
+      if (!res.ok) throw new Error("Failed to fetch auctions");
+      const data = await res.json();
+      console.log("Auction data: ", data);
+      setAuctions(data);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error("Error fetching auctions:", error.message);
+      } else {
+        console.error("Unknown error:", error);
+      }
+    }
+  };
+
+  // Initial fetch on component mount
   useEffect(() => {
-    const mockAuctions = Array.from({ length: 15 }).map((_, i) => ({
-      id: `auction_${i + 1}`,
-      productId: `product_${i + 1}`,
-      productName: `Product ${i + 1}`,
-      merchantName: `Merchant ${(i % 5) + 1}`,
-      description: `This is a description for auction ${
-        i + 1
-      }. It includes details about the product condition and other relevant information.`,
-      condition: i % 2 === 0 ? "new" : "used",
-      startTime: new Date(
-        Date.now() - Math.floor(Math.random() * 10000000000)
-      ).toISOString(),
-      endTime: new Date(
-        Date.now() + Math.floor(Math.random() * 10000000000)
-      ).toISOString(),
-      itemImg: [
-        `/placeholder.svg?height=200&width=200&text=Image+${i + 1}`,
-        `/placeholder.svg?height=200&width=200&text=Image+${i + 2}`,
-      ],
-      startingPrice: Number.parseFloat((Math.random() * 1000).toFixed(2)),
-      reservedPrice: Number.parseFloat((Math.random() * 2000).toFixed(2)),
-      bidIncrement: Number.parseFloat((Math.random() * 50).toFixed(2)),
-      status:
-        i % 4 === 0
-          ? "pending"
-          : i % 4 === 1
-          ? "active"
-          : i % 4 === 2
-          ? "ended"
-          : "cancelled",
-      adminApproval:
-        i % 3 === 0 ? "pending" : i % 3 === 1 ? "approved" : "rejected",
-      currentBid: Number.parseFloat((Math.random() * 1500).toFixed(2)),
-      bidCount: Math.floor(Math.random() * 20),
-      category: ["Electronics", "Fashion", "Home", "Books", "Toys"][i % 5],
-    }));
-    setAuctions(mockAuctions);
+    fetchAuctions();
+  }, []);
+
+  useEffect(() => {
+    const fetchAuctions = async () => {
+      try {
+        const res = await fetch("/api/manageAuctions");
+        if (!res.ok) throw new Error("Failed to fetch auctions");
+        const data = await res.json();
+        console.log("Auction data: ", data);
+        setAuctions(data);
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error("Error fetching auctions:", error.message);
+        } else {
+          console.error("Unknown error:", error);
+        }
+      }
+    };
+
+    fetchAuctions();
   }, []);
 
   // Apply filters
@@ -194,6 +175,13 @@ export default function AuctionsPageClient() {
     setCurrentPage(1);
   };
 
+  const handleDialogOpenChange = (open: boolean) => {
+    setSelectedAuction(null);
+    if (!open) {
+      fetchAuctions(); // Refetch auctions when dialog closes
+    }
+  };
+
   const handleDateChange = (range: { from?: Date; to?: Date }) => {
     setDateRange(range);
     setCurrentPage(1);
@@ -205,7 +193,7 @@ export default function AuctionsPageClient() {
     setAdminApproval("all");
     setCondition("all");
     setDateRange({});
-    setPriceRange([0, 2000]);
+    setPriceRange([0, 1000000000]);
     setCurrentPage(1);
   };
 
@@ -247,7 +235,7 @@ export default function AuctionsPageClient() {
                 </Button>
               </form>
 
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="grid md:grid-cols-5 grid-cols-2 items-center gap-2">
                 <Select
                   value={status}
                   onValueChange={(value) => {
@@ -255,7 +243,7 @@ export default function AuctionsPageClient() {
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -274,7 +262,7 @@ export default function AuctionsPageClient() {
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Admin Approval" />
                   </SelectTrigger>
                   <SelectContent>
@@ -292,7 +280,7 @@ export default function AuctionsPageClient() {
                     setCurrentPage(1);
                   }}
                 >
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[160px]">
                     <SelectValue placeholder="Condition" />
                   </SelectTrigger>
                   <SelectContent>
@@ -391,7 +379,7 @@ export default function AuctionsPageClient() {
                   condition !== "all" ||
                   dateRange.from ||
                   priceRange[0] !== 0 ||
-                  priceRange[1] !== 2000) && (
+                  priceRange[1] !== 1000000000) && (
                   <Button variant="outline" size="sm" onClick={clearFilters}>
                     <X className="mr-2 h-4 w-4" />
                     Clear Filters
@@ -407,47 +395,57 @@ export default function AuctionsPageClient() {
               <CardDescription>
                 Manage all auctions in the marketplace system
               </CardDescription>
-            </CardHeader>
+            </CardHeader >
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Product</TableHead>
+                    <TableHead>Auction</TableHead>
                     <TableHead className="hidden md:table-cell">
                       Merchant
                     </TableHead>
+                    <TableHead>
+                      <span className="inline md:hidden">Price</span>
+                      <span className="hidden md:inline">Start Price</span>
+                    </TableHead>
                     <TableHead className="hidden md:table-cell">
-                      Starting Price
+                      Reserved Price
                     </TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="table-cell">Start/End Time</TableHead>
                     <TableHead className="hidden md:table-cell">
-                      Current Bid
+                      Start/End Time
+                    </TableHead>
+                    <TableHead>
+                      <span className="inline md:hidden">Bid</span>
+                      <span className="hidden md:inline">Current Bid</span>
                     </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredAuctions.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center">
+                      <TableCell colSpan={7} className="text-center">
                         No auctions found
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredAuctions.map((auction) => (
                       <TableRow
-                        key={auction.id}
+                        key={auction._id}
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => setSelectedAuction(auction)}
                       >
                         <TableCell className="font-medium">
-                          {auction.productName}
+                          {auction.auctionTitle || "N/A"}
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
-                          {auction.merchantName}
+                          {auction.merchantName || "N/A"}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell>
                           ${auction.startingPrice.toFixed(2)}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          ${auction.reservedPrice.toFixed(2)}
                         </TableCell>
                         <TableCell>
                           {auction.status === "pending" && (
@@ -471,16 +469,16 @@ export default function AuctionsPageClient() {
                             </span>
                           )}
                         </TableCell>
-                        <TableCell className="table-cell">
+                        <TableCell className="hidden md:table-cell">
                           {new Date(auction.startTime).toLocaleDateString()} -{" "}
                           {new Date(auction.endTime).toLocaleDateString()}
                         </TableCell>
-                        <TableCell className="hidden md:table-cell">
+                        <TableCell>
                           {auction.currentBid
                             ? `$${auction.currentBid.toFixed(2)} (${
-                                auction.bidCount
+                                auction.bidCount || 0
                               } bids)`
-                            : "No bids yet"}
+                            : "No bids"}
                         </TableCell>
                       </TableRow>
                     ))
@@ -502,7 +500,7 @@ export default function AuctionsPageClient() {
             <AuctionDetailsDialog
               auction={selectedAuction}
               open={!!selectedAuction}
-              onOpenChange={() => setSelectedAuction(null)}
+              onOpenChange={handleDialogOpenChange}
             />
           )}
         </main>

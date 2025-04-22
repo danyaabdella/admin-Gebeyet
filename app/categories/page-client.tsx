@@ -25,17 +25,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/toaster";
 import { Sidebar } from "@/components/sidebar";
 import { useSession } from "next-auth/react";
-
-interface Category {
-  _id: string;
-  name: string;
-  description: string;
-  createdBy: string;
-  isDeleted: boolean;
-  trashDate: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Category } from "@/utils/typeDefinitions";
 
 export function CategoryPageClient() {
   const { data: session, status } = useSession();

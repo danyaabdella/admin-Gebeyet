@@ -5,7 +5,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AdsTable } from "@/components/ads/ads-table";
 import { AdsFilter } from "@/components/ads/ads-filter";
 import { Sidebar } from "@/components/sidebar";
-import { Toaster } from "@/components/toaster";
 
 interface LocationData {
   center: { lat: number; lng: number };

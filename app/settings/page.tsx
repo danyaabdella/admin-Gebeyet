@@ -91,12 +91,6 @@ export default function SettingsPage() {
 
           <TabsContent value="about" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>About Us Content Management</CardTitle>
-                <CardDescription>
-                  Update company information, team members, and other content on your About Us page.
-                </CardDescription>
-              </CardHeader>
               <CardContent>
                 <AboutUsContentManager />
               </CardContent>
