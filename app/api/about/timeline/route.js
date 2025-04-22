@@ -15,7 +15,7 @@ export async function GET() {
 
 export async function POST(req) {
     await connectToDB();
-    // await isSuperAdmin();  
+    await isSuperAdmin();  
 
     try {
     const body = await req.json();
@@ -27,16 +27,25 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-    await connectToDB();
-    // await isSuperAdmin();  
+  await connectToDB();
+  await isSuperAdmin();
+
+  try {
+    const body = await req.json(); // Get the updated timeline events data from the request body
     
-    try {
-    const body = await req.json();
-    const { id, ...rest } = body;
-    const data = await TimelineEvent.findByIdAndUpdate(id, rest, { new: true });
-    return new Response(JSON.stringify({ success: true, data }), { status: 200 });
-  } catch {
-    return new Response(JSON.stringify({ success: false }), { status: 500 });
+    // Clear out the old timeline events
+    await TimelineEvent.deleteMany({});
+
+    // Insert the new timeline events into the database
+    const updatedTimelineEvents = await TimelineEvent.insertMany(body);
+
+    return new Response(JSON.stringify({ success: true, data: updatedTimelineEvents }), { status: 200 });
+  } catch (error) {
+    console.error("Error updating timeline events:", error);
+    return new Response(
+      JSON.stringify({ success: false, message: error.message || "Error updating timeline events" }),
+      { status: 500 }
+    );
   }
 }
 

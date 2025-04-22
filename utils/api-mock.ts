@@ -485,7 +485,6 @@ export async function fetchAboutUsContent() {
   };
 }
 
-
 // Content Management APIs
 export async function updateTermsOfService(data: any) {
   console.log("Updating Terms of Service content:", data)

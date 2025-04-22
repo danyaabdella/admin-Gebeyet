@@ -3,7 +3,7 @@ import { connectToDB, isSuperAdmin } from "@/utils/functions";
 
 export async function GET() {
   await connectToDB();
-  // await isSuperAdmin();
+  await isSuperAdmin();
 
   try {
     const data = await Location.find();
@@ -17,7 +17,7 @@ export async function GET() {
 
 export async function POST(req) {
   await connectToDB();
-  // await isSuperAdmin();
+  await isSuperAdmin();
 
   try {
     const body = await req.json();
@@ -32,17 +32,24 @@ export async function POST(req) {
 
 export async function PUT(req) {
   await connectToDB();
-  // await isSuperAdmin();
+  await isSuperAdmin();
 
   try {
-    const body = await req.json();
-    const { id, ...rest } = body;
-    const data = await Location.findByIdAndUpdate(id, rest, { new: true });
+    const body = await req.json(); // body = array of new locations
+
+    // Delete all existing locations
+    await Location.deleteMany({});
+
+    // Insert new locations
+    const data = await Location.insertMany(body);
+
     return new Response(JSON.stringify({ success: true, data }), {
       status: 200,
     });
-  } catch {
+  } catch (error) {
+    console.error("Error updating locations:", error);
     return new Response(JSON.stringify({ success: false }), { status: 500 });
   }
 }
+
 

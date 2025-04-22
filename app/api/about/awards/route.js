@@ -3,7 +3,7 @@ import { connectToDB, isSuperAdmin } from "@/utils/functions";
 
 export async function GET() {
     await connectToDB();
-    // await isSuperAdmin();
+    await isSuperAdmin();
 
   try {
     const data = await Award.find();
@@ -15,7 +15,7 @@ export async function GET() {
 
 export async function POST(req) {
     await connectToDB();
-    // await isSuperAdmin();
+    await isSuperAdmin();
 
       try {
     const body = await req.json();
@@ -27,22 +27,30 @@ export async function POST(req) {
 }
 
 export async function PUT(req) {
-    await connectToDB();
-    // await isSuperAdmin();
+  await connectToDB();
+  await isSuperAdmin();
 
-      try {
-    const body = await req.json();
-    const { id, ...rest } = body;
-    const data = await Award.findByIdAndUpdate(id, rest, { new: true });
-    return new Response(JSON.stringify({ success: true, data }), { status: 200 });
-  } catch {
+  try {
+    const body = await req.json(); // body = array of awards
+
+    // Delete all current awards
+    await Award.deleteMany({});
+
+    // Insert new awards
+    const data = await Award.insertMany(body);
+
+    return new Response(JSON.stringify({ success: true, data }), {
+      status: 200,
+    });
+  } catch (error) {
+    console.error("Error updating awards:", error);
     return new Response(JSON.stringify({ success: false }), { status: 500 });
   }
 }
 
 export async function DELETE(req) {
     await connectToDB();
-    // await isSuperAdmin();
+    await isSuperAdmin();
     
     try {
     const { searchParams } = new URL(req.url);

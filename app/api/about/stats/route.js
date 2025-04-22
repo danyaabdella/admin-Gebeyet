@@ -15,7 +15,7 @@ export async function GET() {
   
   export async function POST(req) {
     await connectToDB();
-    // await isSuperAdmin();        
+    await isSuperAdmin();        
     
     try {
       const body = await req.json();
@@ -28,21 +28,28 @@ export async function GET() {
   
   export async function PUT(req) {
     await connectToDB();
-    // await isSuperAdmin();        
-    
+    await isSuperAdmin();
+  
     try {
-      const body = await req.json();
-      const { id, ...rest } = body;
-      const data = await Stat.findByIdAndUpdate(id, rest, { new: true });
-      return new Response(JSON.stringify({ success: true, data }), { status: 200 });
-    } catch {
-      return new Response(JSON.stringify({ success: false }), { status: 500 });
+      const body = await req.json(); 
+
+      await Stat.deleteMany({});
+  
+      const updatedStats = await Stat.insertMany(body);
+  
+      return new Response(JSON.stringify({ success: true, data: updatedStats }), { status: 200 });
+    } catch (error) {
+      console.error("Error updating stats:", error);
+      return new Response(
+        JSON.stringify({ success: false, message: error.message || "Error updating stats" }),
+        { status: 500 }
+      );
     }
-  }
+  }  
   
   export async function DELETE(req) {
     await connectToDB();
-    // await isSuperAdmin();        
+    await isSuperAdmin();        
     
     try {
       const { searchParams } = new URL(req.url);

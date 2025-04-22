@@ -3,7 +3,7 @@ import { connectToDB, isSuperAdmin } from "@/utils/functions";
 
 export async function GET() {
   await connectToDB();
-  // await isSuperAdmin();
+  await isSuperAdmin();
 
   try {
     const data = await TeamMember.find();
@@ -17,7 +17,7 @@ export async function GET() {
 
 export async function POST(req) {
   await connectToDB();
-  // await isSuperAdmin();
+  await isSuperAdmin();
 
   try {
     const body = await req.json();
@@ -32,30 +32,41 @@ export async function POST(req) {
 
 export async function PUT(req) {
   await connectToDB();
-  // await isSuperAdmin();
+  await isSuperAdmin();
 
   try {
-    const body = await req.json();
-    const { id, ...rest } = body;
-    const data = await TeamMember.findByIdAndUpdate(id, rest, { new: true });
-    return new Response(JSON.stringify({ success: true, data }), {
+    const members = await req.json();
+
+    await TeamMember.deleteMany({});
+
+    const inserted = await TeamMember.insertMany(members);
+
+    return new Response(JSON.stringify({ success: true, data: inserted }), {
       status: 200,
     });
-  } catch {
+  } catch (err) {
+    console.error("Error updating team members:", err);
     return new Response(JSON.stringify({ success: false }), { status: 500 });
   }
 }
 
 export async function DELETE(req) {
   await connectToDB();
-  // await isSuperAdmin();
+  await isSuperAdmin();
 
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
+
+    if (!id) {
+      return new Response(JSON.stringify({ success: false, message: "Missing ID" }), { status: 400 });
+    }
+
     await TeamMember.findByIdAndDelete(id);
+
     return new Response(JSON.stringify({ success: true }), { status: 200 });
-  } catch {
+  } catch (err) {
+    console.error("Error deleting team member:", err);
     return new Response(JSON.stringify({ success: false }), { status: 500 });
   }
 }

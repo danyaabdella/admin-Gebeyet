@@ -3,7 +3,7 @@ import { connectToDB, isSuperAdmin } from "@/utils/functions";
 
 export async function GET(req) {
     await connectToDB();
-    // await isSuperAdmin();
+    await isSuperAdmin();
 
     try {
       const data = await Hero.findOne();
@@ -13,20 +13,20 @@ export async function GET(req) {
     }
   }
   
-  export async function POST(req) {
-    await connectToDB();
-    // await isSuperAdmin();
+// export async function POST(req) {
+//     await connectToDB();
+//     await isSuperAdmin();
     
-    try {
-      const body = await req.json();
-      const data = await Hero.create(body);
-      return new Response(JSON.stringify({ success: true, data }), { status: 201 });
-    } catch {
-      return new Response(JSON.stringify({ success: false }), { status: 500 });
-    }
-  }
+//     try {
+//       const body = await req.json();
+//       const data = await Hero.create(body);
+//       return new Response(JSON.stringify({ success: true, data }), { status: 201 });
+//     } catch {
+//       return new Response(JSON.stringify({ success: false }), { status: 500 });
+//     }
+// }
   
-  export async function PUT(req) {
+export async function PUT(req) {
     await connectToDB();
     await isSuperAdmin();   
 
@@ -37,17 +37,17 @@ export async function GET(req) {
     } catch {
       return new Response(JSON.stringify({ success: false }), { status: 500 });
     }
-  }
+}
   
-  export async function DELETE() {
-    await connectToDB();
-    await isSuperAdmin();   
+// export async function DELETE() {
+//     await connectToDB();
+//     await isSuperAdmin();   
 
-    try {
-      await Hero.deleteMany();
-      return new Response(JSON.stringify({ success: true }), { status: 200 });
-    } catch {
-      return new Response(JSON.stringify({ success: false }), { status: 500 });
-    }
-  }
+//     try {
+//       await Hero.deleteMany();
+//       return new Response(JSON.stringify({ success: true }), { status: 200 });
+//     } catch {
+//       return new Response(JSON.stringify({ success: false }), { status: 500 });
+//     }
+// }
   

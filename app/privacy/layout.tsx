@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Privacy Policy of the marketplace",
 }
 
-export default function OrdersLayout({ children }: { children: ReactNode }) {
+export default function PrivacyLayout({ children }: { children: ReactNode }) {
   return (
     <section>
       {/* You can wrap with sidebar/header if needed */}

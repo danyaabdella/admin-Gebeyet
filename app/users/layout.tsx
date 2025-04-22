@@ -6,7 +6,7 @@ export const metadata: Metadata = {
   description: "Manage all users in the Marketplace Admin dashboard.",
 };
 
-export default function OrdersLayout({ children }: { children: ReactNode }) {
+export default function UsersLayout({ children }: { children: ReactNode }) {
   return (
     <section>
       {children}
