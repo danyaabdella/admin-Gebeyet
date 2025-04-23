@@ -40,6 +40,7 @@ export async function connectToDB() {
     }
   
     try {
+      console.log("URI: ",process.env.MONGO_URL )
       await mongoose.connect(process.env.MONGO_URL);
   
       isConnected = true;
@@ -180,8 +181,7 @@ export async function checkSession(email) {
       to,
       subject,
       text,
-    };
-  
+    }
     try {
       await transporter.sendMail(mailOptions);
       console.log(`Email sent to ${to} for ${userType} action: ${action}`);
