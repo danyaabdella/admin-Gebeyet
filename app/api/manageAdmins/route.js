@@ -1,8 +1,6 @@
-import { connectToDB, isAdmin, isSuperAdmin, sendNotification } from "../../../utils/functions";
+import { connectToDB, isAdmin, isAdminOrSuperAdmin, isSuperAdmin, sendNotification } from "../../../utils/functions";
 import Admin from "@/models/Admin";
-import { role } from "../auth/[...nextauth]/route"; 
 import argon2 from 'argon2';
-import DeletedAdmin from '../../models/DeletedAdmin';
 
 // GET: Fetch all admins
 export async function GET(req) {
@@ -16,17 +14,9 @@ export async function GET(req) {
     const email = url.searchParams.get("email");
     const isDeleted = url.searchParams.get("isDeleted");
 
-    // Check the user's role
-    const userRole = await role();
-    if (!userRole) {
-      return new Response(JSON.stringify({ message: "Unauthorized: No user session found" }), { status: 401 });
-    }
-
     // If fetching by _id, allow both superAdmin and admin roles
     if (_id) {
-      if (userRole !== "superAdmin" && userRole !== "admin") {
-        return new Response(JSON.stringify({ message: "Unauthorized: Only admins or superAdmins can fetch by ID" }), { status: 403 });
-      }
+      isAdminOrSuperAdmin();
       const admin = await Admin.findById(_id);
       if (!admin) {
         return new Response(JSON.stringify({ message: "Admin not found" }), { status: 404 });
@@ -65,10 +55,83 @@ export async function GET(req) {
   }
 }
 
-// POST: Create a new admin
+// Update Admin
+export async function PUT(req) {
+  try {
+    await connectToDB();
+
+    // Parse the request data
+    const { _id, isBanned, isDeleted, fullname, phone, password, banReason } = await req.json();
+
+    if (!_id) {
+      return new Response(JSON.stringify({ message: "User ID is required" }), { status: 400 });
+    }
+
+    const admin = await Admin.findById(_id);
+    if (!admin) {
+      return new Response(JSON.stringify({ message: "Admin not found" }), { status: 404 });
+    }
+
+    // SuperAdmin permission required to update isBanned
+    if (typeof isBanned !== "undefined") {
+      await isSuperAdmin();
+    
+      console.log("Ban reason: ", banReason);
+    
+      admin.isBanned = isBanned;
+    
+      if (isBanned) {
+        admin.banReason = banReason; // ✅ Set before saving
+      } else {
+        admin.banReason = null; // ✅ Reset ban reason when unbanning
+      }
+    
+      await admin.save(); // ✅ Save after setting banReason
+    
+      const action = isBanned ? "banned" : "restored";
+      await sendNotification(admin.email, "admin", action);
+    
+      return new Response(JSON.stringify(admin), { status: 200 });
+    }    
+
+    // SuperAdmin permission required to restore a deleted admin
+    if (isDeleted === false) {
+      await isSuperAdmin();
+
+      admin.isDeleted = false;
+      admin.trashDate = null;
+      await admin.save();
+
+      return new Response(JSON.stringify(admin), { status: 200 });
+    }
+
+    // Admin can only update their own info (except restricted fields)
+    await isAdmin();
+
+    if (fullname) admin.fullname = fullname;
+    if (phone) admin.phone = phone;
+
+    if (password) {
+      admin.password = await argon2.hash(password);
+    }
+
+    await admin.save();
+
+    return new Response(JSON.stringify(admin), { status: 200 });
+
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ message: error.message || "Error updating admin" }),
+      { status: error.message.includes("Unauthorized") ? 403 : 500 }
+    );
+  }
+}
+
+// // POST: Create a new admin
 export async function POST(req) {
   try {
     await connectToDB();
+
     await isSuperAdmin(); 
 
     const { email, fullname, password, phone, createdBy } = await req.json();
@@ -76,6 +139,7 @@ export async function POST(req) {
     // Check if admin already exists
     const existingAdmin = await Admin.findOne({ email });
     if (existingAdmin) {
+      console.log("Admin already exists: ", existingAdmin);
       return new Response(JSON.stringify({ message: "Admin already exists" }), { status: 400 });
     }
 
@@ -89,8 +153,11 @@ export async function POST(req) {
       phone,
       createdBy,
     });
+    console.log("New admin created: ", newAdmin);
 
+    // Send notification
     await sendNotification(newAdmin.email, "admin", "created", password);
+    console.log("Notification sent successfully.");
 
     return new Response(JSON.stringify(newAdmin), { status: 201 });
   } catch (error) {
@@ -103,102 +170,10 @@ export async function POST(req) {
   }
 }
 
-//Update Admin
-export async function PUT(req) {
-  try {
-    await connectToDB();
-
-    // Parse the request data
-    const { _id, isBanned, isDeleted } = await req.json();
-
-    if (!_id) {
-      return new Response(JSON.stringify({ message: "User ID is required" }), { status: 400 });
-    }
-
-    const admin = await Admin.findById(_id);
-    if (!admin) {
-      return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
-    }
-
-    // Case 1: If isBanned is passed, check if user is superAdmin and only update isBanned
-    if (typeof isBanned !== "undefined") {
-      await isSuperAdmin(); 
-    
-      // Update ban status separately
-      const updatedAdmin = await Admin.findByIdAndUpdate(
-        _id,
-        { isBanned },
-        { new: true }
-      );
-    
-      if (!updatedAdmin) {
-        return new Response(JSON.stringify({ message: "Admin not found" }), { status: 404 });
-      }
-    
-      if (isBanned) {
-        await sendNotification(updatedAdmin.email, "admin", "banned");
-      } else {
-        await sendNotification(updatedAdmin.email, "admin", "restored");
-      }
-    
-      return new Response(JSON.stringify(updatedAdmin), { status: 200 });
-    } 
-    
-    if (isDeleted === true) {
-      await isSuperAdmin();
-
-      // Move admin to DeletedAdmin database
-      await DeletedAdmin.create({
-        _id: admin._id,
-        email: admin.email,
-        fullname: admin.fullname,
-        phone: admin.phone,
-        createdBy: admin.createdBy,
-        createdAt: admin.createdAt,
-        deletedAt: new Date(),
-      });
-
-      // Delete from Admin collection
-      await Admin.findByIdAndDelete(_id);
-      await sendNotification(admin.email, "admin", "deleted");
-      return new Response(JSON.stringify({ message: "Admin permanently deleted and stored in DeletedAdmin" }), { status: 200 });
-      
-    }
-    // } else {
-    //   // Case 2: If isBanned is not passed, check if user is admin and update other fields
-    //   await isAdmin(); 
-
-    //   const updatedData = {
-    //     fullname,
-    //     phone,
-    //   };
-
-    //   // Hash password only if it's being updated
-    //   if (password) {
-    //     updatedData.password = await argon2.hash(password);  // Use argon2 for hashing
-    //   }
-
-    //   const updatedAdmin = await Admin.findByIdAndUpdate(_id, updatedData, { new: true });
-    //   if (!updatedAdmin) {
-    //     return new Response(JSON.stringify({ message: "Admin not found" }), { status: 404 });
-    //   }
-
-    //   return new Response(JSON.stringify(updatedAdmin), { status: 200 });
-    // }
-  } catch (error) {
-    return new Response(
-      JSON.stringify({
-        message: error.message || "Error updating admin",
-      }),
-      { status: error.message === "Unauthorized: Only superAdmins can perform this operation" ? 403 : 500 }
-    );
-  }
-}
-
-// DELETE: Soft delete an admin
+// // DELETE: Soft delete an admin
 export async function DELETE(req) {
   try {
-    await connectToDB();
+    await connectToDB(); 
 
     const { _id } = await req.json();
 
@@ -206,27 +181,24 @@ export async function DELETE(req) {
       return new Response(JSON.stringify({ message: "User ID is required" }), { status: 400 });
     }
 
-    const admin = await Admin.findById(_id);
+    const admin = await Admin.findById(_id); 
     if (!admin) {
       return new Response(JSON.stringify({ message: "Admin not found" }), { status: 404 });
     }
 
-    await isSuperAdmin(); // Ensure only super admins can delete
+    await isSuperAdmin(); 
 
-    // Store deleted admin in DeletedAdmin collection
-    await DeletedAdmin.create({
-      _id: admin._id,
-      email: admin.email,
-      fullname: admin.fullname,
-      phone: admin.phone,
-      createdBy: admin.createdBy,
-      createdAt: admin.createdAt,
-      deletedAt: new Date(),
-    });
+    if (!admin.isDeleted) {
+      admin.isDeleted = true;
+      admin.trashDate = new Date();
+      await admin.save(); 
+    } else {
+      await Admin.findByIdAndDelete(_id); 
+    }
 
-    // Delete the admin from the Admin collection
-    await Admin.findByIdAndDelete(_id);
+    // Send notification
     await sendNotification(admin.email, "admin", "deleted");
+
     return new Response(JSON.stringify({ message: "Admin permanently deleted and stored in DeletedAdmin" }), { status: 200 });
 
   } catch (error) {
@@ -238,5 +210,6 @@ export async function DELETE(req) {
     );
   }
 }
+
 
 

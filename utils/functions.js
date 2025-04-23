@@ -2,10 +2,11 @@ import mongoose from 'mongoose';
 import nodemailer from "nodemailer";
 
 import { role } from '../app/api/auth/[...nextauth]/route';
-import Admin from '../models/Admin';
-import SuperAdmin from '../models/SuperAdmin';
+import Admin from '@/models/Admin';
+import SuperAdmin from '@/models/SuperAdmin';
 import { getServerSession } from 'next-auth';
 import { options } from '../app/api/auth/[...nextauth]/options';
+import Ad from "@/models/Ad";
 
 export async function fetchUserData() {
   let data;
@@ -68,6 +69,7 @@ export async function isAdmin() {
 
 export async function isAdminOrSuperAdmin() {
     const userRole = await role();
+    console.log("role: ", userRole);
     if (userRole !== "admin" && userRole !== "superAdmin") {
       throw new Error("Unauthorized: Only admins or superAdmins can perform this operation");
     }
@@ -83,7 +85,6 @@ export async function userInfo() {
     if (!userInfo) {
         userInfo = await SuperAdmin.findOne({email: userEmail})
     }
-    console.log("user info to check role: ", userInfo.role);
     if(!userInfo) {
       return false;
     }
@@ -120,74 +121,114 @@ export async function checkSession(email) {
     return null;
 }
 
-  // Create a common email transporter
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-  
-  /**
-   * Sends an email notification based on the user type and action.
-   * @param {string} to - The recipient's email.
-   * @param {string} userType - Either "admin" or "user".
-   * @param {string} action - Action type: "created", "deleted", "banned", "restored", "approved".
-   * @param {string} [password] - The password (only required for "created" action).
-   */
-  export async function sendNotification(to, userType, action, password = "") {
-    const contactEmail = process.env.EMAIL_USER;
-    let subject, text;
-  
-    switch (action) {
-      case "created":
-        subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Created`;
-        text = `Hello,\n\nYour ${userType} account has been successfully created.\n\nEmail: ${to}\n${
-          password ? `Password: ${password}\n\nPlease log in and change your password for security reasons.` : ""
-        }\n\nBest regards,\nSupport Team`;
+// Create a common email transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+/**
+ * Sends an email notification based on the user type and action.
+ * @param {string} to - The recipient's email.
+ * @param {string} userType - Either "admin" or "user".
+ * @param {string} action - Action type: "created", "deleted", "banned", "restored", "approved".
+ * @param {string} [password] - The password (only required for "created" action).
+ */
+export async function sendNotification(to, userType, action, password = "") {
+  const contactEmail = process.env.EMAIL_USER;
+  let subject, text;
+
+  switch (action) {
+    case "created":
+      subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Created`;
+      text = `Hello,\n\nYour ${userType} account has been successfully created.\n\nEmail: ${to}\n${
+        password ? `Password: ${password}\n\nPlease log in and change your password for security reasons.` : ""
+      }\n\nBest regards,\nSupport Team`;
+      break;
+
+    case "deleted":
+      subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Deleted`;
+      text = `Hello,\n\nYour ${userType} account has been deleted. If you believe this was a mistake, please contact our support team via ${contactEmail}.\n\nBest regards,\nSupport Team`;
+      break;
+
+    case "banned":
+      subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Banned`;
+      text = `Hello,\n\nYour ${userType} account has been banned by the administrators for an unknown duration.\nIf you have any questions, please contact support at ${contactEmail}.\n\nBest regards,\nSupport Team`;
+      break;
+
+    case "restored":
+      subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Restored`;
+      text = `Hello,\n\nYour ${userType} account has been successfully restored by the administrators. You can now log in as usual.\n\nBest regards,\nSupport Team`;
+      break;
+
+      case "unbanned":
+        subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Unbanned`;
+        text = `Hello,\n\nYour ${userType} account has been successfully Unbanned by the administrators. You can now log in as usual.\n\nBest regards,\nSupport Team`;
         break;
-  
-      case "deleted":
-        subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Deleted`;
-        text = `Hello,\n\nYour ${userType} account has been deleted. If you believe this was a mistake, please contact our support team via ${contactEmail}.\n\nBest regards,\nSupport Team`;
-        break;
-  
-      case "banned":
-        subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Banned`;
-        text = `Hello,\n\nYour ${userType} account has been banned by the administrators for an unknown duration.\nIf you have any questions, please contact support at ${contactEmail}.\n\nBest regards,\nSupport Team`;
-        break;
-  
-      case "restored":
-        subject = `Your ${userType === "admin" ? "Admin" : "User"} Account Has Been Restored`;
-        text = `Hello,\n\nYour ${userType} account has been successfully restored by the administrators. You can now log in as usual.\n\nBest regards,\nSupport Team`;
-        break;
-  
-      case "approved":
+
+    case "approved":
+      if (userType === "user") {
+        subject = "Your Account Has Been Approved!";
+        text = `Hello,\n\nYour account has been approved! You can now access all seller features.\n\nBest regards,\nSupport Team`;
+      } else {
+        throw new Error("Invalid action for admin");
+      }
+      break;
+      case "rejected":
         if (userType === "user") {
-          subject = "Your Account Has Been Approved!";
-          text = `Hello,\n\nYour account has been approved! You can now access all seller features.\n\nBest regards,\nSupport Team`;
+          subject = "Your Account Has Been Rejected!";
+          text = `Hello,\n\nYour account has been rejected! You can now access all seller features.\n\nBest regards,\nSupport Team`;
         } else {
           throw new Error("Invalid action for admin");
         }
         break;
-  
-      default:
-        throw new Error("Invalid action type");
-    }
-  
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to,
-      subject,
-      text,
-    }
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log(`Email sent to ${to} for ${userType} action: ${action}`);
-    } catch (error) {
-      console.error("Error sending email:", error);
-      throw new Error("Failed to send email");
-    }
+
+    default:
+      throw new Error("Invalid action type");
   }
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to,
+    subject,
+    text,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Email sent to ${to} for ${userType} action: ${action}`);
+  } catch (error) {
+    console.error("Error sending email:", error);
+    throw new Error("Failed to send email");
+  }
+}
+
+const deactivateExpiredAds = async () => {
+  try {
+    await connectToDB();
+
+    const now = new Date();
+
+    const result = await Ad.updateMany(
+      {
+        isActive: true,
+        approvalStatus: "APPROVED",
+        endsAt: { $lt: now },
+      },
+      { $set: { isActive: false } }
+    );
+
+    console.log(`[EXPIRED ADS CLEANER]: ${result.modifiedCount} ads deactivated.`);
+    return { success: true, modified: result.modifiedCount };
+  } catch (error) {
+    console.error("[EXPIRED ADS CLEANER ERROR]:", error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+export default deactivateExpiredAds;
+
   

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -7,26 +8,23 @@ import { Sidebar } from "@/components/sidebar"
 import { UserTable } from "@/components/users/user-table"
 import { UserFilters } from "@/components/users/user-filters"
 import { PaginationControls } from "@/components/users/pagination-controls"
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog"
-import {
-  fetchUsers,
-  fetchDeletedUsers,
-  verifyUser,
-  banUser,
-  unbanUser,
-  deleteUser,
-  restoreUser,
-  permanentlyDeleteUser,
-} from "@/lib/data-fetching"
 import { toast } from "@/components/ui/use-toast"
 import { Toaster } from "@/components/toaster"
+import { banUser, deleteUser, permanentlyDeleteUser, restoreUser, unbanUser, approveUser, rejectUser } from "@/utils/adminFunctions"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<any[]>([])
-  const [trashUsers, setTrashUsers] = useState<any[]>([])
+  // State definitions
+  const [allUsers, setAllUsers] = useState<any[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState("all")
   const [statusFilter, setStatusFilter] = useState("all")
+  const [approvalStatusFilter, setApprovalStatusFilter] = useState("all")
   const [activeTab, setActiveTab] = useState("all")
   const [isLoading, setIsLoading] = useState(true)
   const [pagination, setPagination] = useState({
@@ -35,37 +33,41 @@ export default function UsersPage() {
     limit: 15,
     totalPages: 1,
   })
-  const [trashPagination, setTrashPagination] = useState({
-    total: 0,
-    page: 1,
-    limit: 15,
-    totalPages: 1,
-  })
-  const [confirmAction, setConfirmAction] = useState<{
-    type: "verify" | "ban" | "unban" | "delete" | "restore" | "permanent-delete" | null
-    userId: string | null
-  }>({ type: null, userId: null })
+  const [showBanDialog, setShowBanDialog] = useState<string | null>(null)
+  const [showApproveDialog, setShowApproveDialog] = useState<string | null>(null)
+  const [showRejectDialog, setShowRejectDialog] = useState<string | null>(null)
+  const [showRestoreDialog, setShowRestoreDialog] = useState<string | null>(null)
+  const [showPermanentDeleteDialog, setShowPermanentDeleteDialog] = useState<string | null>(null)
+  const [showConfirmDialog, setShowConfirmDialog] = useState<{ type: string, userId: string, message: string } | null>(null)
+  const [selectedBanReason, setSelectedBanReason] = useState("")
+  const [banDescription, setBanDescription] = useState("")
+  const [selectedRejectionReason, setSelectedRejectionReason] = useState("")
+  const [rejectionDescription, setRejectionDescription] = useState("")
+  const [uniqueTin, setUniqueTin] = useState<string | null>(null);
 
-  // Load users data
+  // Predefined reasons
+  const banReasons = [
+    "Inappropriate behavior",
+    "Spam",
+    "Policy violation",
+    "Other",
+  ]
+
+  const rejectionReasons = [
+    "Incomplete profile",
+    "Invalid documents",
+    "Policy violation",
+    "Other",
+  ]
+
+  // Fetch users on component mount
   useEffect(() => {
-    async function loadUsers() {
+    async function loadAllUsers() {
       setIsLoading(true)
       try {
-        const filters: any = {}
-        if (searchTerm) filters.search = searchTerm
-        if (roleFilter !== "all") filters.role = roleFilter
-        if (statusFilter === "verified") filters.isEmailVerified = true
-        if (statusFilter === "unverified") filters.isEmailVerified = false
-        if (statusFilter === "banned") filters.isBanned = true
-
-        const result = await fetchUsers(pagination.page, pagination.limit, filters)
-        setUsers(result.users)
-        setPagination(result.pagination)
-
-        // Also fetch trash users for the trash tab
-        const trashResult = await fetchDeletedUsers(trashPagination.page, trashPagination.limit)
-        setTrashUsers(trashResult.users)
-        setTrashPagination(trashResult.pagination)
+        const response = await fetch('/api/manageUsers')
+        const users = await response.json()
+        setAllUsers(users)
       } catch (error) {
         console.error("Error loading users:", error)
         toast({
@@ -77,175 +79,208 @@ export default function UsersPage() {
         setIsLoading(false)
       }
     }
+    loadAllUsers()
+  }, [])
 
-    loadUsers()
-  }, [
-    pagination.page,
-    trashPagination.page,
-    searchTerm,
-    roleFilter,
-    statusFilter,
-    pagination.limit,
-    trashPagination.limit,
-  ])
+  const getFilteredUsers = () => {
+    let filtered = [...allUsers];
+  
+    // Apply search term filter
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter(user =>
+        (user.fullName?.toLowerCase().includes(lowerSearch) ||
+         user.address?.state?.toLowerCase().includes(lowerSearch) ||
+         user.address?.city?.toLowerCase().includes(lowerSearch))
+      );
+    }
+  
+    // Apply role filter
+    if (roleFilter !== "all") {
+      filtered = filtered.filter(user => user.role === roleFilter);
+    }
+  
+    // Apply approval status filter for merchants
+    if (roleFilter === "merchant" && approvalStatusFilter !== "all") {
+      filtered = filtered.filter(user => user.approvalStatus === approvalStatusFilter);
+    }
+  
+    // Apply verification status filter
+    if (statusFilter !== "all") {
+      if (statusFilter === "verified") {
+        filtered = filtered.filter(user => user.isEmailVerified && !user.isBanned && !user.isDeleted);
+      } else if (statusFilter === "unverified") {
+        filtered = filtered.filter(user => !user.isEmailVerified && !user.isBanned && !user.isDeleted);
+      } else if (statusFilter === "banned") {
+        filtered = filtered.filter(user => user.isBanned && !user.isDeleted);
+      }
+    }
+  
+    // Apply tab filter
+    if (activeTab === "active") {
+      filtered = filtered.filter(user => !user.isDeleted);
+    } else if (activeTab === "trash") {
+      filtered = filtered.filter(user => user.isDeleted);
+    }
+    // Note: "all" tab shows all users regardless of isDeleted status
+  
+    return filtered;
+  };
 
+  // Compute filtered and paginated users
+  const filteredUsers = getFilteredUsers()
+  const totalFiltered = filteredUsers.length
+  const totalPages = Math.ceil(totalFiltered / pagination.limit)
+  const paginatedUsers = filteredUsers.slice(
+    (pagination.page - 1) * pagination.limit,
+    pagination.page * pagination.limit
+  )
+
+  // Update pagination when filters change
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    console.log("url: ", urlParams.toString());
-  
-    const tabParam = urlParams.has("customers")
-      ? "customers"
-      : urlParams.has("merchants")
-      ? "merchants"
-      : "all";
-  
-    setActiveTab(tabParam);
-    console.log("Active tab :", tabParam);
-  }, []);
+    setPagination(prev => ({
+      ...prev,
+      total: totalFiltered,
+      totalPages: totalPages,
+      page: 1
+    }))
+  }, [searchTerm, roleFilter, statusFilter, approvalStatusFilter, activeTab, allUsers])
 
-  // Handle page change
+  // Handle page navigation
   const handlePageChange = (newPage: number) => {
-    if (activeTab === "trash") {
-      setTrashPagination((prev) => ({ ...prev, page: newPage }))
-    } else {
-      setPagination((prev) => ({ ...prev, page: newPage }))
+    setPagination(prev => ({ ...prev, page: newPage }))
+  }
+
+  // Initiate a user action with confirmation
+  const handleUserAction = (
+    type: "approve" | "reject" | "ban" | "unban" | "delete" | "restore" | "permanent-delete",
+    userId: string
+  ) => {
+    switch (type) {
+      case "reject":
+        setShowRejectDialog(userId)
+        setSelectedRejectionReason("")
+        setRejectionDescription("")
+        break
+      case "ban":
+        setShowBanDialog(userId)
+        setSelectedBanReason("")
+        setBanDescription("")
+        break
+      case "restore":
+        setShowRestoreDialog(userId)
+        break
+      case "permanent-delete":
+        setShowPermanentDeleteDialog(userId)
+        break
+      case "approve":
+        setShowApproveDialog(userId)
+        setUniqueTin("")
+        break
+      case "unban":
+        setShowConfirmDialog({ type, userId, message: "Are you sure you want to unban this user?" })
+        break
+      case "delete":
+        setShowConfirmDialog({ type, userId, message: "Are you sure you want to delete this user?" })
+        break
     }
   }
 
-  // Handle user actions
-  const handleUserAction = (
-    type: "verify" | "ban" | "unban" | "delete" | "restore" | "permanent-delete",
+  // Execute confirmed user action
+  const handleConfirmAction = async (
+    type: "approve" | "reject" | "ban" | "unban" | "delete" | "restore" | "permanent-delete",
     userId: string,
+    actionData?: Record<string, any>
   ) => {
-    setConfirmAction({ type, userId })
-  }
-
-  const handleConfirmAction = async () => {
-    if (!confirmAction.userId || !confirmAction.type) return
-
-    const { type, userId } = confirmAction
     try {
       let result
-
       switch (type) {
-        case "verify":
-          result = await verifyUser(userId)
+        case "approve":
+          if (uniqueTin) {
+            result = await approveUser(userId, uniqueTin);
           if (result.success) {
-            setUsers(users.map((user) => (user._id === userId ? { ...user, isEmailVerified: true } : user)))
+            setAllUsers(prev => prev.map(user =>
+              user._id === userId ? { ...user, approvalStatus: "approved", rejectionReason: null } : user
+            ))
+          }} else {
+            console.error("Unique TIN is required to approve user.");
+          }
+          break
+        case "reject":
+          if (!actionData) throw new Error("Rejection reason is required")
+            result = await rejectUser(userId, actionData as { reason: string; description: string });
+          if (result.success) {
+            setAllUsers(prev => prev.map(user =>
+              user._id === userId ? { ...user, approvalStatus: "rejected", rejectionReason: actionData } : user
+            ))
           }
           break
         case "ban":
-          result = await banUser(userId)
+          if (!actionData) throw new Error("Ban reason is required")
+          result = await banUser(userId, actionData as { reason: string; description: string })
           if (result.success) {
-            setUsers(users.map((user) => (user._id === userId ? { ...user, isBanned: true } : user)))
+            setAllUsers(prev => prev.map(user =>
+              user._id === userId ? { ...user, isBanned: true, banReason: actionData } : user
+            ))
           }
           break
         case "unban":
           result = await unbanUser(userId)
           if (result.success) {
-            setUsers(users.map((user) => (user._id === userId ? { ...user, isBanned: false } : user)))
+            setAllUsers(prev => prev.map(user =>
+              user._id === userId ? { ...user, isBanned: false, banReason: null, bannedBy: null } : user
+            ))
           }
           break
         case "delete":
           result = await deleteUser(userId)
           if (result.success) {
-            setUsers(users.filter((user) => user._id !== userId))
-            // Refresh trash users
-            const trashResult = await fetchDeletedUsers(trashPagination.page, trashPagination.limit)
-            setTrashUsers(trashResult.users)
-            setTrashPagination(trashResult.pagination)
+            setAllUsers(prev => prev.map(user =>
+              user._id === userId ? { ...user, isDeleted: true, trashDate: new Date() } : user
+            ))
           }
           break
         case "restore":
           result = await restoreUser(userId)
           if (result.success) {
-            setTrashUsers(trashUsers.filter((user) => user._id !== userId))
-            // Refresh active users
-            const usersResult = await fetchUsers(pagination.page, pagination.limit)
-            setUsers(usersResult.users)
-            setPagination(usersResult.pagination)
+            setAllUsers(prev => prev.map(user =>
+              user._id === userId ? { ...user, isDeleted: false, trashDate: null } : user
+            ))
           }
           break
         case "permanent-delete":
           result = await permanentlyDeleteUser(userId)
           if (result.success) {
-            setTrashUsers(trashUsers.filter((user) => user._id !== userId))
-            setTrashPagination((prev) => ({
-              ...prev,
-              total: prev.total - 1,
-              totalPages: Math.ceil((prev.total - 1) / prev.limit),
-            }))
+            setAllUsers(prev => prev.filter(user => user._id !== userId))
           }
           break
       }
-
       if (result?.success) {
         toast({
           title: "Success",
           description: result.message,
         })
+      } else {
+        throw new Error(result?.message || `Failed to ${type} user`)
       }
     } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to ${confirmAction.type} user. Please try again.`,
-      })
-    } finally {
-      setConfirmAction({ type: null, userId: null })
+      if (error instanceof Error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || `Failed to ${type} user. Please try again.`,
+        })
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: `Failed to ${type} user. Please try again.`,
+        })
+      }
     }
   }
 
-  // Get confirmation dialog content based on action type
-  const getConfirmationContent = () => {
-    switch (confirmAction.type) {
-      case "verify":
-        return {
-          title: "Verify User",
-          description: "Are you sure you want to verify this user?",
-          variant: "default" as const,
-        }
-      case "ban":
-        return {
-          title: "Ban User",
-          description: "Are you sure you want to ban this user? They will not be able to access the platform.",
-          variant: "destructive" as const,
-        }
-      case "unban":
-        return {
-          title: "Unban User",
-          description: "Are you sure you want to unban this user? They will regain access to the platform.",
-          variant: "default" as const,
-        }
-      case "delete":
-        return {
-          title: "Delete User",
-          description: "Are you sure you want to delete this user? They will be moved to trash.",
-          variant: "destructive" as const,
-        }
-      case "restore":
-        return {
-          title: "Restore User",
-          description: "Are you sure you want to restore this user? They will regain access to the platform.",
-          variant: "default" as const,
-        }
-      case "permanent-delete":
-        return {
-          title: "Permanently Delete User",
-          description: "Are you sure you want to permanently delete this user? This action cannot be undone.",
-          variant: "destructive" as const,
-        }
-      default:
-        return {
-          title: "",
-          description: "",
-          variant: "default" as const,
-        }
-    }
-  }
-
-  const confirmationContent = getConfirmationContent()
-
+  // Render the UI
   return (
     <div className="flex min-h-screen flex-col">
       <Sidebar />
@@ -253,27 +288,16 @@ export default function UsersPage() {
         <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
-                Total Users: {activeTab === "trash" ? trashPagination.total : pagination.total}
-              </span>
-            </div>
+            <span className="text-sm text-muted-foreground">
+              Total Users: {filteredUsers.length}
+            </span>
           </div>
 
           <Tabs value={activeTab} className="space-y-4" onValueChange={setActiveTab}>
             <TabsList className="w-full sm:w-auto grid grid-cols-4 sm:flex">
-              <TabsTrigger value="all" className="flex-1 sm:flex-none">
-                All Users
-              </TabsTrigger>
-              <TabsTrigger value="customers" className="flex-1 sm:flex-none">
-                Customers
-              </TabsTrigger>
-              <TabsTrigger value="merchants" className="flex-1 sm:flex-none">
-                Merchants
-              </TabsTrigger>
-              <TabsTrigger value="trash" className="flex-1 sm:flex-none">
-                Trash
-              </TabsTrigger>
+              <TabsTrigger value="all">All Users</TabsTrigger>
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="trash">Trash</TabsTrigger>
             </TabsList>
 
             <TabsContent value="all" className="space-y-4">
@@ -284,18 +308,26 @@ export default function UsersPage() {
                 setRoleFilter={setRoleFilter}
                 statusFilter={statusFilter}
                 setStatusFilter={setStatusFilter}
+                approvalStatusFilter={approvalStatusFilter}
+                setApprovalStatusFilter={setApprovalStatusFilter}
+                showRoleFilter={true}
+                showStatusFilter={true}
+                showApprovalStatusFilter={roleFilter === "merchant"}
               />
-
               <Card className="overflow-hidden">
                 <CardHeader className="p-4 bg-muted/50">
                   <CardTitle>All Users</CardTitle>
                   <CardDescription>Manage all users in the marketplace system</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <UserTable users={users} isLoading={isLoading} onViewUser={() => {}} onAction={handleUserAction} />
+                  <UserTable
+                    users={paginatedUsers}
+                    isLoading={isLoading}
+                    onViewUser={() => {}}
+                    onAction={handleUserAction}
+                  />
                 </CardContent>
               </Card>
-
               <PaginationControls
                 currentPage={pagination.page}
                 totalPages={pagination.totalPages}
@@ -303,76 +335,334 @@ export default function UsersPage() {
               />
             </TabsContent>
 
-            <TabsContent value="customers" className="space-y-4">
+            <TabsContent value="active" className="space-y-4">
+              <UserFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                roleFilter={roleFilter}
+                setRoleFilter={setRoleFilter}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                approvalStatusFilter={approvalStatusFilter}
+                setApprovalStatusFilter={setApprovalStatusFilter}
+                showRoleFilter={true}
+                showStatusFilter={true}
+                showApprovalStatusFilter={roleFilter === "merchant"}
+              />
               <Card className="overflow-hidden">
                 <CardHeader className="p-4 bg-muted/50">
-                  <CardTitle>Customer Users</CardTitle>
-                  <CardDescription>Manage customer accounts in the marketplace</CardDescription>
+                  <CardTitle>Active Users</CardTitle>
+                  <CardDescription>Manage active users in the marketplace system</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                   <UserTable
-                    users={users.filter((user) => user.role === "customer")}
+                    users={paginatedUsers}
                     isLoading={isLoading}
                     onViewUser={() => {}}
                     onAction={handleUserAction}
                   />
                 </CardContent>
               </Card>
-            </TabsContent>
-
-            <TabsContent value="merchants" className="space-y-4">
-              <Card className="overflow-hidden">
-                <CardHeader className="p-4 bg-muted/50">
-                  <CardTitle>Merchant Users</CardTitle>
-                  <CardDescription>Manage merchant accounts in the marketplace</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <UserTable
-                    users={users.filter((user) => user.role === "merchant")}
-                    isLoading={isLoading}
-                    onViewUser={() => {}}
-                    onAction={handleUserAction}
-                  />
-                </CardContent>
-              </Card>
+              <PaginationControls
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+              />
             </TabsContent>
 
             <TabsContent value="trash" className="space-y-4">
+              <UserFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                roleFilter={roleFilter}
+                setRoleFilter={setRoleFilter}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
+                approvalStatusFilter={approvalStatusFilter}
+                setApprovalStatusFilter={setApprovalStatusFilter}
+                showRoleFilter={true}
+                showStatusFilter={true}
+                showApprovalStatusFilter={roleFilter === "merchant"}
+              />
               <Card className="overflow-hidden">
                 <CardHeader className="p-4 bg-muted/50">
-                  <CardTitle>Deleted Users</CardTitle>
+                  <CardTitle>Trash</CardTitle>
                   <CardDescription>Manage deleted users in the marketplace system</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
                   <UserTable
-                    users={trashUsers}
+                    users={paginatedUsers}
                     isLoading={isLoading}
-                    isTrash={true}
                     onViewUser={() => {}}
                     onAction={handleUserAction}
                   />
                 </CardContent>
               </Card>
-
               <PaginationControls
-                currentPage={trashPagination.page}
-                totalPages={trashPagination.totalPages}
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
                 onPageChange={handlePageChange}
               />
             </TabsContent>
           </Tabs>
 
-          {/* Confirmation Dialog */}
-          <ConfirmationDialog
-            open={confirmAction.type !== null}
-            onOpenChange={(open) => {
-              if (!open) setConfirmAction({ type: null, userId: null })
-            }}
-            title={confirmationContent.title}
-            description={confirmationContent.description}
-            onConfirm={handleConfirmAction}
-            variant={confirmationContent.variant}
-          />
+          {/* Ban Confirmation Dialog */}
+          {showBanDialog && (
+            <Dialog open={!!showBanDialog} onOpenChange={() => setShowBanDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Ban</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to ban this user? Please provide a reason and additional details.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="banReason">Ban Reason</Label>
+                    <Select value={selectedBanReason} onValueChange={setSelectedBanReason}>
+                      <SelectTrigger id="banReason">
+                        <SelectValue placeholder="Select a reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {banReasons.map((reason) => (
+                          <SelectItem key={reason} value={reason}>
+                            {reason}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="banDescription">Additional Details</Label>
+                    <Textarea
+                      id="banDescription"
+                      value={banDescription}
+                      onChange={(e) => setBanDescription(e.target.value)}
+                      placeholder="Enter additional details about the ban"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowBanDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      if (!selectedBanReason) {
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: "Please select a ban reason.",
+                        })
+                        return
+                      }
+                      await handleConfirmAction("ban", showBanDialog, { reason: selectedBanReason, description: banDescription })
+                      setShowBanDialog(null)
+                    }}
+                    disabled={!selectedBanReason || isLoading}
+                  >
+                    Confirm Ban
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {showApproveDialog && (
+              <Dialog open={!!showApproveDialog} onOpenChange={() => setShowApproveDialog(null)}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Confirm Approve</DialogTitle>
+                    <DialogDescription>
+                      Are you sure you want to approve this user? Please provide a unique TIN number.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="uniqueTin">Unique TIN Number</Label>
+                      <Input
+                        id="uniqueTin"
+                        value={uniqueTin ?? ""}
+                        onChange={(e) => setUniqueTin(e.target.value)}
+                        placeholder="Enter unique TIN number"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowApproveDialog(null)}>
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={async () => {
+                        if (!uniqueTin) {
+                          toast({
+                            variant: "destructive",
+                            title: "Error",
+                            description: "Please enter unique TIN number.",
+                          });
+                          return;
+                        }
+                        await handleConfirmAction("approve", showApproveDialog, { uniqueTin });
+                        setShowApproveDialog(null);
+                      }}
+                      disabled={!uniqueTin || isLoading}
+                    >
+                      Confirm Approve
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+          )}
+
+          {/* Reject Confirmation Dialog */}
+          {showRejectDialog && (
+            <Dialog open={!!showRejectDialog} onOpenChange={() => setShowRejectDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Rejection</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to reject this user? Please provide a reason and additional details.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="rejectionReason">Rejection Reason</Label>
+                    <Select value={selectedRejectionReason} onValueChange={setSelectedRejectionReason}>
+                      <SelectTrigger id="rejectionReason">
+                        <SelectValue placeholder="Select a reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {rejectionReasons.map((reason) => (
+                          <SelectItem key={reason} value={reason}>
+                            {reason}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="rejectionDescription">Additional Details</Label>
+                    <Textarea
+                      id="rejectionDescription"
+                      value={rejectionDescription}
+                      onChange={(e) => setRejectionDescription(e.target.value)}
+                      placeholder="Enter additional details about the rejection"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowRejectDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      if (!selectedRejectionReason) {
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: "Please select a rejection reason.",
+                        })
+                        return
+                      }
+                      await handleConfirmAction("reject", showRejectDialog, { reason: selectedRejectionReason, description: rejectionDescription })
+                      setShowRejectDialog(null)
+                    }}
+                    disabled={!selectedRejectionReason || isLoading}
+                  >
+                    Confirm Rejection
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Generic Confirmation Dialog */}
+          {showConfirmDialog && (
+            <Dialog open={!!showConfirmDialog} onOpenChange={() => setShowConfirmDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Action</DialogTitle>
+                  <DialogDescription>
+                    {showConfirmDialog.message}
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowConfirmDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      await handleConfirmAction(showConfirmDialog.type as "approve" | "reject" | "ban" | "unban" | "delete" | "restore" | "permanent-delete", showConfirmDialog.userId);
+                      setShowConfirmDialog(null)
+                    }}
+                    disabled={isLoading}
+                  >
+                    Confirm
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Restore Confirmation Dialog */}
+          {showRestoreDialog && (
+            <Dialog open={!!showRestoreDialog} onOpenChange={() => setShowRestoreDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Restore</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to restore this user?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowRestoreDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      await handleConfirmAction("restore", showRestoreDialog)
+                      setShowRestoreDialog(null)
+                    }}
+                    disabled={isLoading}
+                  >
+                    Confirm
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Permanent Delete Confirmation Dialog */}
+          {showPermanentDeleteDialog && (
+            <Dialog open={!!showPermanentDeleteDialog} onOpenChange={() => setShowPermanentDeleteDialog(null)}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Permanent Delete</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to permanently delete this user? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowPermanentDeleteDialog(null)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={async () => {
+                      await handleConfirmAction("permanent-delete", showPermanentDeleteDialog)
+                      setShowPermanentDeleteDialog(null)
+                    }}
+                    disabled={isLoading}
+                  >
+                    Confirm Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </main>
       </div>
       <Toaster />

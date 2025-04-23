@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import type { Notification } from "@/lib/notification-data"
-import { NotificationType } from "@/lib/notification-data"
+import type { Notification } from "@/utils/notification-data"
+import { NotificationType } from "@/utils/notification-data"
 import { NotificationItem } from "./notification-item"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

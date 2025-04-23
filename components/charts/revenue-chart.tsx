@@ -1,38 +1,135 @@
-"use client"
+"use client";
 
-import { useEffect, useRef } from "react"
-import { Chart, registerables } from "chart.js"
+import { useEffect, useRef, useState } from "react";
+import { Chart, registerables } from "chart.js";
 
-Chart.register(...registerables)
+Chart.register(...registerables);
 
-export function RevenueChart() {
-  const chartRef = useRef<HTMLCanvasElement>(null)
-  const chartInstance = useRef<Chart | null>(null)
+export function RevenueChart({ year }: { year?: number }) {
+  const chartRef = useRef<HTMLCanvasElement>(null);
+  const chartInstance = useRef<Chart | null>(null);
+  const [chartData, setChartData] = useState<{
+    months: string[];
+    revenueData: number[];
+    ordersData: number[];
+  }>({
+    months: [],
+    revenueData: [],
+    ordersData: [],
+  });
 
   useEffect(() => {
-    if (!chartRef.current) return
+    async function fetchAndProcessOrders() {
+      try {
+        const response = await fetch("/api/order");
+        if (!response.ok) {
+          console.error("Failed to fetch orders:", response.statusText);
+          return;
+        }
+
+        const data = await response.json();
+        if (!data.success) {
+          console.error("API error:", data.message);
+          return;
+        }
+
+        const orders = data.orders;
+        const today = new Date("2025-04-14"); // Fixed reference date
+        const months: string[] = [];
+        const revenueData: number[] = [];
+        const ordersData: number[] = [];
+
+        let startDate: Date;
+        let endDate: Date;
+
+        if (year) {
+          // If year is provided, use full year
+          startDate = new Date(year, 0, 1); // Jan 1st of the year
+          endDate = new Date(year, 11, 31); // Dec 31st of the year
+
+          // Initialize months for the full year
+          for (let i = 0; i < 12; i++) {
+            const date = new Date(year, i, 1);
+            months.push(date.toLocaleString("default", { month: "short" }));
+            revenueData.push(0);
+            ordersData.push(0);
+          }
+        } else {
+          // Default behavior: last 12 months
+          startDate = new Date(today.getFullYear(), today.getMonth() - 11, 1);
+          endDate = today;
+
+          // Initialize months (12 months back)
+          for (let i = 11; i >= 0; i--) {
+            const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            months.push(date.toLocaleString("default", { month: "short" }));
+            revenueData.push(0);
+            ordersData.push(0);
+          }
+        }
+
+        orders.forEach((order: any) => {
+          const orderDate = new Date(order.orderDate);
+
+          if (orderDate >= startDate && orderDate <= endDate) {
+            const monthIndex = year
+              ? orderDate.getMonth() // 0-11 for specific year
+              : (orderDate.getFullYear() - startDate.getFullYear()) * 12 +
+                orderDate.getMonth() - startDate.getMonth();
+
+            if (monthIndex >= 0 && monthIndex < 12) {
+              // Always count the order
+              ordersData[monthIndex] += 1;
+
+              // Only include revenue for orders that are 'Paid To Merchant'
+              if (order.paymentStatus === "Paid To Merchant") {
+                let totalProductPrice = 0;
+
+                if (order.products && Array.isArray(order.products)) {
+                  totalProductPrice = order.products.reduce(
+                    (sum: number, product: any) => {
+                      const price = product.price || 0;
+                      const quantity = product.quantity || 1;
+                      return sum + price * quantity;
+                    },
+                    0
+                  );
+                }
+
+                revenueData[monthIndex] += totalProductPrice * 0.04;
+              }
+            }
+          }
+        });
+
+        setChartData({ months, revenueData, ordersData });
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    }
+
+    fetchAndProcessOrders();
+  }, [year]);
+
+  useEffect(() => {
+    if (!chartRef.current || !chartData.months.length) return;
 
     // Destroy existing chart
     if (chartInstance.current) {
-      chartInstance.current.destroy()
+      chartInstance.current.destroy();
     }
 
-    // Sample data
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    const revenueData = [12500, 15000, 18000, 16500, 21000, 22000, 25000, 23000, 27000, 29000, 32000, 34000]
-    const ordersData = [150, 180, 210, 190, 230, 250, 270, 260, 290, 310, 330, 350]
-
     // Create new chart
-    const ctx = chartRef.current.getContext("2d")
+    const ctx = chartRef.current.getContext("2d");
     if (ctx) {
       chartInstance.current = new Chart(ctx, {
         type: "line",
         data: {
-          labels: months,
+          labels: chartData.months,
           datasets: [
             {
               label: "Revenue",
-              data: revenueData,
+              data: chartData.revenueData,
               borderColor: "rgb(59, 130, 246)",
               backgroundColor: "rgba(59, 130, 246, 0.1)",
               borderWidth: 2,
@@ -42,7 +139,7 @@ export function RevenueChart() {
             },
             {
               label: "Orders",
-              data: ordersData,
+              data: chartData.ordersData,
               borderColor: "rgb(16, 185, 129)",
               backgroundColor: "rgba(16, 185, 129, 0.1)",
               borderWidth: 2,
@@ -101,21 +198,20 @@ export function RevenueChart() {
             },
           },
         },
-      })
+      });
     }
 
     // Cleanup
     return () => {
       if (chartInstance.current) {
-        chartInstance.current.destroy()
+        chartInstance.current.destroy();
       }
-    }
-  }, [])
+    };
+  }, [chartData]);
 
   return (
     <div className="h-[300px] w-full">
       <canvas ref={chartRef} />
     </div>
-  )
+  );
 }
-

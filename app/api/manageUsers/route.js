@@ -13,7 +13,7 @@ export async function GET(req) {
     const fullName = url.searchParams.get("fullName");
     const isBanned = url.searchParams.get("isBanned");
     const role = url.searchParams.get("role");
-    const isMerchant = url.searchParams.get("isMerchant");
+    const approvalStatus = url.searchParams.get("approvalStatus");
     const stateName = url.searchParams.get("stateName");
     const cityName = url.searchParams.get("cityName");
     const approvedBy = url.searchParams.get("approvedBy");
@@ -28,7 +28,7 @@ export async function GET(req) {
     if (role) filter.role = role;
     if (approvedBy) filter.approvedBy = approvedBy;
     if (bannedBy) filter.bannedBy = bannedBy;
-    if (isMerchant) filter.isMerchant = isMerchant === "true";
+    if (approvalStatus) filter.approvalStatus = approvalStatus === "true";
     if (stateName) filter.stateName = { $regex: stateName, $options: "i" }; 
     if (cityName) filter.cityName = { $regex: cityName, $options: "i" }; 
 
@@ -51,58 +51,93 @@ export async function PUT(req) {
     await connectToDB();
 
     const userData = await userInfo();
+    
+    const { action, userId, data, uniqueTin } = await req.json();
+    console.log("User ID and actions: ", action, userId, data);
 
-    // Parse the request body
-    const body = await req.json();
-    const { _id, isMerchant, isBanned, isDeleted } = body;
-
-    if (!_id) {
-      return new Response(JSON.stringify({ message: "User ID is required" }), { status: 400 });
+    if (!userId || !action) {
+      return new Response(JSON.stringify({ message: "User ID and action are required" }), { status: 400 });
     }
 
-    // Check if the user is marked as deleted
-    const user = await User.findById(_id);
+    const user = await User.findById(userId);
     if (!user) {
       return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
     }
 
-    // Handle the undo deletion logic
-    if (isDeleted === false && user.trashDate !== null) {
-      user.trashDate = null;
-      user.isDeleted = false;
-      await user.save();
-      await sendNotification(user.email, "user", "restored");
-      return new Response(JSON.stringify({ message: "User restored from trash" }), { status: 200 });
-    }
+    switch (action) {
+      case "approve":
+        console.log("Unique Tin: ", uniqueTin);
+        user.approvalStatus = "approved";
+        user.approvedBy = userData.email;
+        user.rejectionReason = null;
+        if (user.merchantDetails) {
+          user.merchantDetails.uniqueTinNumber = uniqueTin;
+        } else {
+          user.merchantDetails = { uniqueTinNumber: uniqueTin };
+        }
+        console.log("Updated user: ", user)
+        await user.save();
+        await sendNotification(user.email, "user", "approved");
+        return new Response(JSON.stringify({ message: "User approved" }), { status: 200 });
 
-    // Build the update object dynamically
-    let updateData = {};
-    if (isMerchant !== undefined) {
-      updateData.isMerchant = isMerchant;
-      updateData.approvedBy = isMerchant ? userData.email : null;
-      await sendNotification(user.email, "user", "approved");
-    }
-    if (isBanned !== undefined) {
-      updateData.isBanned = isBanned;
-      updateData.bannedBy = isBanned ? userData.email : null;
-      if (isBanned) {
+      case "reject":
+        if (!data || !data.rejectionReason || !data.rejectionReason.reason) {
+          return new Response(JSON.stringify({ message: "Rejection reason is required" }), { status: 400 });
+        }
+        user.approvalStatus = "rejected";
+        user.rejectionReason = {
+          reason: data.rejectionReason.reason,
+          description: data.rejectionReason.description || "",
+        };
+        user.approvedBy = null;
+        await user.save();
+        await sendNotification(user.email, "user", "rejected");
+        return new Response(JSON.stringify({ message: "User rejected" }), { status: 200 });
+
+      case "ban":
+        if (!data || !data.banReason || !data.banReason.reason) {
+          return new Response(JSON.stringify({ message: "Ban reason is required" }), { status: 400 });
+        }
+        user.isBanned = true;
+        user.banReason = {
+          reason: data.banReason.reason,
+          description: data.banReason.description || "",
+        };
+        user.bannedBy = userData.email;
+        await user.save();
         await sendNotification(user.email, "user", "banned");
-      }
+        return new Response(JSON.stringify({ message: "User banned" }), { status: 200 });
+
+      case "unban":
+        user.isBanned = false;
+        user.banReason = null;
+        user.bannedBy = null;
+        await user.save();
+        await sendNotification(user.email, "user", "unbanned");
+        return new Response(JSON.stringify({ message: "User unbanned" }), { status: 200 });
+
+      case "delete":
+        user.isDeleted = true;
+        user.trashDate = new Date();
+        await user.save();
+        await sendNotification(user.email, "user", "deleted");
+        return new Response(JSON.stringify({ message: "User deleted" }), { status: 200 });
+
+      case "restore":
+        user.isDeleted = false;
+        user.trashDate = null;
+        await user.save();
+        await sendNotification(user.email, "user", "restored");
+        return new Response(JSON.stringify({ message: "User restored" }), { status: 200 });
+
+      case "permanent-delete":
+        await User.findByIdAndDelete(userId);
+        await sendNotification(user.email, "user", "permanently deleted");
+        return new Response(JSON.stringify({ message: "User permanently deleted" }), { status: 200 });
+
+      default:
+        return new Response(JSON.stringify({ message: "Invalid action" }), { status: 400 });
     }
-
-    // Update the user if no deletion logic is applied
-    const updatedUser = await User.findByIdAndUpdate(
-      _id,
-      { $set: updateData },
-      { new: true }
-    );
-
-    if (!updatedUser) {
-      return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
-    }
-
-
-    return new Response(JSON.stringify({ message: "User updated successfully", user: updatedUser }), { status: 200 });
   } catch (error) {
     console.error("Error occurred:", error.message);
     return new Response(
@@ -113,38 +148,44 @@ export async function PUT(req) {
 }
 
 export async function DELETE(req) {
-try {
+  try {
     await connectToDB();
     await isAdminOrSuperAdmin();
 
     const { _id } = await req.json();
+    console.log("id: ", _id);
 
-    // Find the user to soft-delete
+    // Find the user
     const user = await User.findById(_id);
+    console.log("User to delete: ", user);
     if (!user) {
-    return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
+      return new Response(JSON.stringify({ message: "User not found" }), { status: 404 });
     }
 
     if (user.isDeleted) {
+      await User.findByIdAndDelete(_id);
+
       return new Response(
-        JSON.stringify({ message: "User alraeady in trash. It will be permanently deleted after 30 days." }),
+        JSON.stringify({ message: "User permanently deleted from the trash." }),
         { status: 200 }
-        );
+      );
     }
-    // Mark the user as deleted and set the trash date
+
+    // Soft delete: mark user as deleted and set trash date
     user.isDeleted = true;
     user.trashDate = new Date();
     await user.save();
+
     await sendNotification(user.email, "user", "deleted");
 
     return new Response(
-    JSON.stringify({ message: "User soft deleted. It will be permanently deleted after 30 days." }),
-    { status: 200 }
+      JSON.stringify({ message: "User soft deleted. It will be permanently deleted after 30 days." }),
+      { status: 200 }
     );
-} catch (error) {
+  } catch (error) {
     return new Response(
-    JSON.stringify({ message: error.message || "Error deleting user" }),
-    { status: 500 }
+      JSON.stringify({ message: error.message || "Error deleting user" }),
+      { status: 500 }
     );
-}
+  }
 }

@@ -11,7 +11,7 @@ interface CategoryTableProps {
   categories: any[]
   isLoading: boolean
   userSession: any
-  onCategoryAction: (type: string, categoryId: string) => void
+  onCategoryAction: (type: string, categoryId: string, data?: any) => void; // Make data optional with 'data?'
   selectedTab: string
 }
 
@@ -61,7 +61,7 @@ export function CategoryTable({
   const confirmDelete = () => {
     if (selectedCategory) {
       onCategoryAction("delete", selectedCategory._id)
-      setShowDeleteConfirm(false)
+      setShowDeleteConfirm(false);
     }
   }
 
@@ -88,7 +88,6 @@ export function CategoryTable({
             <TableHead className="hidden md:table-cell">Description</TableHead>
             <TableHead className="hidden md:table-cell">Created By</TableHead>
             <TableHead>Created At</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -115,25 +114,6 @@ export function CategoryTable({
                 <TableCell className="hidden md:table-cell">{category.description}</TableCell>
                 <TableCell className="hidden md:table-cell">{category.createdBy}</TableCell>
                 <TableCell className="whitespace-nowrap">{formatDate(category.createdAt)}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2 items-center" onClick={(e) => e.stopPropagation()}>
-                    {selectedTab === "active" && canPerformAction(category) && (
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(category)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                    {selectedTab === "deleted" && canPerformAction(category) && (
-                      <>
-                        <Button className="hidden md:block" variant="ghost" size="icon" onClick={() => handleRestore(category)}>
-                          <RotateCcw className="h-4 w-4 " />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handlePermanentDelete(category)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </TableCell>
               </TableRow>
             ))
           )}

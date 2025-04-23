@@ -16,25 +16,34 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NotificationPopover } from "./notification-popover";
 import { ThemeToggle } from "./ui/theme-toogle";
-import { useSidebar } from "./sidebar-provider";
+import { getUserRole } from "@/utils/adminFunctions";
+
+type NavLink = { name: string; href: string };
 
 export function NavBar() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isOpen, toggleSidebar } = useSidebar();
+  const [role, setRole] = useState<"admin" | "superAdmin" | null>(null);
 
-  // Navigation links
-  const navLinks = [
+  useEffect(() => {
+    async function fetchRole() {
+      const r = await getUserRole();
+      setRole(r as "admin" | "superAdmin" | null);
+    }
+    fetchRole();
+  }, []);
+
+  const navLinks: NavLink[] = [
     { name: "Dashboard", href: "/dashboard" },
-    { name: "Products", href: "/products" },
     { name: "User", href: "/users" },
-    { name: "Admin", href: "/admins" },
+    role === "superAdmin" && { name: "Admin", href: "/admins" },
     { name: "Auction", href: "/auctions" },
+    { name: "Order", href: "/orders" },
+    { name: "Products", href: "/products" },
     { name: "Category", href: "/categories" },
-    { name: "Transactions", href: "/transactions" },
-  ];
+  ].filter(Boolean) as NavLink[];
 
   // Redirect to /signin if there's no session
   useEffect(() => {
@@ -99,9 +108,13 @@ export function NavBar() {
 
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
-                <span className="text-lg font-bold text-primary-foreground">M</span>
+                <span className="text-lg font-bold text-primary-foreground">
+                  M
+                </span>
               </div>
-              <span className="hidden font-semibold sm:inline-block">Marketplace Admin</span>
+              <span className="hidden font-semibold sm:inline-block">
+                Marketplace Admin
+              </span>
             </Link>
           </div>
 
@@ -122,60 +135,78 @@ export function NavBar() {
           </nav>
 
           {/* Right Side: Notifications, Theme Toggle, User Avatar */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <NotificationPopover />
-            <ThemeToggle />
-
-            {/* User Profile */}
+          <div className="flex items-center gap-2 sm:gap-4 min-w-[120px]">
+            <div className="flex items-center">
+              <NotificationPopover />
+            </div>
+            <div className="flex items-center">
+              <ThemeToggle />
+            </div>
             {session?.user && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8 transition-transform hover:scale-105">
-                      <AvatarImage
-                        src={session.user.image || "/placeholder.svg"}
-                        alt={session.user.name || "User"}
-                      />
-                      <AvatarFallback>{session.user.name?.charAt(0) || "U"}</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex items-center gap-2 p-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage
-                        src={session.user.image || "/placeholder.svg"}
-                        alt={session.user.name || "User"}
-                      />
-                      <AvatarFallback>{session.user.name?.charAt(0) || "U"}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{session.user.name}</p>
-                      <p className="text-xs text-muted-foreground">{session.user.email}</p>
+              <div className="flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
+                      <Avatar className="h-8 w-8 transition-transform hover:scale-105">
+                        <AvatarImage
+                          src={session.user.image || "/placeholder.svg"}
+                          alt={session.user.name || "User"}
+                        />
+                        <AvatarFallback>
+                          {session.user.name?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    <div className="flex items-center gap-2 p-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage
+                          src={session.user.image || "/placeholder.svg"}
+                          alt={session.user.name || "User"}
+                        />
+                        <AvatarFallback>
+                          {session.user.name?.charAt(0) || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col space-y-1 leading-none">
+                        <p className="font-medium">{session.user.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {session.user.email}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="cursor-pointer text-destructive focus:text-destructive"
-                    onClick={() => {
-                      signOut();
-                      router.push("/signin");
-                    }}
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile" className="cursor-pointer">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings" className="cursor-pointer">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="cursor-pointer text-destructive focus:text-destructive"
+                      onClick={() => {
+                        signOut();
+                        router.push("/signin");
+                      }}
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             )}
           </div>
         </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import { useState } from "react"
@@ -18,14 +19,22 @@ import {
   XCircle,
   Trash2,
   RefreshCw,
-  AlertTriangle,
   ChevronLeft,
   ChevronRight,
   MapPin,
   Star,
   Truck,
 } from "lucide-react"
-import { ProductMap } from "./product-map"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Textarea } from "@/components/ui/textarea"
+import { ProductMap } from "./product-map";
+import { ProductDetailsDialogProps } from "@/utils/typeDefinitions";
 
 // Declare Google Maps types
 declare global {
@@ -34,40 +43,46 @@ declare global {
   }
 }
 
-interface ProductDetailsDialogProps {
-  product: any
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onAction: (type: string, productId: string) => void
-  isLoading: boolean
-}
-
 export function ProductDetailsDialog({ product, open, onOpenChange, onAction, isLoading }: ProductDetailsDialogProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
-  const [showConfirmPermanentDelete, setShowConfirmPermanentDelete] = useState(false)
-  const [mapLoading, setMapLoading] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showBanConfirm, setShowBanConfirm] = useState(false)
+  const [showUnbanConfirm, setShowUnbanConfirm] = useState(false)
+  const [selectedBanReason, setSelectedBanReason] = useState("")
+  const [banDescription, setBanDescription] = useState("")
+
+  const banReasons = [
+    "Policy Violation",
+    "Inappropriate Content",
+    "Fraudulent Listing",
+    "Counterfeit Product",
+    "Safety Concerns",
+    "Other"
+  ]
 
   const nextImage = () => {
     if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prevIndex) => (prevIndex === product.images.length - 1 ? 0 : prevIndex + 1))
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === product.images.length - 1 ? 0 : prevIndex + 1
+      )
     }
   }
 
   const prevImage = () => {
     if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prevIndex) => (prevIndex === 0 ? product.images.length - 1 : prevIndex - 1))
+      setCurrentImageIndex((prevIndex) => 
+        prevIndex === 0 ? product.images.length - 1 : prevIndex - 1
+      )
     }
   }
 
-  // Calculate average rating
   const avgRating: number =
-  product.review && product.review.length > 0
-    ? parseFloat(
-        (product.review.reduce((sum: number, review: any) => sum + review.rating, 0) / product.review.length).toFixed(1)
-      )
-    : 0;
-
+    product.review && product.review.length > 0
+      ? parseFloat(
+          (product.review.reduce((sum: number, review: any) => sum + review.rating, 0) / 
+          product.review.length).toFixed(1)
+        )
+      : 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -99,7 +114,7 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
           </TabsList>
 
           <TabsContent value="details" className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 ">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div>
                 <Label className="text-sm font-medium">Product Name</Label>
                 <div className="text-sm mt-1">{product.productName}</div>
@@ -202,7 +217,6 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                     alt={`Product image ${currentImageIndex + 1}`}
                     className="w-full h-48 sm:h-64 md:h-80 object-contain bg-gray-50"
                   />
-
                   {product.images.length > 1 && (
                     <>
                       <Button
@@ -214,7 +228,6 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                         <ChevronLeft className="h-4 w-4" />
                         <span className="sr-only">Previous image</span>
                       </Button>
-
                       <Button
                         variant="outline"
                         size="icon"
@@ -224,7 +237,6 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                         <ChevronRight className="h-4 w-4" />
                         <span className="sr-only">Next image</span>
                       </Button>
-
                       <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black/50 text-white px-2 py-1 rounded-md text-xs">
                         {currentImageIndex + 1} / {product.images.length}
                       </div>
@@ -236,7 +248,6 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                   <span className="text-muted-foreground">No images available</span>
                 </div>
               )}
-
               {product.images && product.images.length > 1 && (
                 <div className="flex mt-4 gap-2 overflow-x-auto pb-2">
                   {product.images.map((img: string, index: number) => (
@@ -260,62 +271,60 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
           </TabsContent>
 
           <TabsContent value="reviews">
-  {product.review && product.review.length > 0 ? (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center space-x-2">
-          <span className="text-2xl font-bold">{avgRating.toFixed(1)}</span>
-          <div className="flex">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={`h-5 w-5 ${
-                  i < Math.floor(avgRating)
-                    ? "text-yellow-500 fill-yellow-500"
-                    : i < Math.ceil(avgRating)
-                    ? "text-yellow-500 fill-yellow-500 opacity-50"
-                    : "text-gray-300"
-                }`}
-              />
-            ))}
-          </div>
-          <span className="ml-2 text-sm text-muted-foreground">
-            ({product.review.length} {product.review.length === 1 ? "review" : "reviews"})
-          </span>
-        </div>
-      </div>
-
-      {/* Reviews List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {product.review.map((review: any, index: number) => (
-          <div key={index} className="border rounded-lg p-4 shadow-sm bg-white">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="font-medium">Customer ID: {review.customerId}</div>
-                <div className="flex items-center mt-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
-                      }`}
-                    />
+            {product.review && product.review.length > 0 ? (
+              <div className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl font-bold">{avgRating.toFixed(1)}</span>
+                    <div className="flex">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-5 w-5 ${
+                            i < Math.floor(avgRating)
+                              ? "text-yellow-500 fill-yellow-500"
+                              : i < Math.ceil(avgRating)
+                              ? "text-yellow-500 fill-yellow-500 opacity-50"
+                              : "text-gray-300"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="ml-2 text-sm text-muted-foreground">
+                      ({product.review.length} {product.review.length === 1 ? "review" : "reviews"})
+                    </span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {product.review.map((review: any, index: number) => (
+                    <div key={index} className="border rounded-lg p-4 shadow-sm bg-white">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium">Customer ID: {review.customerId}</div>
+                          <div className="flex items-center mt-1">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`h-4 w-4 ${
+                                  i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {new Date(review.createdDate).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <p className="mt-2 text-sm text-gray-700">{review.comment}</p>
+                    </div>
                   ))}
                 </div>
               </div>
-              <div className="text-sm text-gray-500">
-                {new Date(review.createdDate).toLocaleDateString()}
-              </div>
-            </div>
-            <p className="mt-2 text-sm text-gray-700">{review.comment}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  ) : (
-    <div className="text-center py-8 text-gray-500">No reviews available for this product.</div>
-  )}
-</TabsContent>
+            ) : (
+              <div className="text-center py-8 text-gray-500">No reviews available for this product.</div>
+            )}
+          </TabsContent>
 
           <TabsContent value="location" className="space-y-4">
             <div className="flex items-center justify-between">
@@ -329,7 +338,6 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                 </Badge>
               )}
             </div>
-
             <div className="border rounded-md overflow-hidden">
               {product.location && product.location.coordinates ? (
                 <ProductMap
@@ -349,7 +357,6 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                 </div>
               )}
             </div>
-
             {product.location && product.location.coordinates && (
               <div className="flex justify-end">
                 <a
@@ -367,96 +374,168 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
         </Tabs>
 
         <DialogFooter className="flex-col sm:flex-row gap-2 mt-6">
-          {!product.isDeleted ? (
+          {!product.isDeleted && (
             <>
               {!product.isBanned ? (
                 <Button
                   variant="destructive"
-                  onClick={() => onAction("ban", product._id)}
+                  onClick={() => {
+                    setSelectedBanReason("")
+                    setBanDescription("")
+                    setShowBanConfirm(true)
+                  }}
                   disabled={isLoading}
                   className="w-full sm:w-auto"
                 >
                   <XCircle className="mr-2 h-4 w-4" />
-                  {isLoading ? "Processing..." : "Ban Product"}
+                  Ban Product
                 </Button>
               ) : (
                 <Button
                   variant="outline"
-                  onClick={() => onAction("unban", product._id)}
+                  onClick={() => setShowUnbanConfirm(true)}
                   disabled={isLoading}
                   className="w-full sm:w-auto"
                 >
                   <RefreshCw className="mr-2 h-4 w-4" />
-                  {isLoading ? "Processing..." : "Unban Product"}
+                  Unban Product
                 </Button>
               )}
-
-              {!showConfirmDelete ? (
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowConfirmDelete(true)}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Product
-                </Button>
-              ) : (
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    onAction("delete", product._id)
-                    setShowConfirmDelete(false)
-                  }}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto"
-                >
-                  <AlertTriangle className="mr-2 h-4 w-4" />
-                  {isLoading ? "Processing..." : "Confirm Delete"}
-                </Button>
-              )}
-            </>
-          ) : (
-            <>
               <Button
-                variant="default"
-                onClick={() => onAction("restore", product._id)}
+                variant="destructive"
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={isLoading}
                 className="w-full sm:w-auto"
               >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                {isLoading ? "Processing..." : "Restore Product"}
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Product
               </Button>
+            </>
+          )}
 
-              {!showConfirmPermanentDelete ? (
-                <Button
-                  variant="destructive"
-                  onClick={() => setShowConfirmPermanentDelete(true)}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Permanently Delete
+          {/* Ban Confirmation Dialog */}
+          {showBanConfirm && (
+            <Dialog open={showBanConfirm} onOpenChange={setShowBanConfirm}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Ban</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to ban this product? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="banReason">Ban Reason</Label>
+                    <Select value={selectedBanReason} onValueChange={setSelectedBanReason}>
+                      <SelectTrigger id="banReason">
+                        <SelectValue placeholder="Select a reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {banReasons.map((reason) => (
+                          <SelectItem key={reason} value={reason}>
+                            {reason}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="banDescription">Additional Details</Label>
+                    <Textarea
+                      id="banDescription"
+                      value={banDescription}
+                      onChange={(e) => setBanDescription(e.target.value)}
+                      placeholder="Enter additional details about the ban"
+                    />
+                  </div>
+                </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowBanConfirm(false)}>
+                  Cancel
                 </Button>
-              ) : (
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    onAction("permanent-delete", product._id)
-                    setShowConfirmPermanentDelete(false)
+                    onAction({
+                      type: "ban",
+                      productId: product._id,
+                      reason: selectedBanReason,
+                      description: banDescription,
+                    });
+                    setShowBanConfirm(false);
                   }}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto"
+                  disabled={!selectedBanReason || isLoading}
                 >
-                  <AlertTriangle className="mr-2 h-4 w-4" />
-                  {isLoading ? "Processing..." : "Confirm Permanent Delete"}
+                  Confirm Ban
                 </Button>
-              )}
-            </>
+              </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Unban Confirmation Dialog */}
+          {showUnbanConfirm && (
+            <Dialog open={showUnbanConfirm} onOpenChange={setShowUnbanConfirm}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Unban</DialogTitle>
+                  <DialogDescription>Are you sure you want to unban this product?</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowUnbanConfirm(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      onAction({
+                        type: "unban",
+                        productId: product._id,
+                      });
+                      setShowUnbanConfirm(false);
+                    }}
+                    disabled={isLoading}
+                  >
+                    Confirm
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+
+          {/* Delete Confirmation Dialog */}
+          {showDeleteConfirm && (
+            <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Delete</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this product? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      onAction({
+                        type: "delete",
+                        productId: product._id,
+                      });
+                      setShowDeleteConfirm(false);
+                    }}
+                    disabled={isLoading}
+                  >
+                    Confirm Delete
+                  </Button>
+                </DialogFooter>
+
+              </DialogContent>
+            </Dialog>
           )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
-
