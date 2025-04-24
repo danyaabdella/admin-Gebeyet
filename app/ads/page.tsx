@@ -28,7 +28,6 @@ export default function AdsManagementPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [location, setLocation] = useState<LocationData | null>(null);
 
-  // Fetch ads from API
   const fetchAds = async (params: any = {}) => {
     try {
       const queryParams = new URLSearchParams();
@@ -48,7 +47,6 @@ export default function AdsManagementPage() {
     }
   };
 
-  // Initial fetch and location-based re-fetch
   useEffect(() => {
     const loadAds = async () => {
       setIsLoading(true);
@@ -70,7 +68,6 @@ export default function AdsManagementPage() {
     loadAds();
   }, [location]);
 
-  // Handle refresh button click
   const handleRefresh = async () => {
     setIsLoading(true);
     try {
@@ -89,7 +86,6 @@ export default function AdsManagementPage() {
   };
 
   const handleLocationChange = ({ center, radius }: LocationData) => {
-    // Only update if location actually changed
     if (
       location?.center.lat !== center.lat ||
       location?.center.lng !== center.lng ||

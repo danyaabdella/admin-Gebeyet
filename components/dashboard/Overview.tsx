@@ -58,7 +58,7 @@ export function Overview({ stats, recentSales, salesThisMonth }: OverviewProps) 
         </Card>
       </Link>
 
-      <Link href="/transactions?revenue" className="block">
+      <Link href="/" className="block">
         <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">System Revenue</CardTitle>
@@ -381,17 +381,6 @@ export function Overview({ stats, recentSales, salesThisMonth }: OverviewProps) 
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Transaction Distribution</CardTitle>
-            <CardDescription>Breakdown by transaction types</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <TransactionTypeDistributionChart />
-          </CardContent>
-        </Card>
-      </div>
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
             <CardTitle>Revenue by Category</CardTitle>
             <CardDescription>Top performing categories</CardDescription>
           </CardHeader>
@@ -399,6 +388,17 @@ export function Overview({ stats, recentSales, salesThisMonth }: OverviewProps) 
             <CategoryRevenueChart />
           </CardContent>
         </Card>
+        {/* <Card>
+          <CardHeader>
+            <CardTitle>Transaction Distribution</CardTitle>
+            <CardDescription>Breakdown by transaction types</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <TransactionTypeDistributionChart />
+          </CardContent>
+        </Card> */}
+      </div>
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Order Distribution</CardTitle>

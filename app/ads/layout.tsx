@@ -6,10 +6,9 @@ export const metadata: Metadata = {
   description: "Ads Management of the marketplace",
 }
 
-export default function OrdersLayout({ children }: { children: ReactNode }) {
+export default function AdsLayout({ children }: { children: ReactNode }) {
   return (
     <section>
-      {/* You can wrap with sidebar/header if needed */}
       {children}
     </section>
   );

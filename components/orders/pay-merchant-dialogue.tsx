@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { CreditCard } from "lucide-react"
+import { useState } from "react";
+import { CreditCard } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,38 +12,47 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { useToast } from "@/hooks/use-toast"
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 interface MerchantDetails {
-  account_name: string
-  account_number: string
-  amount: number
-  currency: string
-  bank_code: string
+  account_name: string;
+  account_number: string;
+  amount: number;
+  currency: string;
+  bank_code: string;
 }
 
 interface PayMerchantDialogProps {
-  orderId: string
-  merchantDetails: MerchantDetails
+  orderId: string;
+  merchantDetails: MerchantDetails;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  onFailure: () => void;
 }
 
-export function PayMerchantDialog({ orderId, merchantDetails }: PayMerchantDialogProps) {
-  console.log("Order ID: ", orderId);
-  const [open, setOpen] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const { toast } = useToast()
+export function PayMerchantDialog({
+  orderId,
+  merchantDetails,
+  open,
+  onOpenChange,
+  onSuccess,
+  onFailure,
+}: PayMerchantDialogProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "ETB",
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const handlePayMerchant = async () => {
-    setIsSubmitting(true)
-  
+    setIsSubmitting(true);
+
     try {
       const response = await fetch("/api/payMerchant", {
         method: "POST",
@@ -57,37 +66,43 @@ export function PayMerchantDialog({ orderId, merchantDetails }: PayMerchantDialo
           amount: merchantDetails.amount,
           bank_code: 946,
         }),
-      })
+      });
 
-      console.log("Response: ", response);
       const data = await response.json();
-      console.log("Data: ", data);
-  
+
       if (!response.ok) {
-        throw new Error(data.message || "Payment to merchant failed")
+        throw new Error(data.message || "Payment to merchant failed");
       }
-  
+
       toast({
         title: "Payment to merchant processed",
-        description: `${formatCurrency(merchantDetails.amount, merchantDetails.currency)} has been sent to ${merchantDetails.account_name}.`,
-      })
-  
-      setOpen(false) // Close modal or popup
+        description: `${formatCurrency(
+          merchantDetails.amount,
+          merchantDetails.currency
+        )} has been sent to ${merchantDetails.account_name}.`,
+      });
+
+      onSuccess(); // Trigger success callback to refetch data
+      onOpenChange(false); // Close dialog
     } catch (error: any) {
-      console.error("Payment to merchant error:", error)
-  
+      console.error("Payment to merchant error:", error);
+
       toast({
         title: "Payment failed",
-        description: error.message || "There was an error processing the payment to merchant. Please try again.",
+        description:
+          error.message ||
+          "There was an error processing the payment to merchant. Please try again.",
         variant: "destructive",
-      })
+      });
+
+      onFailure(); // Trigger failure callback to refetch data
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" className="gap-2">
           <CreditCard className="h-4 w-4" />
@@ -98,7 +113,8 @@ export function PayMerchantDialog({ orderId, merchantDetails }: PayMerchantDialo
         <DialogHeader>
           <DialogTitle>Pay Merchant</DialogTitle>
           <DialogDescription>
-            You are about to process a payment to the merchant. This action cannot be undone.
+            You are about to process a payment to the merchant. This action cannot
+            be undone.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -121,7 +137,7 @@ export function PayMerchantDialog({ orderId, merchantDetails }: PayMerchantDialo
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={handlePayMerchant} disabled={isSubmitting}>
@@ -130,5 +146,5 @@ export function PayMerchantDialog({ orderId, merchantDetails }: PayMerchantDialo
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

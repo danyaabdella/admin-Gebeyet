@@ -1,19 +1,22 @@
 "use client";
 
-import type React from "react";
-
+import React from "react";
 import { useSidebar } from "@/components/sidebar-provider";
-import { Sidebar } from "@/components/sidebar";
 import { NavBar } from "@/components/nav-bar";
 import { Footer } from "./footer";
 import { Toaster } from "@/components/toaster";
+import AnnouncementBot from "@/components/ChatBot";
+import { useProfile } from "@/components/userProfile";
 
-export default function LayoutClient({
-  children,
-}: {
+interface LayoutClientProps {
   children: React.ReactNode;
-}) {
+}
+
+export default function LayoutClient({ children }: LayoutClientProps) {
   const { isOpen } = useSidebar();
+  const { data: user, loading } = useProfile();
+
+  const shouldShowBot = user?.role === "superAdmin";
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -27,7 +30,7 @@ export default function LayoutClient({
         <main className="flex-1 p-4 md:p-6">{children}</main>
         <Footer />
       </div>
-
+      {!loading && shouldShowBot && <AnnouncementBot />}
       <Toaster />
     </div>
   );

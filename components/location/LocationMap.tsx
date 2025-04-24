@@ -34,7 +34,7 @@ export default function LocationMap({ location, title = "Location", ...divProps 
         const map = new Map(mapsDivRef.current as HTMLDivElement, {
           mapId: "map",
           center: { lng: location[0], lat: location[1] },
-          zoom: 12,
+          zoom: 6,
           mapTypeControl: false,
           streetViewControl: false,
           zoomControl: true,

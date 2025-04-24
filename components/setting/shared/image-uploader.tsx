@@ -1,12 +1,11 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { uploadImage } from "@/utils/upload"
 import { Loader2, Upload } from "lucide-react"
+import { uploadImage } from "@/utils/upload"
 
 interface ImageUploaderProps {
   value: string
@@ -26,12 +25,11 @@ export function ImageUploader({ value, onChange, onBlur }: ImageUploaderProps) {
       setIsUploading(true)
       setError(null)
 
-      // In a real implementation, this would upload to your server or cloud storage
       const imageUrl = await uploadImage(file)
       onChange(imageUrl)
     } catch (err) {
-      setError("Failed to upload image. Please try again.")
       console.error("Upload error:", err)
+      setError("Failed to upload image. Please try again.")
     } finally {
       setIsUploading(false)
     }

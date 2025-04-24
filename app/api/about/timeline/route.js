@@ -1,9 +1,10 @@
 import { TimelineEvent } from "@/models/About";
+import { updateTimelineEvents } from "@/utils/about";
 import { connectToDB, isSuperAdmin } from "@/utils/functions";
 
 export async function GET() {
   await connectToDB();
-  // await isSuperAdmin();
+  await isSuperAdmin();
 
   try {
     const data = await TimelineEvent.find();
@@ -31,14 +32,14 @@ export async function PUT(req) {
   await isSuperAdmin();
 
   try {
-    const body = await req.json(); // Get the updated timeline events data from the request body
-    
-    // Clear out the old timeline events
+    const body = await req.json();
+    console.log("Body: ", body);
+
     await TimelineEvent.deleteMany({});
 
-    // Insert the new timeline events into the database
-    const updatedTimelineEvents = await TimelineEvent.insertMany(body);
+    const updatedTimelineEvents = await TimelineEvent.insertMany(body.events);
 
+    console.log("Updated data: ", updatedTimelineEvents); // Correct variable name here
     return new Response(JSON.stringify({ success: true, data: updatedTimelineEvents }), { status: 200 });
   } catch (error) {
     console.error("Error updating timeline events:", error);

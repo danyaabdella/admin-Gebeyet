@@ -39,6 +39,7 @@ export function RejectAdDialog({ ad, isOpen, onClose, onSuccess }: RejectAdDialo
   ];
 
   const handleReject = async () => {
+    console.log("Add to reject: ", ad);
     if (!reason) {
       const errorMessage = "Please select a rejection reason";
       setError(errorMessage);
@@ -65,7 +66,7 @@ export function RejectAdDialog({ ad, isOpen, onClose, onSuccess }: RejectAdDialo
           reason: rejectionReasons.find((r) => r.id === reason)?.label || reason,
           description,
           tx_ref: ad.tx_ref,
-          amount: ad.amount,
+          amount: ad.price,
         }),
       });
 

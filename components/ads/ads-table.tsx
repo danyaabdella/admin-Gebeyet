@@ -49,10 +49,8 @@ export function AdsTable({ ads, isLoading, onRefresh }: AdsTableProps) {
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Calculate total pages
   const totalPages = Math.ceil(ads.length / itemsPerPage);
 
-  // Slice ads for the current page
   const paginatedAds = ads.slice(
     (page - 1) * itemsPerPage,
     page * itemsPerPage

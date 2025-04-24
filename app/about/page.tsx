@@ -26,12 +26,12 @@ async function fetchAboutUsContent() {
     "hero",
     "mission",
     "vision",
-    "value",
+    "values",
     "stats",
     "timeline",
     "team",
-    "location",
-    "award",
+    "locations",
+    "awards",
     "cta",
   ];
 
@@ -72,7 +72,7 @@ export default function AboutUsPage() {
     const loadAboutData = async () => {
       try {
         const data = await fetchAboutUsContent();
-        console.log("hsitory data1: ", data.history);
+        console.log("History data:", data.history); // Debug the data
         setAboutData(data);
       } catch (err) {
         console.error("Failed to fetch about us data:", err);
@@ -117,7 +117,6 @@ export default function AboutUsPage() {
 
   return (
     <div className="container relative mx-auto px-4 py-8 sm:px-6 sm:py-12 lg:px-8 max-w-7xl">
-      {/* Hero Section */}
       <div className="relative mb-16">
         {isLoading ? (
           <div className="space-y-6">
@@ -152,7 +151,6 @@ export default function AboutUsPage() {
         ) : null}
       </div>
 
-      {/* Mission & Vision Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
         {isLoading ? (
           <>
@@ -212,7 +210,6 @@ export default function AboutUsPage() {
         )}
       </div>
 
-      {/* Values Section */}
       <div className="mb-16">
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
           Our Core Values
@@ -246,7 +243,6 @@ export default function AboutUsPage() {
         ) : null}
       </div>
 
-      {/* History Timeline Section */}
       <div className="mb-16">
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
           {isLoading ? (
@@ -264,14 +260,12 @@ export default function AboutUsPage() {
           </div>
         ) : aboutData?.history?.length > 0 ? (
           <div className="relative">
-            {/* Timeline line */}
             <div className="absolute left-0 md:left-1/2 transform md:-translate-x-1/2 h-full w-1 bg-purple-200 dark:bg-purple-900/50"></div>
 
             <div className="space-y-12">
-              {console.log("history data: ", aboutData.history)}
               {aboutData.history.map((event: any, index: number) => (
                 <div
-                  key={event.year}
+                  key={event.id || `history-${event.year}-${index}`}
                   className={`relative flex flex-col md:flex-row ${
                     index % 2 === 0 ? "md:flex-row-reverse" : ""
                   }`}
@@ -303,6 +297,9 @@ export default function AboutUsPage() {
                         width={96}
                         height={96}
                         className="object-cover"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg";
+                        }}
                       />
                     </div>
                   </div>
@@ -310,73 +307,13 @@ export default function AboutUsPage() {
               ))}
             </div>
           </div>
-        ) : null}
+        ) : (
+          <p className="text-center text-muted-foreground">
+            No history data available.
+          </p>
+        )}
       </div>
 
-      {/* Team Section */}
-      <div className="mb-16">
-        <div className="text-center mb-8">
-          {isLoading ? (
-            <>
-              <Skeleton className="h-8 w-64 mx-auto mb-4" />
-              <Skeleton className="h-4 w-96 mx-auto" />
-            </>
-          ) : aboutData?.team ? (
-            <>
-              <h2 className="text-2xl sm:text-3xl font-bold">
-                {aboutData.team.title}
-              </h2>
-              <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-                {aboutData.team.description}
-              </p>
-            </>
-          ) : null}
-        </div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-64 w-full" />
-            ))}
-          </div>
-        ) : aboutData?.team?.members?.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-            {aboutData.team.members.map((member: any) => (
-              <Card
-                key={member.id}
-                className="overflow-hidden transition-all hover:shadow-md"
-              >
-                <div className="aspect-square relative overflow-hidden bg-gradient-to-br from-purple-100 to-indigo-100 dark:from-purple-900/30 dark:to-indigo-900/30">
-                  <Avatar className="h-full w-full rounded-none">
-                    <AvatarImage
-                      src={member.image || "/placeholder.svg"}
-                      alt={member.name}
-                      className="object-cover"
-                    />
-                    <AvatarFallback className="text-4xl rounded-none h-full">
-                      {member.name
-                        .split(" ")
-                        .map((n: string) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                </div>
-                <CardContent className="p-4">
-                  <h3 className="font-bold">{member.name}</h3>
-                  <p className="text-sm text-purple-600 dark:text-purple-400">
-                    {member.role}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {member.bio}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      {/* Locations Section */}
       <div className="mb-16">
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
           Our Global Presence
@@ -424,7 +361,6 @@ export default function AboutUsPage() {
         ) : null}
       </div>
 
-      {/* Awards Section */}
       <div className="mb-16">
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
           Awards & Recognition
@@ -460,7 +396,6 @@ export default function AboutUsPage() {
         ) : null}
       </div>
 
-      {/* Stats Section */}
       <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 rounded-xl p-8 mb-16">
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -484,7 +419,6 @@ export default function AboutUsPage() {
         ) : null}
       </div>
 
-      {/* CTA Section */}
       {isLoading ? (
         <Skeleton className="h-64 w-full" />
       ) : aboutData?.cta ? (

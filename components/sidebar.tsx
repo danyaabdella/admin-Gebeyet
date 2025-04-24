@@ -27,15 +27,19 @@ type NavItem = {
 export function Sidebar() {
   const pathname = usePathname();
   const [role, setRole] = useState<"admin" | "superAdmin" | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchRole() {
       const r = await getUserRole();
       const normalizedRole = r === "superadmin" ? "superAdmin" : r;
-      setRole(normalizedRole as "admin" | "superAdmin" | null);
+      setRole(normalizedRole as "admin" | "superAdmin");
+      setLoading(false);
     }
     fetchRole();
   }, []);
+
+  if (loading) return null;
 
   const navItems: (NavItem | false)[] = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

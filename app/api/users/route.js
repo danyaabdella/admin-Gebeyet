@@ -13,6 +13,7 @@ export async function GET(req) {
         const url = new URL(req.url);
         const _id = url.searchParams.get('_id');
         const email = url.searchParams.get("email");
+        console.log("email for layout: ", email);
 
         let filterUser = {};
         if (email) {

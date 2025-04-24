@@ -1,107 +1,3 @@
-// Filter auctions based on search and filters
-function filterAuctions(auctions: any[], filters: any = {}) {
-  return auctions.filter((auction) => {
-    // Search filter
-    if (
-      filters.search &&
-      !auction.productName.toLowerCase().includes(filters.search.toLowerCase()) &&
-      !auction.merchantName.toLowerCase().includes(filters.search.toLowerCase()) &&
-      !auction.description.toLowerCase().includes(filters.search.toLowerCase())
-    ) {
-      return false
-    }
-
-    // Status filter
-    if (filters.status && filters.status !== "all" && auction.status !== filters.status) {
-      return false
-    }
-
-    // Price range filter
-    if (filters.minPrice !== undefined && auction.startingPrice < filters.minPrice) {
-      return false
-    }
-
-    if (filters.maxPrice !== undefined && auction.startingPrice > filters.maxPrice) {
-      return false
-    }
-
-    // Date range filter
-    if (filters.startDate) {
-      const startDate = new Date(filters.startDate)
-      const auctionStartTime = new Date(auction.startTime)
-      if (auctionStartTime < startDate) {
-        return false
-      }
-    }
-
-    if (filters.endDate) {
-      const endDate = new Date(filters.endDate)
-      const auctionEndTime = new Date(auction.endTime)
-      if (auctionEndTime > endDate) {
-        return false
-      }
-    }
-
-    // Condition filter
-    if (filters.condition && auction.condition !== filters.condition) {
-      return false
-    }
-
-    return true
-  })
-}
-
-// Paginate results
-function paginateResults(items: any[], page: number, limit: number) {
-  const startIndex = (page - 1) * limit
-  const endIndex = startIndex + limit
-
-  return {
-    items: items.slice(startIndex, endIndex),
-    pagination: {
-      total: items.length,
-      page,
-      limit,
-      totalPages: Math.ceil(items.length / limit),
-    },
-  }
-}
-
-export async function fetchAuctions(page = 1, limit = 15, filters = {}) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-
-  const filteredAuctions = filterAuctions(mockAuctions, filters)
-  const { items, pagination } = paginateResults(filteredAuctions, page, limit)
-
-  return {
-    auctions: items,
-    pagination,
-    total: filteredAuctions.length,
-  }
-}
-
-// Auction actions
-export async function approveAuction(auctionId: string) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
-
-  return {
-    success: true,
-    message: "Auction approved successfully",
-  }
-}
-
-export async function rejectAuction(auctionId: string, reason: string, category: string) {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 800))
-
-  return {
-    success: true,
-    message: "Auction rejected successfully",
-  }
-}
-
 export async function fetchProducts(page: number, limit: number, filters: {
   isBanned: boolean | undefined; 
   isDeleted: boolean | undefined; 
@@ -182,62 +78,72 @@ export async function deleteProduct(productId: string) {
 
 export async function fetchDashboardStats() {
   try {
-    // Fetch data from all APIs concurrently
-    const [ordersRes, usersRes, productsRes, categoriesRes, adminsRes] = await Promise.all([
-      fetch('/api/order'),
-      fetch('/api/manageUsers'),
-      fetch('/api/products'),
-      fetch('/api/manageCategory'),
-      fetch('/api/manageAdmins'),
+    const [
+      ordersRes,
+      usersRes,
+      productsRes,
+      categoriesRes,
+      adminsRes,
+      auctionRes,
+    ] = await Promise.all([
+      fetch("/api/order"),
+      fetch("/api/manageUsers"),
+      fetch("/api/products"),
+      fetch("/api/manageCategory"),
+      fetch("/api/manageAdmins"),
+      fetch("/api/manageAuctions"),
     ]);
 
-    // Check if responses are OK
-    if (!ordersRes.ok || !usersRes.ok || !productsRes.ok || !categoriesRes.ok || !adminsRes.ok) {
-      throw new Error('One or more API requests failed');
+    // ✅ Corrected this check
+    if (
+      !ordersRes.ok ||
+      !usersRes.ok ||
+      !productsRes.ok ||
+      !categoriesRes.ok ||
+      !adminsRes.ok ||
+      !auctionRes.ok
+    ) {
+      throw new Error("One or more API requests failed");
     }
 
-    // Parse JSON responses
     const ordersData = await ordersRes.json();
     const usersData = await usersRes.json();
     const productsData = await productsRes.json();
     const categoriesData = await categoriesRes.json();
     const adminsData = await adminsRes.json();
+    const auctionData = await auctionRes.json();
 
-    // Handle data with fallback to empty arrays
     const orders = Array.isArray(ordersData.orders) ? ordersData.orders : [];
-    // Handle usersData as a flat array since /api/manageUsers returns users directly
     const users = Array.isArray(usersData) ? usersData : [];
     const products = Array.isArray(productsData.products) ? productsData.products : [];
     const categories = Array.isArray(categoriesData) ? categoriesData : [];
     const admins = Array.isArray(adminsData) ? adminsData : [];
+    const auctions = Array.isArray(auctionData) ? auctionData : [];
 
-    // Date utilities
     const now = new Date();
     const currentMonth = now.getMonth();
     const previousMonth = (currentMonth - 1 + 12) % 12;
     const currentYear = now.getFullYear();
 
-    // Filter items by month for a given date field
-    const filterByMonth = (items, field) => ({ current, previous }) => {
-      const currentMonthItems = items.filter(item => {
+    const filterByMonth = (items: any[], field: string) => ({ current, previous }) => {
+      const currentMonthItems = items.filter((item) => {
         const date = new Date(item[field]);
-        return isNaN(date.getTime())
-          ? false
-          : date.getMonth() === current && date.getFullYear() === currentYear;
+        return !isNaN(date.getTime()) &&
+          date.getMonth() === current &&
+          date.getFullYear() === currentYear;
       });
 
-      const previousMonthItems = items.filter(item => {
+      const previousMonthItems = items.filter((item) => {
         const date = new Date(item[field]);
-        return isNaN(date.getTime())
-          ? false
-          : date.getMonth() === previous && date.getFullYear() === currentYear;
+        return !isNaN(date.getTime()) &&
+          date.getMonth() === previous &&
+          date.getFullYear() === currentYear;
       });
 
       return { currentMonthItems, previousMonthItems };
     };
 
-    // Calculate growth percentage and direction
-    const calculateGrowth = (current, previous) => {
+    const calculateGrowth = (current: number, previous: number) => {
       const diff = current - previous;
       const percent = previous === 0 ? (current > 0 ? 100 : 0) : (diff / previous) * 100;
       return {
@@ -246,81 +152,74 @@ export async function fetchDashboardStats() {
       };
     };
 
-    // Transactions calculation
+    // 💰 Transactions
     let totalTransactionAmount = 0;
 
-    orders.forEach((order) => {
-      const { paymentStatus, totalPrice } = order;
-
-      // Ensure totalPrice is a valid number
+    orders.forEach(({ paymentStatus, totalPrice }) => {
       const price = Number(totalPrice) || 0;
 
-      if (paymentStatus === 'Paid') {
+      if (paymentStatus === "Paid") {
         totalTransactionAmount += price;
-      } else if (paymentStatus === 'Refunded') {
-        totalTransactionAmount += price * 2; // Double for refunded orders
-      } else if (paymentStatus === 'Paid To Merchant') {
-        const systemRevenue = price * 0.04; // 4% system revenue
-        totalTransactionAmount += price - systemRevenue;
+        
+      } else if (paymentStatus === "Refunded") {
+        totalTransactionAmount += price * 2;
+      } else if (paymentStatus === "Paid To Merchant") {
+        totalTransactionAmount += price - price * 0.04;
       }
     });
 
     const totalTransactions = +totalTransactionAmount.toFixed(2);
 
     const { currentMonthItems: currentTransactions, previousMonthItems: previousTransactions } =
-      filterByMonth(orders, 'orderDate')({ current: currentMonth, previous: previousMonth });
+      filterByMonth(orders, "orderDate")({ current: currentMonth, previous: previousMonth });
     const transactionStats = calculateGrowth(currentTransactions.length, previousTransactions.length);
 
-    // Revenue calculation
+    // 💵 Revenue
     const totalRevenueOrders = orders
-      .filter(o => o.paymentStatus === 'Paid To Merchant')
-      .reduce((sum, o) => sum + (Number(o.totalPrice) || 0), 0);
+      .filter((o: { paymentStatus: string; }) => o.paymentStatus === "Paid To Merchant")
+      .reduce((sum: number, o: { totalPrice: any; }) => sum + (Number(o.totalPrice) || 0), 0);
+
     const revenue = +(totalRevenueOrders * 0.04).toFixed(2);
 
     const currentRevenue = currentTransactions
-      .filter(o => o.paymentStatus === 'Paid To Merchant')
+      .filter((o) => o.paymentStatus === "Paid To Merchant")
       .reduce((sum, o) => sum + (Number(o.totalPrice) || 0), 0) * 0.04;
 
     const previousRevenue = previousTransactions
-      .filter(o => o.paymentStatus === 'Paid To Merchant')
+      .filter((o) => o.paymentStatus === "Paid To Merchant")
       .reduce((sum, o) => sum + (Number(o.totalPrice) || 0), 0) * 0.04;
 
     const revenueStats = calculateGrowth(currentRevenue, previousRevenue);
 
-    // Users calculation
-    const filterByRole = (role: string) => {
-      return users.filter((user) => user.role === role);
-    };
+    // 👥 Users
+    const filterByRole = (role: string) => users.filter((u) => u.role === role);
 
-    const customers = filterByRole('customer');
-    const merchants = filterByRole('merchant');
-
-    // Adjust pendingMerchantApprovals to handle API's approvalStatus behavior
-    const pendingMerchantApprovals = merchants.filter(m => m.approvalStatus === 'pending').length;
+    const merchants = filterByRole("merchant");
+    const customers = filterByRole("customer");
+    const pendingMerchantApprovals = merchants.filter((m) => m.approvalStatus === "pending").length;
 
     const { currentMonthItems: currentUsers, previousMonthItems: previousUsers } =
-      filterByMonth(users, 'createdAt')({ current: currentMonth, previous: previousMonth });
+      filterByMonth(users, "createdAt")({ current: currentMonth, previous: previousMonth });
     const { currentMonthItems: currentCustomers, previousMonthItems: previousCustomers } =
-      filterByMonth(customers, 'createdAt')({ current: currentMonth, previous: previousMonth });
+      filterByMonth(customers, "createdAt")({ current: currentMonth, previous: previousMonth });
     const { currentMonthItems: currentMerchants, previousMonthItems: previousMerchants } =
-      filterByMonth(merchants, 'createdAt')({ current: currentMonth, previous: previousMonth });
+      filterByMonth(merchants, "createdAt")({ current: currentMonth, previous: previousMonth });
 
-    // Products calculation
+    // 📦 Products
     const { currentMonthItems: currentProducts, previousMonthItems: previousProducts } =
-      filterByMonth(products, 'createdAt')({ current: currentMonth, previous: previousMonth });
+      filterByMonth(products, "createdAt")({ current: currentMonth, previous: previousMonth });
 
-    // Categories calculation
+    // 🏷️ Categories
     const { currentMonthItems: currentCategories, previousMonthItems: previousCategories } =
-      filterByMonth(categories, 'createdAt')({ current: currentMonth, previous: previousMonth });
+      filterByMonth(categories, "createdAt")({ current: currentMonth, previous: previousMonth });
 
-    // Return dashboard stats
     return {
       transactions: {
         total: totalTransactions,
         ...transactionStats,
       },
       revenue: {
-        total: revenue,
+        total: +revenue.toFixed(2),
         ...revenueStats,
       },
       merchants: {
@@ -342,14 +241,14 @@ export async function fetchDashboardStats() {
       },
       orders: {
         total: orders.length,
-        pendingRefunds: orders.filter(o => o.paymentStatus === 'Pending Refund').length,
+        pendingRefunds: orders.filter((o) => o.paymentStatus === "Pending Refund").length,
         ...calculateGrowth(currentTransactions.length, previousTransactions.length),
       },
       auctions: {
-        total: 10,
-        pendingApproval: 2,
+        total: auctions.length,
+        pendingApproval: auctions.filter((a) => a.status === "pending").length,
         isIncrease: false,
-        percentChange: -2, // Demo data, unchanged as requested
+        percentChange: -2, // demo data
       },
       categories: {
         total: categories.length,
@@ -366,7 +265,7 @@ export async function fetchDashboardStats() {
       message: error.message,
       stack: error.stack,
     });
-    // Return default stats to prevent UI crashes
+
     return {
       transactions: { total: 0, isIncrease: false, percentChange: 0 },
       revenue: { total: 0, isIncrease: false, percentChange: 0 },
@@ -375,7 +274,7 @@ export async function fetchDashboardStats() {
       users: { total: 0, isIncrease: false, percentChange: 0 },
       products: { total: 0, isIncrease: false, percentChange: 0 },
       orders: { total: 0, pendingRefunds: 0, isIncrease: false, percentChange: 0 },
-      auctions: { total: 10, pendingApproval: 2, isIncrease: false, percentChange: -2 },
+      auctions: { total: 0, pendingApproval: 0, isIncrease: false, percentChange: 0 },
       categories: { total: 0, isIncrease: false, percentChange: 0 },
       admins: { total: 0, isIncrease: false, percentChange: 0 },
     };

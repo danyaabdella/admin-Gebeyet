@@ -1,6 +1,6 @@
-import Order from '../../../models/Order';
-import Product from '../../../models/Product';
-import { isAdmin,isAdminOrSuperAdmin } from '../../../utils/functions';
+import Order from '@/models/Order';
+import Product from '@/models/Product';
+import { isAdminOrSuperAdmin } from '@/utils/functions';
 
 const CHAPA_SECRET_KEY = "CHASECK_TEST-s6oBbGS04bRkcXLT7P6x2do2EKcCXfJ6";
 
@@ -28,9 +28,10 @@ export async function POST(req) {
             },
             body: new URLSearchParams({
                 reason: reason,
-                amount: amount, // If not provided, full amount is refunded
+                amount: amount,
             }),
         });
+        console.log("Response: ", response);
         const result = await response.json();
         console.log("Result: ", result);
 

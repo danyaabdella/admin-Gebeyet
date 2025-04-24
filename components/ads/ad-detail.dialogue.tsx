@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   CheckCircle,
   XCircle,
@@ -19,25 +25,32 @@ import {
   Phone,
   Tag,
   ShoppingBag,
-} from "lucide-react"
-import Image from "next/image"
-import { format } from "date-fns"
+} from "lucide-react";
+import Image from "next/image";
+import { format } from "date-fns";
+import LocationMap from "../location/LocationMap";
 
 interface AdDetailDialogProps {
-  ad: any
-  isOpen: boolean
-  onClose: () => void
-  onApprove?: () => void
-  onReject?: () => void
+  ad: any;
+  isOpen: boolean;
+  onClose: () => void;
+  onApprove?: () => void;
+  onReject?: () => void;
 }
 
-export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdDetailDialogProps) {
-  if (!ad) return null
+export function AdDetailDialog({
+  ad,
+  isOpen,
+  onClose,
+  onApprove,
+  onReject,
+}: AdDetailDialogProps) {
+  if (!ad) return null;
 
   const formatDate = (dateString: string | null) => {
-    if (!dateString) return "Not set"
-    return format(new Date(dateString), "PPP")
-  }
+    if (!dateString) return "Not set";
+    return format(new Date(dateString), "PPP");
+  };
 
   const getApprovalStatusBadge = (status: string) => {
     switch (status) {
@@ -46,22 +59,22 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
           <Badge className="flex items-center gap-1">
             <CheckCircle className="h-3 w-3" /> Approved
           </Badge>
-        )
+        );
       case "REJECTED":
         return (
           <Badge variant="destructive" className="flex items-center gap-1">
             <XCircle className="h-3 w-3" /> Rejected
           </Badge>
-        )
+        );
       case "PENDING":
       default:
         return (
           <Badge variant="outline" className="flex items-center gap-1">
             <Clock className="h-3 w-3" /> Pending
           </Badge>
-        )
+        );
     }
-  }
+  };
 
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
@@ -70,22 +83,22 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
           <Badge className="flex items-center gap-1">
             <DollarSign className="h-3 w-3" /> Paid
           </Badge>
-        )
+        );
       case "FAILED":
         return (
           <Badge variant="destructive" className="flex items-center gap-1">
             <Ban className="h-3 w-3" /> Failed
           </Badge>
-        )
+        );
       case "PENDING":
       default:
         return (
           <Badge variant="outline" className="flex items-center gap-1">
             <AlertCircle className="h-3 w-3" /> Pending
           </Badge>
-        )
+        );
     }
-  }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -101,7 +114,6 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
         </DialogHeader>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-          {/* Product Information */}
           <Card>
             <CardContent className="p-4">
               <h3 className="text-lg font-semibold flex items-center mb-4">
@@ -112,7 +124,10 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
               <div className="flex flex-col md:flex-row gap-4 items-start">
                 <div className="relative w-[120px] h-[120px] flex-shrink-0">
                   <Image
-                    src={ad.product.image || "/placeholder.svg?height=120&width=120"}
+                    src={
+                      ad.product.image ||
+                      "/placeholder.svg?height=120&width=120"
+                    }
                     alt={ad.product.productName}
                     fill
                     className="object-cover rounded-md"
@@ -121,23 +136,35 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
 
                 <div className="space-y-2 flex-1">
                   <div>
-                    <span className="text-sm text-muted-foreground">Product Name:</span>
+                    <span className="text-sm text-muted-foreground">
+                      Product Name:
+                    </span>
                     <p className="font-medium">{ad.product.productName}</p>
                   </div>
 
                   <div>
-                    <span className="text-sm text-muted-foreground">Product ID:</span>
+                    <span className="text-sm text-muted-foreground">
+                      Product ID:
+                    </span>
                     <p className="font-mono text-sm">{ad.product.productId}</p>
                   </div>
 
                   <div>
-                    <span className="text-sm text-muted-foreground">Product Price:</span>
-                    <p className="font-medium">${ad.product.price.toFixed(2)}</p>
+                    <span className="text-sm text-muted-foreground">
+                      Product Price:
+                    </span>
+                    <p className="font-medium">
+                      ${ad.product.price.toFixed(2)}
+                    </p>
                   </div>
 
                   <div>
-                    <span className="text-sm text-muted-foreground">Ad Price:</span>
-                    <p className="font-medium text-green-600">${ad.price.toFixed(2)}</p>
+                    <span className="text-sm text-muted-foreground">
+                      Ad Price:
+                    </span>
+                    <p className="font-medium text-green-600">
+                      ${ad.price.toFixed(2)}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -155,26 +182,42 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
               <div className="space-y-3">
                 <div className="flex items-center">
                   <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground w-24">Name:</span>
-                  <span className="font-medium">{ad.merchantDetail.merchantName}</span>
+                  <span className="text-sm text-muted-foreground w-24">
+                    Name:
+                  </span>
+                  <span className="font-medium">
+                    {ad.merchantDetail.merchantName}
+                  </span>
                 </div>
 
                 <div className="flex items-center">
                   <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground w-24">Email:</span>
-                  <span className="font-medium">{ad.merchantDetail.merchantEmail}</span>
+                  <span className="text-sm text-muted-foreground w-24">
+                    Email:
+                  </span>
+                  <span className="font-medium">
+                    {ad.merchantDetail.merchantEmail}
+                  </span>
                 </div>
 
                 <div className="flex items-center">
                   <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground w-24">Phone:</span>
-                  <span className="font-medium">{ad.merchantDetail.phoneNumber}</span>
+                  <span className="text-sm text-muted-foreground w-24">
+                    Phone:
+                  </span>
+                  <span className="font-medium">
+                    {ad.merchantDetail.phoneNumber}
+                  </span>
                 </div>
 
                 <div className="flex items-center">
                   <Tag className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground w-24">Merchant ID:</span>
-                  <span className="font-mono text-sm">{ad.merchantDetail.merchantId}</span>
+                  <span className="text-sm text-muted-foreground w-24">
+                    Merchant ID:
+                  </span>
+                  <span className="font-mono text-sm">
+                    {ad.merchantDetail.merchantId}
+                  </span>
                 </div>
               </div>
             </CardContent>
@@ -191,32 +234,39 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
               <div className="space-y-3">
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground w-24">Created:</span>
+                  <span className="text-sm text-muted-foreground w-24">
+                    Created:
+                  </span>
                   <span>{formatDate(ad.createdAt)}</span>
                 </div>
 
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground w-24">Starts:</span>
+                  <span className="text-sm text-muted-foreground w-24">
+                    Starts:
+                  </span>
                   <span>{formatDate(ad.startsAt)}</span>
                 </div>
 
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground w-24">Ends:</span>
+                  <span className="text-sm text-muted-foreground w-24">
+                    Ends:
+                  </span>
                   <span>{formatDate(ad.endsAt)}</span>
                 </div>
 
                 <div className="flex items-center">
                   <AlertCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground w-24">Active:</span>
+                  <span className="text-sm text-muted-foreground w-24">
+                    Active:
+                  </span>
                   <span>{ad.isActive ? "Yes" : "No"}</span>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Location */}
           <Card>
             <CardContent className="p-4">
               <h3 className="text-lg font-semibold flex items-center mb-4">
@@ -227,15 +277,19 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
               <div className="space-y-3">
                 <div className="flex items-center">
                   <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground w-24">Coordinates:</span>
+                  <span className="text-sm text-muted-foreground w-24">
+                    Coordinates:
+                  </span>
                   <span className="font-mono text-sm">
                     {ad.location.coordinates[0]}, {ad.location.coordinates[1]}
                   </span>
                 </div>
 
-                <div className="bg-muted h-[120px] rounded-md flex items-center justify-center">
-                  <MapPin className="h-6 w-6 text-primary" />
-                  <span className="ml-2 text-sm text-muted-foreground">Map preview placeholder</span>
+                <div className="h-40 md:h-64 rounded-md overflow-hidden border">
+                  <LocationMap
+                    location={ad.location.coordinates}
+                    title="Ad Location"
+                  />
                 </div>
               </div>
             </CardContent>
@@ -260,7 +314,9 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
                 {ad.rejectionReason.description && (
                   <div>
                     <span className="text-sm font-medium">Description:</span>
-                    <p className="text-sm text-muted-foreground">{ad.rejectionReason.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {ad.rejectionReason.description}
+                    </p>
                   </div>
                 )}
               </div>
@@ -297,5 +353,5 @@ export function AdDetailDialog({ ad, isOpen, onClose, onApprove, onReject }: AdD
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

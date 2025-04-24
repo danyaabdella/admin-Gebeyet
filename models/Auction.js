@@ -1,8 +1,9 @@
 import mongoose from 'mongoose'
 
 const auctionSchema = new mongoose.Schema({
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: false },
-    merchantId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    auctionTitle: { type: String, required: false },
+    merchantName: { type: String, required: true },
+    category: { type: String, required: true },
     description: String,
     condition: { type: String, enum: ['new', 'used'], required: true },
     startTime: { type: Date, required: true },

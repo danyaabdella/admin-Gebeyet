@@ -250,7 +250,7 @@ export function CategoryPageClient() {
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
             </div>
-            <Button variant="secondary" size="sm" onClick={handleSearch}>
+            <Button variant="outline" size="sm" onClick={handleSearch}>
               Search
             </Button>
           </div>
