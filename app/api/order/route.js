@@ -1,9 +1,10 @@
 import Order from "@/models/Order";
-import { isAdminOrSuperAdmin } from "@/utils/functions";
+import { connectToDB, isAdminOrSuperAdmin } from "@/utils/functions";
 
 export async function GET(req) {
     try {
       const { searchParams } = new URL(req.url);
+      await connectToDB();
       await isAdminOrSuperAdmin();
   
       const id = searchParams.get('id');

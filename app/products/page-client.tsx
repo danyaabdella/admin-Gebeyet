@@ -1,29 +1,60 @@
 "use client";
 
 import { useState, useEffect, useMemo, SetStateAction } from "react";
-import { Search, Filter, CheckCircle, XCircle, Trash2, MapPin, DollarSign, Box, Star, Truck, Tag } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Search,
+  Filter,
+  CheckCircle,
+  XCircle,
+  Trash2,
+  MapPin,
+  DollarSign,
+  Box,
+  Star,
+  Truck,
+  Tag,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Sidebar } from "@/components/sidebar";
 import { ProductDetailsDialog } from "@/components/products/product-details-dialog";
 import { PaginationControls } from "@/components/auctions/pagination-controls";
 import { useToast } from "@/components/ui/use-toast";
 import { Toaster } from "@/components/toaster";
-import DistancePicker from "@/components/DistancePicker";
-import {
-  fetchProducts,
-} from "@/utils/data-fetching";
+import DistancePicker from "@/components/location/DistancePicker";
+import { fetchProducts } from "@/utils/data-fetching";
 import debounce from "lodash.debounce";
 import { ProductType, LocationData, LatLng } from "@/utils/typeDefinitions";
 
 export default function ProductsPageClient() {
   const [selectedTab, setSelectedTab] = useState("active");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductType | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
@@ -56,14 +87,17 @@ export default function ProductsPageClient() {
   const fetchCategories = async () => {
     const res = await fetch("/api/manageCategory");
     const data = await res.json();
-    
-    const formatted = [{ id: "all", name: "All Categories" }, ...data.map((cat: { _id: any; name: any; }) => ({
-      id: cat._id,
-      name: cat.name,
-    }))];
-  
+
+    const formatted = [
+      { id: "all", name: "All Categories" },
+      ...data.map((cat: { _id: any; name: any }) => ({
+        id: cat._id,
+        name: cat.name,
+      })),
+    ];
+
     return formatted;
-  };  
+  };
 
   const deliveryTypes = [
     { id: "all", name: "All Types" },
@@ -82,7 +116,8 @@ export default function ProductsPageClient() {
             isDeleted: selectedTab === "deleted" ? true : undefined,
             isBanned: selectedTab === "banned" ? true : undefined,
             phrase: searchQuery || undefined,
-            categoryId: selectedCategory !== "all" ? selectedCategory : undefined,
+            categoryId:
+              selectedCategory !== "all" ? selectedCategory : undefined,
             minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
             maxPrice: priceRange[1] > 0 ? priceRange[1] : undefined,
             minQuantity: quantityRange[0] > 0 ? quantityRange[0] : undefined,
@@ -90,9 +125,13 @@ export default function ProductsPageClient() {
             minAvgReview: ratingRange[0] > 0 ? ratingRange[0] : undefined,
             maxAvgReview: ratingRange[1] < 5 ? ratingRange[1] : undefined,
             delivery: deliveryType !== "all" ? deliveryType : undefined,
-            minDeliveryPrice: deliveryPriceRange[0] > 0 ? deliveryPriceRange[0] : undefined,
-            maxDeliveryPrice: deliveryPriceRange[1] > 0 ? deliveryPriceRange[1] : undefined,
-            center: locationCenter ? `${locationCenter.lat}-${locationCenter.lng}` : undefined,
+            minDeliveryPrice:
+              deliveryPriceRange[0] > 0 ? deliveryPriceRange[0] : undefined,
+            maxDeliveryPrice:
+              deliveryPriceRange[1] > 0 ? deliveryPriceRange[1] : undefined,
+            center: locationCenter
+              ? `${locationCenter.lat}-${locationCenter.lng}`
+              : undefined,
             radius: locationRadius * 1000, // Convert km to meters
           };
 
@@ -138,9 +177,11 @@ export default function ProductsPageClient() {
       setCategories(fetched);
     };
     loadCategories();
-  }, []);  
+  }, []);
 
-  const handleSearchChange = (e: { target: { value: SetStateAction<string>; }; }) => {
+  const handleSearchChange = (e: {
+    target: { value: SetStateAction<string> };
+  }) => {
     setSearchQuery(e.target.value);
   };
 
@@ -173,80 +214,80 @@ export default function ProductsPageClient() {
     setLocationCenter(center);
   };
 
-const handleProductAction = async (
-  type: "ban" | "unban" | "delete",
-  productId: string,
-  additionalData: Record<string, any> = {}
-) => {
-  console.log("Product actions: ", type);
-  setIsLoading(true);
-  try {
-    let response;
+  const handleProductAction = async (
+    type: "ban" | "unban" | "delete",
+    productId: string,
+    additionalData: Record<string, any> = {}
+  ) => {
+    console.log("Product actions: ", type);
+    setIsLoading(true);
+    try {
+      let response;
 
-    switch (type) {
-      case "ban":
-        response = await fetch("/api/products", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            _id: productId,
-            isBanned: true,
-            banReason: additionalData.reason,
-            banDescription: additionalData.description,
-          }),
-        }).then((res) => res.json());
-        break;
+      switch (type) {
+        case "ban":
+          response = await fetch("/api/products", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              _id: productId,
+              isBanned: true,
+              banReason: additionalData.reason,
+              banDescription: additionalData.description,
+            }),
+          }).then((res) => res.json());
+          break;
 
-      case "unban":
-        response = await fetch("/api/products", {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            _id: productId,
-            isBanned: false,
-          }),
-        }).then((res) => res.json());
-        break;
+        case "unban":
+          response = await fetch("/api/products", {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              _id: productId,
+              isBanned: false,
+            }),
+          }).then((res) => res.json());
+          break;
 
-      case "delete":
-        response = await fetch("/api/products", {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            _id: productId,
-          }),
-        }).then((res) => res.json());
-        break;
+        case "delete":
+          response = await fetch("/api/products", {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              _id: productId,
+            }),
+          }).then((res) => res.json());
+          break;
 
-      default:
-        throw new Error("Invalid action type");
+        default:
+          throw new Error("Invalid action type");
+      }
+
+      console.log("Response: ", response);
+
+      toast({
+        title: "Success",
+        description: response.message,
+      });
+
+      debouncedFetchProducts();
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to ${type} product. Please try again.`,
+      });
+    } finally {
+      setIsLoading(false);
+      setSelectedProduct(null);
     }
-
-    console.log("Response: ", response);
-
-    toast({
-      title: "Success",
-      description: response.message,
-    });
-
-    debouncedFetchProducts();
-  } catch (error) {
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: `Failed to ${type} product. Please try again.`,
-    });
-  } finally {
-    setIsLoading(false);
-    setSelectedProduct(null);
-  }
-};
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -260,7 +301,10 @@ const handleProductAction = async (
             <div className="flex items-center gap-4">
               <span className="text-sm md:text-base text-muted-foreground">
                 <span className="hidden md:inline">Total </span>Products:
-                <span className="font-medium text-gray-800 dark:text-gray-200"> {totalProducts}</span>
+                <span className="font-medium text-gray-800 dark:text-gray-200">
+                  {" "}
+                  {totalProducts}
+                </span>
               </span>
               <Button
                 variant="outline"
@@ -288,7 +332,11 @@ const handleProductAction = async (
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Select defaultValue="all" value={selectedTab} onValueChange={handleTabChange}>
+              <Select
+                defaultValue="all"
+                value={selectedTab}
+                onValueChange={handleTabChange}
+              >
                 <SelectTrigger className="w-[140px] md:w-[180px]">
                   <SelectValue placeholder="View" />
                 </SelectTrigger>
@@ -373,7 +421,10 @@ const handleProductAction = async (
                           type="number"
                           value={minRating}
                           onChange={(e) => {
-                            const value = Math.min(5, Math.max(0, Number(e.target.value) || 0));
+                            const value = Math.min(
+                              5,
+                              Math.max(0, Number(e.target.value) || 0)
+                            );
                             setMinRating(e.target.value);
                             setRatingRange([value, ratingRange[1]]);
                           }}
@@ -385,7 +436,10 @@ const handleProductAction = async (
                           type="number"
                           value={maxRating}
                           onChange={(e) => {
-                            const value = Math.min(5, Math.max(0, Number(e.target.value) || 0));
+                            const value = Math.min(
+                              5,
+                              Math.max(0, Number(e.target.value) || 0)
+                            );
                             setMaxRating(e.target.value);
                             setRatingRange([ratingRange[0], value]);
                           }}
@@ -401,7 +455,10 @@ const handleProductAction = async (
                         <Label className="flex items-center">
                           <Tag className="h-4 w-4 mr-1" /> Category
                         </Label>
-                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                        <Select
+                          value={selectedCategory}
+                          onValueChange={setSelectedCategory}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select category" />
                           </SelectTrigger>
@@ -419,7 +476,10 @@ const handleProductAction = async (
                         <Label className="flex items-center">
                           <Truck className="h-4 w-4 mr-1" /> Delivery Type
                         </Label>
-                        <Select value={deliveryType} onValueChange={setDeliveryType}>
+                        <Select
+                          value={deliveryType}
+                          onValueChange={setDeliveryType}
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder="Select delivery type" />
                           </SelectTrigger>
@@ -442,7 +502,8 @@ const handleProductAction = async (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 justify-between">
                       <Label className="flex items-center">
-                        <MapPin className="h-4 w-4 mr-1 text-red-500" /> Location
+                        <MapPin className="h-4 w-4 mr-1 text-red-500" />{" "}
+                        Location
                       </Label>
                       <div className="flex items-center gap-2">
                         <Label className="hidden md:block">Distance (km)</Label>
@@ -450,12 +511,16 @@ const handleProductAction = async (
                           <Input
                             type="number"
                             value={locationRadius}
-                            onChange={(e) => setLocationRadius(Number(e.target.value) || 50)}
+                            onChange={(e) =>
+                              setLocationRadius(Number(e.target.value) || 50)
+                            }
                             min={1}
                             max={1000}
                             className="w-24"
                           />
-                          <span className="text-sm text-muted-foreground">KM</span>
+                          <span className="text-sm text-muted-foreground">
+                            KM
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -494,11 +559,17 @@ const handleProductAction = async (
                   <TableHeader>
                     <TableRow>
                       <TableHead>Product Name</TableHead>
-                      <TableHead className="hidden md:table-cell">Category</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Category
+                      </TableHead>
                       <TableHead>Price</TableHead>
-                      <TableHead className="hidden md:table-cell">Merchant</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Merchant
+                      </TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="hidden md:table-cell">Stock</TableHead>
+                      <TableHead className="hidden md:table-cell">
+                        Stock
+                      </TableHead>
                       <TableHead>Rating</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -522,10 +593,16 @@ const handleProductAction = async (
                           className="cursor-pointer hover:bg-muted/50"
                           onClick={() => setSelectedProduct(product)}
                         >
-                          <TableCell className="font-medium">{product.productName}</TableCell>
-                          <TableCell className="hidden md:table-cell">{product.category.categoryName}</TableCell>
+                          <TableCell className="font-medium">
+                            {product.productName}
+                          </TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            {product.category.categoryName}
+                          </TableCell>
                           <TableCell>${product.price.toFixed(2)}</TableCell>
-                          <TableCell className="hidden md:table-cell">{product.merchantDetail.merchantName}</TableCell>
+                          <TableCell className="hidden md:table-cell">
+                            {product.merchantDetail.merchantName}
+                          </TableCell>
                           <TableCell>
                             {selectedTab === "deleted" ? (
                               <span className="flex items-center text-gray-500">
@@ -549,10 +626,14 @@ const handleProductAction = async (
                               <div className="flex items-center">
                                 {product.avgRating}
                                 <span className="text-yellow-500 ml-1">★</span>
-                                <span className="text-xs text-muted-foreground ml-1">({product.review.length})</span>
+                                <span className="text-xs text-muted-foreground ml-1">
+                                  ({product.review.length})
+                                </span>
                               </div>
                             ) : (
-                              <span className="text-muted-foreground">No ratings</span>
+                              <span className="text-muted-foreground">
+                                No ratings
+                              </span>
                             )}
                           </TableCell>
                         </TableRow>
@@ -565,7 +646,11 @@ const handleProductAction = async (
           </Card>
 
           {totalPages > 1 && (
-            <PaginationControls totalPages={totalPages} currentPage={currentPage} onPageChange={setCurrentPage} />
+            <PaginationControls
+              totalPages={totalPages}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
+            />
           )}
         </main>
       </div>
@@ -576,10 +661,14 @@ const handleProductAction = async (
           open={!!selectedProduct}
           onOpenChange={() => setSelectedProduct(null)}
           onAction={(action) =>
-            handleProductAction(action.type as "ban" | "unban" | "delete", action.productId, {
-              reason: action.reason,
-              description: action.description,
-            })
+            handleProductAction(
+              action.type as "ban" | "unban" | "delete",
+              action.productId,
+              {
+                reason: action.reason,
+                description: action.description,
+              }
+            )
           }
           isLoading={isLoading}
         />

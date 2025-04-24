@@ -1,8 +1,9 @@
 import mongoose from 'mongoose'
 
 const auctionSchema = new mongoose.Schema({
-    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
-    merchantId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    auctionTitle: { type: String, required: false },
+    merchantName: { type: String, required: true },
+    category: { type: String, required: true },
     description: String,
     condition: { type: String, enum: ['new', 'used'], required: true },
     startTime: { type: Date, required: true },
@@ -11,6 +12,10 @@ const auctionSchema = new mongoose.Schema({
     startingPrice: { type: Number, required: true },
     reservedPrice: { type: Number, required: true },
     bidIncrement: { type: Number, default: 1 },
+    rejectionReason: {
+        category: { type: String },
+        description: { type: String }
+    },
     status: { 
         type: String, 
         enum: ['pending', 'active', 'ended', 'cancelled'],
@@ -25,7 +30,7 @@ const auctionSchema = new mongoose.Schema({
     totalQuantity: { type: Number, default: 1 },
     remainingQuantity: { type: Number },
     buyByParts: { type: Boolean, default: false },
-    category: { type: String, required: true }
+    category: { type: String, required: false }
 }, { timestamps: true })
 
 auctionSchema.pre('save', function(next) {
@@ -48,5 +53,6 @@ auctionSchema.index({ merchantId: 1, status: 1 })
 auctionSchema.index({ status: 1, endTime: 1 })
 auctionSchema.index({ category: 1, status: 1 })
 
-const Auction = mongoose.models.Auction || mongoose.model('Auction', auctionSchema)
-export default Auction
+const Auction = mongoose.models.Auction || mongoose.model('Auction', auctionSchema);
+
+export default Auction;

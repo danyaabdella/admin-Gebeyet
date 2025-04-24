@@ -444,229 +444,45 @@ export async function submitContactForm(formData: any) {
   }
 }
 
-// About Us API
 export async function fetchAboutUsContent() {
-  console.log("Fetching About Us content from API")
+  const sections = [
+    "hero",
+    "mission",
+    "vision",
+    "value",
+    "stats",
+    "timeline",
+    "team",
+    "location",
+    "award",
+    "cta",
+  ];
 
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 1000))
+  const fetchSection = async (section: any) => {
+    try {
+      const res = await fetch(`/api/about/${section}`);
+      const json = await res.json();
+      return json.data;
+    } catch (err) {
+      console.error(`Failed to fetch ${section}:`, err);
+      return null;
+    }
+  };
+
+  const results = await Promise.all(sections.map(fetchSection));
 
   return {
-    hero: {
-      title: "Transforming Digital Experiences",
-      subtitle: "Innovation, Excellence, and Customer Success",
-      description:
-        "We are a forward-thinking technology company dedicated to creating innovative solutions that empower businesses to thrive in the digital age. Our team of experts combines technical excellence with creative thinking to deliver exceptional results for our clients worldwide.",
-      image: "/placeholder.svg?height=600&width=1200",
-    },
-    mission: {
-      title: "Our Mission",
-      content:
-        "To provide cutting-edge digital solutions that solve complex business challenges and create lasting value for our clients, employees, and communities. We strive to be at the forefront of technological innovation while maintaining our commitment to ethical practices and sustainable growth.",
-      image: "/placeholder.svg?height=400&width=600",
-    },
-    vision: {
-      title: "Our Vision",
-      content:
-        "To be the global leader in digital transformation, recognized for our innovative solutions, technical excellence, and exceptional client service. We envision a world where technology enhances human potential and creates opportunities for growth and prosperity.",
-      image: "/placeholder.svg?height=400&width=600",
-    },
-    values: [
-      {
-        id: "value1",
-        title: "Innovation",
-        description: "We embrace creativity and forward-thinking to develop groundbreaking solutions.",
-        icon: "Lightbulb",
-      },
-      {
-        id: "value2",
-        title: "Excellence",
-        description: "We strive for the highest standards in everything we do, from code quality to customer service.",
-        icon: "Award",
-      },
-      {
-        id: "value3",
-        title: "Integrity",
-        description: "We conduct business with honesty, transparency, and ethical responsibility.",
-        icon: "Shield",
-      },
-      {
-        id: "value4",
-        title: "Collaboration",
-        description: "We believe in the power of teamwork and partnership to achieve extraordinary results.",
-        icon: "Users",
-      },
-    ],
-    stats: [
-      {
-        id: "stat1",
-        value: "500+",
-        label: "Clients Served",
-      },
-      {
-        id: "stat2",
-        value: "1,200+",
-        label: "Projects Completed",
-      },
-      {
-        id: "stat3",
-        value: "150+",
-        label: "Team Members",
-      },
-      {
-        id: "stat4",
-        value: "30+",
-        label: "Countries",
-      },
-    ],
-    history: {
-      title: "Our Journey Through the Years",
-      timeline: [
-        {
-          year: "2010",
-          title: "Foundation",
-          description:
-            "Our company was founded with a vision to transform digital experiences through innovative technology solutions.",
-          image: "/placeholder.svg?height=100&width=100",
-        },
-        {
-          year: "2013",
-          title: "First Major Client",
-          description: "Secured our first enterprise client and delivered a successful digital transformation project.",
-          image: "/placeholder.svg?height=100&width=100",
-        },
-        {
-          year: "2015",
-          title: "International Expansion",
-          description: "Opened our first international office and began serving clients across multiple continents.",
-          image: "/placeholder.svg?height=100&width=100",
-        },
-        {
-          year: "2018",
-          title: "Product Innovation",
-          description: "Launched our flagship product, revolutionizing how businesses manage their digital operations.",
-          image: "/placeholder.svg?height=100&width=100",
-        },
-        {
-          year: "2020",
-          title: "Industry Recognition",
-          description: "Received multiple industry awards for innovation and excellence in digital solutions.",
-          image: "/placeholder.svg?height=100&width=100",
-        },
-        {
-          year: "2023",
-          title: "Strategic Growth",
-          description:
-            "Expanded our service offerings and formed strategic partnerships to enhance our market position.",
-          image: "/placeholder.svg?height=100&width=100",
-        },
-      ],
-    },
-    team: {
-      title: "Meet Our Team",
-      description: "Our talented team of professionals is dedicated to delivering exceptional results for our clients.",
-      members: [
-        {
-          id: "member1",
-          name: "Abdelaziz Ebrahim",
-          role: "Chief Executive Officer",
-          bio: "Founder and visionary leader with 15+ years of industry experience.",
-          image: "/placeholder.svg?height=300&width=300",
-        },
-        {
-          id: "member2",
-          name: "Danya Abdella",
-          role: "Chief Technology Officer",
-          bio: "Technical genius with expertise in AI and machine learning.",
-          image: "/placeholder.svg?height=300&width=300",
-        },
-        {
-          id: "member3",
-          name: "Sntayehu Getahun",
-          role: "Chief Operations Officer",
-          bio: "Operations expert with a background in supply chain management.",
-          image: "/placeholder.svg?height=300&width=300",
-        },
-        {
-          id: "member4",
-          name: "Sarah Johnson",
-          role: "Chief Marketing Officer",
-          bio: "Marketing strategist with a passion for brand storytelling.",
-          image: "/placeholder.svg?height=300&width=300",
-        },
-        {
-          id: "member5",
-          name: "Michael Chen",
-          role: "Chief Financial Officer",
-          bio: "Financial expert with experience in tech industry investments.",
-          image: "/placeholder.svg?height=300&width=300",
-        },
-      ],
-    },
-    locations: [
-      {
-        id: "loc1",
-        city: "San Francisco",
-        country: "USA",
-        address: "123 Tech Avenue, San Francisco, CA 94105",
-        image: "/placeholder.svg?height=300&width=500",
-        isHeadquarters: true,
-      },
-      {
-        id: "loc2",
-        city: "London",
-        country: "UK",
-        address: "45 Innovation Street, London, EC2A 4BX",
-        image: "/placeholder.svg?height=300&width=500",
-        isHeadquarters: false,
-      },
-      {
-        id: "loc3",
-        city: "Singapore",
-        country: "Singapore",
-        address: "78 Digital Boulevard, Singapore 018956",
-        image: "/placeholder.svg?height=300&width=500",
-        isHeadquarters: false,
-      },
-      {
-        id: "loc4",
-        city: "Sydney",
-        country: "Australia",
-        address: "90 Tech Park, Sydney, NSW 2000",
-        image: "/placeholder.svg?height=300&width=500",
-        isHeadquarters: false,
-      },
-    ],
-    awards: [
-      {
-        id: "award1",
-        title: "Technology Innovation Award",
-        organization: "Global Tech Forum",
-        year: "2023",
-        description: "Recognized for groundbreaking advancements in AI-powered solutions.",
-      },
-      {
-        id: "award2",
-        title: "Best Workplace Culture",
-        organization: "Business Excellence Awards",
-        year: "2022",
-        description: "Honored for creating an inclusive, innovative, and supportive work environment.",
-      },
-      {
-        id: "award3",
-        title: "Sustainability Leadership",
-        organization: "Green Business Alliance",
-        year: "2021",
-        description: "Acknowledged for commitment to environmental sustainability in business operations.",
-      },
-    ],
-    cta: {
-      title: "Ready to Transform Your Business?",
-      description: "Partner with us to leverage cutting-edge technology solutions that drive growth and innovation.",
-      buttonText: "Get in Touch",
-      buttonLink: "/contact",
-    },
-  }
+    hero: results[0],
+    mission: results[1],
+    vision: results[2],
+    value: results[3],
+    stat: results[4],
+    timeline: results[5],
+    team: results[6],
+    location: results[7],
+    award: results[8],
+    cta: results[9],
+  };
 }
 
 // Content Management APIs
@@ -709,7 +525,7 @@ export async function updateContactContent(data: any) {
   }
 }
 
-export async function updateAboutUsContent(data: any) {
+export async function updateAboutContent(data: any) {
   console.log("Updating About Us content:", data)
 
   // Simulate API delay
@@ -783,4 +599,20 @@ export async function fetchAdminProfile() {
   ]
 
   return profiles[Math.floor(Math.random() * profiles.length)]
+}
+
+export async function changeAdminPassword(passwordData: { currentPassword: string; newPassword: string }) {
+  // In a real implementation, this would change the admin's password
+  console.log("Changing admin password")
+
+  // Simulate API delay
+  await new Promise((resolve) => setTimeout(resolve, 1000))
+
+  // Simulate validation of current password
+  if (passwordData.currentPassword !== "password123") {
+    throw new Error("Current password is incorrect")
+  }
+
+  // Return success for demo
+  return { success: true, message: "Password changed successfully" }
 }

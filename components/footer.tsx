@@ -30,7 +30,7 @@ export function Footer() {
   const [isExpanded, setIsExpanded] = useState(false)
 
   const isFullWidthPage =
-    pathname === "/contact" || pathname === "/privacy" || pathname === "/settings" || pathname === "/terms" ||  pathname === "/about" || pathname.startsWith("/order/")
+    pathname === "/contact" || pathname === "/privacy" || pathname === "/terms" ||  pathname === "/about" || pathname.startsWith("/order/")
 
   // Determine gradient colors based on the current page
   const getGradientColors = () => {

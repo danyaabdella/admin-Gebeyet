@@ -18,7 +18,6 @@ export function TransactionTypeDistributionChart() {
         chartInstance.current.destroy();
       }
 
-      // Fetch data (Using Demo Data for Now)
       const transactionData = await fetchTransactionTypeData();
 
       const ctx = chartRef.current.getContext("2d");

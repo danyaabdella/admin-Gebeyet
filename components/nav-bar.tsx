@@ -43,6 +43,8 @@ export function NavBar() {
     { name: "Order", href: "/orders" },
     { name: "Products", href: "/products" },
     { name: "Category", href: "/categories" },
+    { name: "Ads", href: "/ads" },
+    { name: "About Us", href: "/about" },
   ].filter(Boolean) as NavLink[];
 
   // Redirect to /signin if there's no session

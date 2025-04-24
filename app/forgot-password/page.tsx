@@ -1,30 +1,36 @@
-"use client"
+"use client";
 
-import { CardFooter } from "@/components/ui/card"
-import type React from "react"
-import { useState } from "react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { ArrowLeft, Mail } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { OtpVerification } from "@/components/auth/otp-verification"
-import { ResetPasswordForm } from "@/components/auth/reset-password-form"
-import { toast } from "@/components/ui/use-toast"
-import { Toaster } from "@/components/toaster"
+import { CardFooter } from "@/components/ui/card";
+import type React from "react";
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Mail } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { OtpVerification } from "@/components/auth/otp-verification";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
+import { toast } from "@/components/ui/use-toast";
+import { Toaster } from "@/components/toaster";
 
 export default function ForgotPasswordPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [step, setStep] = useState<"email" | "otp" | "reset">("email")
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState<"email" | "otp" | "reset">("email");
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-  
+
     try {
       // Validate email
       if (!email) {
@@ -36,7 +42,7 @@ export default function ForgotPasswordPage() {
         setIsLoading(false);
         return;
       }
-  
+
       // Call API to request password reset
       const response = await fetch("/api/auth/send-otp", {
         method: "POST",
@@ -45,9 +51,9 @@ export default function ForgotPasswordPage() {
         },
         body: JSON.stringify({ email }),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
         toast({
           title: "OTP Sent",
@@ -73,11 +79,11 @@ export default function ForgotPasswordPage() {
       setIsLoading(false);
     }
   };
-  
+
   const handleOtpVerified = async (otp: string) => {
     try {
       setIsLoading(true);
-  
+
       // Call API to verify OTP
       const response = await fetch("/api/auth/verify-otp", {
         method: "POST",
@@ -86,9 +92,9 @@ export default function ForgotPasswordPage() {
         },
         body: JSON.stringify({ email, otp }),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
         toast({
           title: "Verification Successful",
@@ -118,7 +124,7 @@ export default function ForgotPasswordPage() {
   const handleResendOtp = async () => {
     try {
       setIsLoading(true);
-  
+
       // Call API to resend OTP
       const response = await fetch("/api/auth/resend-otp", {
         method: "POST",
@@ -127,9 +133,9 @@ export default function ForgotPasswordPage() {
         },
         body: JSON.stringify({ email }),
       });
-  
+
       const result = await response.json();
-  
+
       if (response.ok) {
         toast({
           title: "OTP Resent",
@@ -139,7 +145,8 @@ export default function ForgotPasswordPage() {
         toast({
           variant: "destructive",
           title: "Resend Failed",
-          description: result.message || "Failed to resend OTP. Please try again.",
+          description:
+            result.message || "Failed to resend OTP. Please try again.",
         });
       }
     } catch (error) {
@@ -152,16 +159,16 @@ export default function ForgotPasswordPage() {
     } finally {
       setIsLoading(false);
     }
-  };  
-  
+  };
+
   const handlePasswordReset = () => {
     toast({
       title: "Password Reset Successful",
       description: "Your password has been reset successfully",
-    })
+    });
     // Redirect to login page
-    router.push("/signin")
-  }
+    router.push("/signin");
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
@@ -169,7 +176,9 @@ export default function ForgotPasswordPage() {
         {step === "email" && (
           <Card className="w-full">
             <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold text-center">Forgot Password</CardTitle>
+              <CardTitle className="text-2xl font-bold text-center">
+                Forgot Password
+              </CardTitle>
               <CardDescription className="text-center">
                 Enter your email address to receive a verification code
               </CardDescription>
@@ -197,7 +206,10 @@ export default function ForgotPasswordPage() {
               </form>
             </CardContent>
             <CardFooter className="flex justify-center">
-              <Link href="/signin" className="flex items-center text-sm text-muted-foreground hover:text-foreground">
+              <Link
+                href="/signin"
+                className="flex items-center text-sm text-muted-foreground hover:text-foreground"
+              >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Sign In
               </Link>
@@ -216,11 +228,14 @@ export default function ForgotPasswordPage() {
         )}
 
         {step === "reset" && (
-          <ResetPasswordForm email={email} onSuccess={handlePasswordReset} onCancel={() => setStep("otp")} />
+          <ResetPasswordForm
+            email={email}
+            onSuccess={handlePasswordReset}
+            onCancel={() => setStep("otp")}
+          />
         )}
       </div>
       <Toaster />
     </div>
-  )
+  );
 }
-

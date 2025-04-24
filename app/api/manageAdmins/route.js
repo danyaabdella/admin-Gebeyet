@@ -25,7 +25,7 @@ export async function GET(req) {
     }
 
     // For all other fetch operations, only superAdmin is allowed
-    await isSuperAdmin();
+    await isAdminOrSuperAdmin();
 
     let filter = {};
 
@@ -60,7 +60,6 @@ export async function PUT(req) {
   try {
     await connectToDB();
 
-    // Parse the request data
     const { _id, isBanned, isDeleted, fullname, phone, password, banReason } = await req.json();
 
     if (!_id) {

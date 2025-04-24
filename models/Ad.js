@@ -14,6 +14,7 @@ const adSchema = new Schema({
     merchantEmail: { type: String, required: true },
     phoneNumber: { type: Number, required: true }
   },
+  tx_ref: { type: String, required :true },
   paymentStatus: {
     type: String,
     enum: ['PENDING', 'PAID', 'FAILED'],
@@ -52,7 +53,7 @@ adSchema.pre('save', async function (next) {
             type: "Point",
             coordinates: this.location.coordinates
           },
-          $maxDistance: 50000 // 50km
+          $maxDistance: 50000
         }
       }
     });

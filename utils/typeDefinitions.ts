@@ -1,17 +1,17 @@
 // Represents lat/lng coordinates
+import { Document, Types } from 'mongoose';
+
 export type LatLng = {
     lat: number;
     lng: number;
-  };
+};
   
-  // Represents location-based filter data
-  export type LocationData = {
+export type LocationData = {
     radius: number;
     center: LatLng;
-  };
+};
   
-  // Represents the shape of a product object
-  export interface ProductType {
+export interface ProductType {
     _id: string;
     productName: string;
     category: {
@@ -34,27 +34,25 @@ export type LatLng = {
       merchantEmail: string;
     };
     isBanned: boolean;
-  }
+}
 
-  export interface ProductDetailsDialogProps {
+export interface ProductDetailsDialogProps {
     product: any
     open: boolean
     onOpenChange: (open: boolean) => void
     onAction: (action: { type: string; productId: string; reason?: string; description?: string }) => void
     isLoading: boolean
-  }
+}
 
-  export interface Product {
+export interface Product {
     productId: string;
     productName: string;
     quantity: number;
     price: number;
     delivery: "FREE" | "PERPIECS" | "FLAT" | string;
     deliveryPrice: number;
-  }
+}
   
-  import { Document, Types } from 'mongoose';
-
 export interface Address {
   state: string;
   city: string;
@@ -135,6 +133,46 @@ export interface OrderFilters {
   city?: string
 }
 
+export interface Auction {
+  auctionTitle: string;
+  buyByParts: any;
+  remainingQuantity: number;
+  totalQuantity: number;
+  paymentDuration: Number;
+  banReason?: {
+    reason: string;
+    description?: string;
+  };
+  _id: string;
+  productId: string;
+  productName: string;
+  merchantId: string;
+  merchantName: string;
+  description: string;
+  condition: "new" | "used";
+  startTime: string;
+  endTime: string;
+  itemImg: string[];
+  startingPrice: number;
+  reservedPrice: number;
+  bidIncrement: number;
+  status: "pending" | "active" | "ended" | "cancelled";
+  adminApproval: "pending" | "approved" | "rejected";
+  currentBid: number;
+  bidCount: number;
+  category: string;
+}
+
+export interface Category {
+  _id: string;
+  name: string;
+  description: string;
+  createdBy: string;
+  isDeleted: boolean;
+  trashDate: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
   // Initialize filter object
         // let filter = {};
 
