@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { RefreshCcw } from "lucide-react"
+import { useState } from "react";
+import { RefreshCcw } from "lucide-react";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -12,25 +12,36 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 interface RefundDialogProps {
-  orderId: string
-  amount: number
-  transactionRef: string
+  orderId: string;
+  amount: number;
+  transactionRef: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  onFailure: () => void;
 }
 
-export function RefundDialog({ orderId, amount, transactionRef }: RefundDialogProps) {
-  const [open, setOpen] = useState(false)
-  const [reason, setReason] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+export function RefundDialog({
+  orderId,
+  amount,
+  transactionRef,
+  open,
+  onOpenChange,
+  onSuccess,
+  onFailure,
+}: RefundDialogProps) {
+  const [reason, setReason] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleRefund = async () => {
-    setIsSubmitting(true)
-  
+    setIsSubmitting(true);
+
     try {
       const response = await fetch("/api/refund", {
         method: "POST",
@@ -40,38 +51,42 @@ export function RefundDialog({ orderId, amount, transactionRef }: RefundDialogPr
         body: JSON.stringify({
           tx_ref: transactionRef,
           reason: reason,
-          amount: amount
+          amount: amount,
         }),
-      })
-  
-      const data = await response.json()
-  
+      });
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.error || "Refund failed")
+        throw new Error(data.error || "Refund failed");
       }
-  
+
       toast({
         title: "Refund processed",
         description: data.message || `Order #${transactionRef} has been refunded.`,
-      })
-  
-      setOpen(false)
-      setReason("")
+      });
+
+      onSuccess(); // Trigger success callback to refetch data
+      onOpenChange(false); // Close dialog
+      setReason(""); // Reset reason
     } catch (error: any) {
-      console.error("Refund error:", error)
-  
+      console.error("Refund error:", error);
+
       toast({
         title: "Refund failed",
-        description: error.message || "Something went wrong during refund.",
+        description:
+          error.message || "Something went wrong during refund.",
         variant: "destructive",
-      })
+      });
+
+      onFailure(); // Trigger failure callback to refetch data
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="default" className="gap-2">
           <RefreshCcw className="h-4 w-4" />
@@ -82,7 +97,8 @@ export function RefundDialog({ orderId, amount, transactionRef }: RefundDialogPr
         <DialogHeader>
           <DialogTitle>Process Refund</DialogTitle>
           <DialogDescription>
-            You are about to process a refund for order #{transactionRef}. This action cannot be undone.
+            You are about to process a refund for order #{transactionRef}. This
+            action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -100,14 +116,17 @@ export function RefundDialog({ orderId, amount, transactionRef }: RefundDialogPr
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleRefund} disabled={!reason.trim() || isSubmitting}>
+          <Button
+            onClick={handleRefund}
+            disabled={!reason.trim() || isSubmitting}
+          >
             {isSubmitting ? "Processing..." : "Confirm Refund"}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -6,10 +6,9 @@ export const metadata: Metadata = {
   description: "Manage auctions in the marketplace",
 }
 
-export default function OrdersLayout({ children }: { children: ReactNode }) {
+export default function AuctionsLayout({ children }: { children: ReactNode }) {
   return (
     <section>
-      {/* You can wrap with sidebar/header if needed */}
       {children}
     </section>
   );

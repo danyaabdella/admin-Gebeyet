@@ -1,54 +1,105 @@
-"use client"
+// components/NotificationPopover.jsx
+"use client";
 
-import { useState } from "react"
-import { Bell } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { useEffect, useState } from "react";
+import io, { Socket } from "socket.io-client";
+import { Bell } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DefaultEventsMap } from "@socket.io/component-emitter";
 
 type Notification = {
-  id: string
-  title: string
-  description: string
-  time: string
-  read: boolean
-}
+  _id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  isRead: boolean;
+  readersCount: number;
+  link?: string;
+};
+
+let socket: Socket<DefaultEventsMap, DefaultEventsMap>;
 
 export function NotificationPopover() {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      title: "New Order",
-      description: "You have received a new order #12345",
-      time: "5 minutes ago",
-      read: false,
-    },
-    {
-      id: "2",
-      title: "Payment Received",
-      description: "Payment for order #12340 has been received",
-      time: "1 hour ago",
-      read: false,
-    },
-    {
-      id: "3",
-      title: "System Update",
-      description: "System will be updated on 15th March",
-      time: "1 day ago",
-      read: true,
-    },
-  ])
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const markAsRead = (id: string) => {
-    setNotifications(
-      notifications.map((notification) => (notification.id === id ? { ...notification, read: true } : notification)),
-    )
-  }
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch("/api/announcement");
+      if (!res.ok) throw new Error("Failed to fetch notifications");
+      const data = await res.json();
+      setNotifications(data || []);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map((notification) => ({ ...notification, read: true })))
-  }
+  useEffect(() => {
+    // Initialize Socket.IO client
+    socket = io(process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000", {
+      path: "/api/socket/io",
+    });
 
-  const unreadCount = notifications.filter((n) => !n.read).length
+    socket.on("connect", () => {
+      console.log("Connected to Socket.IO server");
+    });
+
+    socket.on("new-announcement", (newNotif: Notification) => {
+      setNotifications((prev) => [newNotif, ...prev]);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket.IO connection error:", error);
+    });
+
+    // Fetch initial notifications
+    fetchNotifications();
+
+    // Initialize Socket.IO server
+    fetch("/api/socket").catch((error) =>
+      console.error("Error initializing Socket.IO:", error),
+    );
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  const markAsRead = async (id: string) => {
+    try {
+      const res = await fetch("/api/announcement", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ announcementId: id }),
+      });
+      if (res.ok) {
+        setNotifications((prev) =>
+          prev.map((notif) =>
+            notif._id === id ? { ...notif, isRead: true } : notif,
+          ),
+        );
+      }
+    } catch (error) {
+      console.error("Error marking as read:", error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      const res = await fetch("/api/announcement", {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setNotifications((prev) =>
+          prev.map((notif) => ({ ...notif, isRead: true })),
+        );
+      }
+    } catch (error) {
+      console.error("Error marking all as read:", error);
+    }
+  };
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
     <Popover>
@@ -66,7 +117,12 @@ export function NotificationPopover() {
         <div className="flex items-center justify-between border-b pb-2">
           <h4 className="font-medium">Notifications</h4>
           {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="h-auto p-0 text-xs text-primary" onClick={markAllAsRead}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-auto p-0 text-xs text-primary"
+              onClick={markAllAsRead}
+            >
               Mark all as read
             </Button>
           )}
@@ -76,20 +132,38 @@ export function NotificationPopover() {
             <div className="space-y-2">
               {notifications.map((notification) => (
                 <div
-                  key={notification.id}
-                  className={`cursor-pointer rounded-md p-2 transition-colors ${notification.read ? "" : "bg-muted"}`}
-                  onClick={() => markAsRead(notification.id)}
+                  key={notification._id}
+                  className={`cursor-pointer rounded-md p-2 transition-colors ${
+                    notification.isRead ? "" : "bg-muted"
+                  }`}
+                  onClick={() => markAsRead(notification._id)}
                 >
                   <div className="flex justify-between">
                     <h5 className="font-medium">{notification.title}</h5>
-                    <span className="text-xs text-muted-foreground">{notification.time}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(notification.createdAt).toLocaleTimeString()}
+                    </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{notification.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {notification.description}
+                  </p>
+                  {notification.link && (
+                    <a
+                      href={notification.link}
+                      className="text-xs text-primary"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Learn more
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="py-6 text-center text-muted-foreground">No notifications</div>
+            <div className="py-6 text-center text-muted-foreground">
+              No notifications
+            </div>
           )}
         </div>
         <div className="border-t pt-2">
@@ -99,6 +173,5 @@ export function NotificationPopover() {
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }
-

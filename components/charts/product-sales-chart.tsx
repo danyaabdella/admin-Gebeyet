@@ -29,7 +29,6 @@ export function ProductSalesChart({ year, month }: ProductSalesChartProps) {
         const orders = data.orders
         const selectedYear = year || new Date().getFullYear()
 
-        // Initialize data for all months
         const months = [
           "Jan", "Feb", "Mar", "Apr", "May", "Jun",
           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -40,7 +39,6 @@ export function ProductSalesChart({ year, month }: ProductSalesChartProps) {
           auctions: 0
         }))
 
-        // Process orders
         orders.forEach((order: any) => {
           const orderDate = new Date(order.orderDate)
           if (orderDate.getFullYear() === selectedYear) {

@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-"use client"
+"use client";
 
-import { useState } from "react"
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,11 +9,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle,
   XCircle,
@@ -24,32 +24,39 @@ import {
   MapPin,
   Star,
   Truck,
-} from "lucide-react"
+} from "lucide-react";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { ProductMap } from "./product-map";
 import { ProductDetailsDialogProps } from "@/utils/typeDefinitions";
+import LocationMap from "../location/LocationMap";
 
 // Declare Google Maps types
 declare global {
   interface Window {
-    google: any
+    google: any;
   }
 }
 
-export function ProductDetailsDialog({ product, open, onOpenChange, onAction, isLoading }: ProductDetailsDialogProps) {
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [showBanConfirm, setShowBanConfirm] = useState(false)
-  const [showUnbanConfirm, setShowUnbanConfirm] = useState(false)
-  const [selectedBanReason, setSelectedBanReason] = useState("")
-  const [banDescription, setBanDescription] = useState("")
+export function ProductDetailsDialog({
+  product,
+  open,
+  onOpenChange,
+  onAction,
+  isLoading,
+}: ProductDetailsDialogProps) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBanConfirm, setShowBanConfirm] = useState(false);
+  const [showUnbanConfirm, setShowUnbanConfirm] = useState(false);
+  const [selectedBanReason, setSelectedBanReason] = useState("");
+  const [banDescription, setBanDescription] = useState("");
 
   const banReasons = [
     "Policy Violation",
@@ -57,32 +64,36 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
     "Fraudulent Listing",
     "Counterfeit Product",
     "Safety Concerns",
-    "Other"
-  ]
+    "Other",
+  ];
 
   const nextImage = () => {
     if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prevIndex) => 
+      setCurrentImageIndex((prevIndex) =>
         prevIndex === product.images.length - 1 ? 0 : prevIndex + 1
-      )
+      );
     }
-  }
+  };
 
   const prevImage = () => {
     if (product.images && product.images.length > 0) {
-      setCurrentImageIndex((prevIndex) => 
+      setCurrentImageIndex((prevIndex) =>
         prevIndex === 0 ? product.images.length - 1 : prevIndex - 1
-      )
+      );
     }
-  }
+  };
 
   const avgRating: number =
     product.review && product.review.length > 0
       ? parseFloat(
-          (product.review.reduce((sum: number, review: any) => sum + review.rating, 0) / 
-          product.review.length).toFixed(1)
+          (
+            product.review.reduce(
+              (sum: number, review: any) => sum + review.rating,
+              0
+            ) / product.review.length
+          ).toFixed(1)
         )
-      : 0
+      : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -96,7 +107,10 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                 Banned
               </Badge>
             ) : (
-              <Badge variant="outline" className="flex items-center gap-1 bg-green-50 text-green-700 border-green-200">
+              <Badge
+                variant="outline"
+                className="flex items-center gap-1 bg-green-50 text-green-700 border-green-200"
+              >
                 <CheckCircle className="h-3 w-3" />
                 Active
               </Badge>
@@ -121,7 +135,9 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
               </div>
               <div>
                 <Label className="text-sm font-medium">Category</Label>
-                <div className="text-sm mt-1">{product.category.categoryName}</div>
+                <div className="text-sm mt-1">
+                  {product.category.categoryName}
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Price</Label>
@@ -137,15 +153,21 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
               </div>
               <div>
                 <Label className="text-sm font-medium">Sold</Label>
-                <div className="text-sm mt-1">{product.soldQuantity} units sold</div>
+                <div className="text-sm mt-1">
+                  {product.soldQuantity} units sold
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Merchant</Label>
-                <div className="text-sm mt-1">{product.merchantDetail.merchantName}</div>
+                <div className="text-sm mt-1">
+                  {product.merchantDetail.merchantName}
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Merchant Email</Label>
-                <div className="text-sm mt-1">{product.merchantDetail.merchantEmail}</div>
+                <div className="text-sm mt-1">
+                  {product.merchantDetail.merchantEmail}
+                </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Delivery Type</Label>
@@ -154,16 +176,18 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                   {product.delivery === "FLAT"
                     ? "Flat Rate"
                     : product.delivery === "PERPIECE"
-                      ? "Per Piece"
-                      : product.delivery === "PERKG"
-                        ? "Per Kilogram"
-                        : "Free Shipping"}
+                    ? "Per Piece"
+                    : product.delivery === "PERKG"
+                    ? "Per Kilogram"
+                    : "Free Shipping"}
                 </div>
               </div>
               <div>
                 <Label className="text-sm font-medium">Delivery Price</Label>
                 <div className="text-sm mt-1">
-                  {product.delivery === "FREE" ? "Free" : `$${product.deliveryPrice.toFixed(2)}`}
+                  {product.delivery === "FREE"
+                    ? "Free"
+                    : `$${product.deliveryPrice.toFixed(2)}`}
                 </div>
               </div>
               {product.variant && product.variant.length > 0 && (
@@ -171,7 +195,11 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                   <Label className="text-sm font-medium">Variants</Label>
                   <div className="text-sm mt-1 flex flex-wrap gap-1">
                     {product.variant.map((variant: string, index: number) => (
-                      <Badge key={index} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="bg-blue-50 text-blue-700 border-blue-200"
+                      >
                         {variant}
                       </Badge>
                     ))}
@@ -183,7 +211,11 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                   <Label className="text-sm font-medium">Sizes</Label>
                   <div className="text-sm mt-1 flex flex-wrap gap-1">
                     {product.size.map((size: string, index: number) => (
-                      <Badge key={index} variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="bg-purple-50 text-purple-700 border-purple-200"
+                      >
                         {size}
                       </Badge>
                     ))}
@@ -192,19 +224,25 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
               )}
               <div>
                 <Label className="text-sm font-medium">Created At</Label>
-                <div className="text-sm mt-1">{new Date(product.createdAt).toLocaleString()}</div>
+                <div className="text-sm mt-1">
+                  {new Date(product.createdAt).toLocaleString()}
+                </div>
               </div>
               {product.isDeleted && product.trashDate && (
                 <div>
                   <Label className="text-sm font-medium">Deleted At</Label>
-                  <div className="text-sm mt-1">{new Date(product.trashDate).toLocaleString()}</div>
+                  <div className="text-sm mt-1">
+                    {new Date(product.trashDate).toLocaleString()}
+                  </div>
                 </div>
               )}
             </div>
 
             <div>
               <Label className="text-sm font-medium">Description</Label>
-              <div className="text-sm mt-1 p-3 bg-muted rounded-md whitespace-pre-wrap">{product.description}</div>
+              <div className="text-sm mt-1 p-3 bg-muted rounded-md whitespace-pre-wrap">
+                {product.description}
+              </div>
             </div>
           </TabsContent>
 
@@ -213,7 +251,9 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
               {product.images && product.images.length > 0 ? (
                 <div className="relative border rounded-md overflow-hidden">
                   <img
-                    src={product.images[currentImageIndex] || "/placeholder.svg"}
+                    src={
+                      product.images[currentImageIndex] || "/placeholder.svg"
+                    }
                     alt={`Product image ${currentImageIndex + 1}`}
                     className="w-full h-48 sm:h-64 md:h-80 object-contain bg-gray-50"
                   />
@@ -245,7 +285,9 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-64 bg-muted rounded-md">
-                  <span className="text-muted-foreground">No images available</span>
+                  <span className="text-muted-foreground">
+                    No images available
+                  </span>
                 </div>
               )}
               {product.images && product.images.length > 1 && (
@@ -254,7 +296,9 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                     <button
                       key={index}
                       className={`relative flex-shrink-0 w-16 h-16 border-2 rounded-md overflow-hidden ${
-                        index === currentImageIndex ? "border-primary" : "border-transparent"
+                        index === currentImageIndex
+                          ? "border-primary"
+                          : "border-transparent"
                       }`}
                       onClick={() => setCurrentImageIndex(index)}
                     >
@@ -275,7 +319,9 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
               <div className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl font-bold">{avgRating.toFixed(1)}</span>
+                    <span className="text-2xl font-bold">
+                      {avgRating.toFixed(1)}
+                    </span>
                     <div className="flex">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <Star
@@ -291,22 +337,30 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-muted-foreground">
-                      ({product.review.length} {product.review.length === 1 ? "review" : "reviews"})
+                      ({product.review.length}{" "}
+                      {product.review.length === 1 ? "review" : "reviews"})
                     </span>
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {product.review.map((review: any, index: number) => (
-                    <div key={index} className="border rounded-lg p-4 shadow-sm bg-white">
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4 shadow-sm bg-white"
+                    >
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="font-medium">Customer ID: {review.customerId}</div>
+                          <div className="font-medium">
+                            Customer ID: {review.customerId}
+                          </div>
                           <div className="flex items-center mt-1">
                             {Array.from({ length: 5 }).map((_, i) => (
                               <Star
                                 key={i}
                                 className={`h-4 w-4 ${
-                                  i < review.rating ? "text-yellow-500 fill-yellow-500" : "text-gray-300"
+                                  i < review.rating
+                                    ? "text-yellow-500 fill-yellow-500"
+                                    : "text-gray-300"
                                 }`}
                               />
                             ))}
@@ -316,13 +370,17 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                           {new Date(review.createdDate).toLocaleDateString()}
                         </div>
                       </div>
-                      <p className="mt-2 text-sm text-gray-700">{review.comment}</p>
+                      <p className="mt-2 text-sm text-gray-700">
+                        {review.comment}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500">No reviews available for this product.</div>
+              <div className="text-center py-8 text-gray-500">
+                No reviews available for this product.
+              </div>
             )}
           </TabsContent>
 
@@ -332,19 +390,20 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                 <MapPin className="h-5 w-5 text-red-500 mr-2" />
                 <span className="font-medium">Product Location</span>
               </div>
-              {product.location && product.location.coordinates && (
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  {product.location.coordinates[1].toFixed(6)}, {product.location.coordinates[0].toFixed(6)}
+              {product.location?.coordinates && (
+                <Badge
+                  variant="outline"
+                  className="bg-blue-50 text-blue-700 border-blue-200"
+                >
+                  {product.location.coordinates[1].toFixed(6)},{" "}
+                  {product.location.coordinates[0].toFixed(6)}
                 </Badge>
               )}
             </div>
+
             <div className="border rounded-md overflow-hidden">
-              {product.location && product.location.coordinates ? (
-                <ProductMap
-                  coordinates={product.location.coordinates}
-                  productName={product.productName}
-                  category={product.category.categoryName}
-                />
+              {product.location?.coordinates ? (
+                <LocationMap location={product.location.coordinates} />
               ) : (
                 <div className="h-64 md:h-80 bg-muted flex items-center justify-center">
                   <div className="text-center p-4">
@@ -357,7 +416,8 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                 </div>
               )}
             </div>
-            {product.location && product.location.coordinates && (
+
+            {product.location?.coordinates && (
               <div className="flex justify-end">
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${product.location.coordinates[1]},${product.location.coordinates[0]}`}
@@ -380,9 +440,9 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    setSelectedBanReason("")
-                    setBanDescription("")
-                    setShowBanConfirm(true)
+                    setSelectedBanReason("");
+                    setBanDescription("");
+                    setShowBanConfirm(true);
                   }}
                   disabled={isLoading}
                   className="w-full sm:w-auto"
@@ -420,13 +480,17 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                 <DialogHeader>
                   <DialogTitle>Confirm Ban</DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to ban this product? This action cannot be undone.
+                    Are you sure you want to ban this product? This action
+                    cannot be undone.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="banReason">Ban Reason</Label>
-                    <Select value={selectedBanReason} onValueChange={setSelectedBanReason}>
+                    <Select
+                      value={selectedBanReason}
+                      onValueChange={setSelectedBanReason}
+                    >
                       <SelectTrigger id="banReason">
                         <SelectValue placeholder="Select a reason" />
                       </SelectTrigger>
@@ -449,26 +513,29 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                     />
                   </div>
                 </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowBanConfirm(false)}>
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    onAction({
-                      type: "ban",
-                      productId: product._id,
-                      reason: selectedBanReason,
-                      description: banDescription,
-                    });
-                    setShowBanConfirm(false);
-                  }}
-                  disabled={!selectedBanReason || isLoading}
-                >
-                  Confirm Ban
-                </Button>
-              </DialogFooter>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowBanConfirm(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      onAction({
+                        type: "ban",
+                        productId: product._id,
+                        reason: selectedBanReason,
+                        description: banDescription,
+                      });
+                      setShowBanConfirm(false);
+                    }}
+                    disabled={!selectedBanReason || isLoading}
+                  >
+                    Confirm Ban
+                  </Button>
+                </DialogFooter>
               </DialogContent>
             </Dialog>
           )}
@@ -479,10 +546,15 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Confirm Unban</DialogTitle>
-                  <DialogDescription>Are you sure you want to unban this product?</DialogDescription>
+                  <DialogDescription>
+                    Are you sure you want to unban this product?
+                  </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowUnbanConfirm(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowUnbanConfirm(false)}
+                  >
                     Cancel
                   </Button>
                   <Button
@@ -504,16 +576,23 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
 
           {/* Delete Confirmation Dialog */}
           {showDeleteConfirm && (
-            <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+            <Dialog
+              open={showDeleteConfirm}
+              onOpenChange={setShowDeleteConfirm}
+            >
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Confirm Delete</DialogTitle>
                   <DialogDescription>
-                    Are you sure you want to delete this product? This action cannot be undone.
+                    Are you sure you want to delete this product? This action
+                    cannot be undone.
                   </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteConfirm(false)}
+                  >
                     Cancel
                   </Button>
                   <Button
@@ -530,12 +609,11 @@ export function ProductDetailsDialog({ product, open, onOpenChange, onAction, is
                     Confirm Delete
                   </Button>
                 </DialogFooter>
-
               </DialogContent>
             </Dialog>
           )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

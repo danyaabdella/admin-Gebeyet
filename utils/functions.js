@@ -10,7 +10,6 @@ import Ad from "@/models/Ad";
 
 export async function fetchUserData() {
   let data;
-    console.log("Fetched user data innn");
     try {
       const response = await fetch('/api/users');
       if (!response.ok) {
@@ -18,8 +17,6 @@ export async function fetchUserData() {
       }
 
       const user = await response.json(); 
-
-      console.log("Fetched user data:", user);
 
       if (user) {
         data = user;
@@ -109,7 +106,6 @@ export async function checkSession(email) {
 
     const sessionEmail = session?.user?.email;
 
-    // Ensure the session email matches the requested email
     if (sessionEmail !== email) {
         return new Response(
             JSON.stringify({ error: "Unauthorized access." }),

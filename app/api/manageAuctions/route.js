@@ -1,33 +1,7 @@
-import { connectToDB, isAdminOrSuperAdmin } from "@/utils/functions";
+// /app/api/manageAuctions/route.ts
+import { connectToDB } from "@/utils/functions";
+import { isAdminOrSuperAdmin } from "@/utils/functions";
 import Auction from "@/models/Auction";
-
-export async function PUT(req) {
-  try {
-    await connectToDB();
-    await isAdminOrSuperAdmin();
-
-    const { auctionId, adminApproval } = await req.json();
-
-    const auction = await Auction.findById(auctionId);
-    if (!auction) {
-      return new Response(JSON.stringify({ message: "Auction not found" }), { status: 404 });
-    }
-
-    const status = adminApproval === "approved" ? "active" : "cancelled";
-
-    auction.adminApproval = adminApproval;
-    auction.status = status;
-    await auction.save();
-
-    return new Response(JSON.stringify({ message: "Auction status updated successfully" }), { status: 200 });
-
-  } catch (error) {
-    return new Response(
-      JSON.stringify({ message: error.message || "Error updating auction" }),
-      { status: 500 }
-    );
-  }
-}
 
 export async function GET(req) {
   try {
@@ -41,7 +15,7 @@ export async function GET(req) {
 
     let filter = {};
 
-    if (_id) filter._id = new ObjectId(_id);
+    if (_id) filter._id = _id;
     if (status) filter.status = status;
     if (adminApproval) filter.adminApproval = adminApproval;
 
@@ -51,6 +25,50 @@ export async function GET(req) {
   } catch (error) {
     return new Response(
       JSON.stringify({ message: error.message || "Error fetching auctions" }),
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req) {
+  try {
+    await connectToDB();
+    await isAdminOrSuperAdmin();
+
+    const { auctionId, adminApproval, reason, description } = await req.json();
+    console.log("Update data: ", auctionId, adminApproval, reason, description);
+
+    if (!auctionId || !adminApproval) {
+      return new Response(
+        JSON.stringify({ message: "auctionId and adminApproval are required" }),
+        { status: 400 }
+      );
+    }
+
+    const auction = await Auction.findById(auctionId);
+    if (!auction) {
+      return new Response(JSON.stringify({ message: "Auction not found" }), { status: 404 });
+    }
+
+    // Update approval status and auction status
+    auction.adminApproval = adminApproval;
+    auction.status = adminApproval === "approved" ? "active" : "cancelled";
+
+    // Store rejection reason if applicable
+    if (adminApproval === "rejected") {
+      auction.rejectionReason = {
+        category: reason || "unspecified",
+        description: description || "No detailed reason provided"
+      };
+    }
+    await auction.save();
+
+    return new Response(JSON.stringify({ message: "Auction status updated successfully" }), { status: 200 });
+
+  } catch (error) {
+    console.log("error: ", error);
+    return new Response(
+      JSON.stringify({ message: error.message || "Error updating auction" }),
       { status: 500 }
     );
   }
