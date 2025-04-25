@@ -1,89 +1,145 @@
-"use client";
+"use client"
 
-import { useState, useEffect, useMemo } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdsTable } from "@/components/ads/ads-table";
-import { AdsFilter } from "@/components/ads/ads-filter";
-import { Sidebar } from "@/components/sidebar";
+import { useState, useEffect, useMemo } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AdsTable } from "@/components/ads/ads-table"
+import { AdsFilter } from "@/components/ads/ads-filter"
+import { Sidebar } from "@/components/sidebar"
+import { adRegions } from "@/lib/adRegion"
 
 interface LocationData {
-  center: { lat: number; lng: number };
-  radius: number;
+  center: { lat: number; lng: number }
+  radius: number
+}
+
+interface Ad {
+  id: string
+  product: {
+    productId: string
+    productName: string
+    price?: number
+    image?: string
+  }
+  merchantDetail: {
+    merchantId: string
+    merchantName: string
+    merchantEmail: string
+    phoneNumber: string
+  }
+  location: {
+    coordinates: [number, number]
+  }
+  price?: number
+  approvalStatus: "APPROVED" | "REJECTED" | "PENDING"
+  paymentStatus: "PAID" | "FAILED" | "PENDING"
+  isActive: boolean
+  createdAt: string
+  startsAt: string | null
+  endsAt: string | null
+  rejectionReason?: {
+    reason: string
+    description?: string
+  }
+  region?: string
 }
 
 export default function AdsManagementPage() {
-  const [allAds, setAllAds] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [allAds, setAllAds] = useState<Ad[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [filters, setFilters] = useState({
     approvalStatus: "",
     paymentStatus: "",
     merchantName: "",
     searchTerm: "",
     isActive: "",
+    region: "", // Added region filter
     dateRange: {
       from: "",
       to: "",
     },
-  });
-  const [activeTab, setActiveTab] = useState("all");
-  const [location, setLocation] = useState<LocationData | null>(null);
+  })
+  const [activeTab, setActiveTab] = useState("all")
+  const [location, setLocation] = useState<LocationData | null>(null)
+
+  // Haversine formula to calculate distance between two points (in km)
+  const haversineDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371 // Earth's radius in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180)
+    const dLng = (lng2 - lng1) * (Math.PI / 180)
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c
+  }
 
   const fetchAds = async (params: any = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-      if (params.status) queryParams.append("status", params.status);
-      if (params.center) queryParams.append("center", params.center);
-      if (params.radius) queryParams.append("radius", params.radius.toString());
-      queryParams.append("page", "1");
-      queryParams.append("limit", "100");
+      const queryParams = new URLSearchParams()
+      if (params.status) queryParams.append("status", params.status)
+      if (params.center) queryParams.append("center", params.center)
+      if (params.radius) queryParams.append("radius", params.radius.toString())
+      if (params.region) queryParams.append("region", params.region) // Add region to API query
+      queryParams.append("page", "1")
+      queryParams.append("limit", "100")
 
-      const response = await fetch(`/api/manageAds?${queryParams}`);
-      if (!response.ok) throw new Error("Failed to fetch ads");
-      const data = await response.json();
-      return data.ads || [];
+      const response = await fetch(`/api/manageAds?${queryParams}`)
+      if (!response.ok) throw new Error("Failed to fetch ads")
+      const data = await response.json()
+      console.log("Ads data: ", data)
+      return data.ads || []
     } catch (error) {
-      console.error("Error fetching ads:", error);
-      return [];
+      console.error("Error fetching ads:", error)
+      return []
     }
-  };
+  }
 
   useEffect(() => {
     const loadAds = async () => {
-      setIsLoading(true);
+      setIsLoading(true)
       try {
-        let fetchParams: any = {};
+        let fetchParams: any = {}
         if (location) {
-          fetchParams.center = `${location.center.lat}-${location.center.lng}`;
-          fetchParams.radius = location.radius;
+          fetchParams.center = `${location.center.lat}-${location.center.lng}`
+          fetchParams.radius = location.radius
         }
-        const adsData = await fetchAds(fetchParams);
-        setAllAds(adsData);
+        if (filters.region && filters.region !== "ALL") {
+          fetchParams.region = filters.region
+        }
+        const adsData = await fetchAds(fetchParams)
+        setAllAds(adsData)
       } catch (error) {
-        console.error("Failed to fetch ads:", error);
+        console.error("Failed to fetch ads:", error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    loadAds();
-  }, [location]);
+    loadAds()
+  }, [location, filters.region])
 
   const handleRefresh = async () => {
-    setIsLoading(true);
+    setIsLoading(true)
     try {
-      let fetchParams: any = {};
+      let fetchParams: any = {}
       if (location) {
-        fetchParams.center = `${location.center.lat}-${location.center.lng}`;
-        fetchParams.radius = location.radius;
+        fetchParams.center = `${location.center.lat}-${location.center.lng}`
+        fetchParams.radius = location.radius
       }
-      const adsData = await fetchAds(fetchParams);
-      setAllAds(adsData);
+      if (filters.region && filters.region !== "ALL") {
+        fetchParams.region = filters.region
+      }
+      const adsData = await fetchAds(fetchParams)
+      setAllAds(adsData)
     } catch (error) {
-      console.error("Failed to fetch ads:", error);
+      console.error("Failed to fetch ads:", error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const handleLocationChange = ({ center, radius }: LocationData) => {
     if (
@@ -91,79 +147,98 @@ export default function AdsManagementPage() {
       location?.center.lng !== center.lng ||
       location?.radius !== radius
     ) {
-      setLocation({ center, radius });
+      setLocation({ center, radius })
     }
-  };
-  
+  }
+
   const filteredAds = useMemo(() => {
     return allAds.filter((ad) => {
       // Filter by tab
-      if (activeTab === "pending" && ad.approvalStatus !== "PENDING") return false;
-      if (activeTab === "approved" && ad.approvalStatus !== "APPROVED") return false;
-      if (activeTab === "rejected" && ad.approvalStatus !== "REJECTED") return false;
-  
+      if (activeTab === "pending" && ad.approvalStatus !== "PENDING") return false
+      if (activeTab === "approved" && ad.approvalStatus !== "APPROVED") return false
+      if (activeTab === "rejected" && ad.approvalStatus !== "REJECTED") return false
+
       // Approval Status filter (for 'all' tab mostly)
       if (
         filters.approvalStatus &&
         filters.approvalStatus !== "ALL" &&
         ad.approvalStatus !== filters.approvalStatus
-      ) return false;
-  
+      )
+        return false
+
       // Payment Status filter
       if (
         filters.paymentStatus &&
         filters.paymentStatus !== "ALL" &&
         ad.paymentStatus !== filters.paymentStatus
-      ) return false;
-  
+      )
+        return false
+
       // Merchant name filter
       if (
         filters.merchantName &&
-        !ad.merchantDetail?.merchantName?.toLowerCase().includes(filters.merchantName.toLowerCase())
-      ) return false;
-  
-      // Active Status filter (only apply if it's specifically set)
-      if (
-        filters.isActive !== undefined &&
-        filters.isActive !== "" &&
-        filters.isActive !== "ALL"
-      ) {
-        const isActiveBool = filters.isActive === "true";
-        if (ad.isActive !== isActiveBool) return false;
+        !ad.merchantDetail?.merchantName
+          ?.toLowerCase()
+          .includes(filters.merchantName.toLowerCase())
+      )
+        return false
+
+      // Active Status filter
+      if (filters.isActive !== undefined && filters.isActive !== "" && filters.isActive !== "ALL") {
+        const isActiveBool = filters.isActive === "true"
+        if (ad.isActive !== isActiveBool) return false
       }
-  
+
+      // Region filter
+      if (filters.region && filters.region !== "ALL") {
+        if (ad.region) {
+          // Match by region field if present
+          if (ad.region !== filters.region) return false
+        } else if (ad.location?.coordinates) {
+          // Fallback: Match by proximity to region's coordinates
+          const regionCoords = adRegions[filters.region]
+          if (regionCoords) {
+            const [adLng, adLat] = ad.location.coordinates
+            const [regionLng, regionLat] = regionCoords
+            const distance = haversineDistance(adLat, adLng, regionLat, regionLng)
+            // Filter ads within 100km of the region's coordinates
+            if (distance > 100) return false
+          }
+        }
+      }
+
       // Search term filter
       if (filters.searchTerm) {
-        const searchLower = filters.searchTerm.toLowerCase();
-        const matchesProduct = ad.product?.productName?.toLowerCase()?.includes(searchLower) || false;
-        const matchesMerchant = ad.merchantDetail?.merchantName?.toLowerCase()?.includes(searchLower) || false;
-        if (!matchesProduct && !matchesMerchant) return false;
+        const searchLower = filters.searchTerm.toLowerCase()
+        const matchesProduct = ad.product?.productName?.toLowerCase()?.includes(searchLower) || false
+        const matchesMerchant =
+          ad.merchantDetail?.merchantName?.toLowerCase()?.includes(searchLower) || false
+        if (!matchesProduct && !matchesMerchant) return false
       }
-  
+
       // From date filter
       if (filters.dateRange.from && ad.createdAt) {
-        const fromDate = new Date(filters.dateRange.from);
-        const adDate = new Date(ad.createdAt);
-        if (adDate < fromDate) return false;
+        const fromDate = new Date(filters.dateRange.from)
+        const adDate = new Date(ad.createdAt)
+        if (adDate < fromDate) return false
       }
-  
+
       // To date filter
       if (filters.dateRange.to && ad.createdAt) {
-        const toDate = new Date(filters.dateRange.to);
-        toDate.setHours(23, 59, 59, 999); // Include the whole day
-        const adDate = new Date(ad.createdAt);
-        if (adDate > toDate) return false;
+        const toDate = new Date(filters.dateRange.to)
+        toDate.setHours(23, 59, 59, 999) // Include the whole day
+        const adDate = new Date(ad.createdAt)
+        if (adDate > toDate) return false
       }
-  
-      return true;
-    });
-  }, [allAds, filters, activeTab]);
-  
+
+      return true
+    })
+  }, [allAds, filters, activeTab])
 
   // Handle filter changes
   const handleFilterChange = (newFilters: any) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }));
-  };
+    setFilters((prev) => ({ ...prev, ...newFilters }))
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col">
@@ -172,12 +247,6 @@ export default function AdsManagementPage() {
         <main className="flex flex-1 flex-col gap-4 p-2 sm:p-4 md:gap-8 md:p-6 lg:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Ads Management</h1>
-            <div className="flex items-center gap-2">
-              {/* <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isLoading}>
-                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
-                Refresh
-              </Button> */}
-            </div>
           </div>
 
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -191,7 +260,11 @@ export default function AdsManagementPage() {
             </div>
 
             <div className="mt-4">
-              <AdsFilter onFilterChange={handleFilterChange} isLoading={isLoading} onLocationChange={handleLocationChange} />
+              <AdsFilter
+                onFilterChange={handleFilterChange}
+                isLoading={isLoading}
+                onLocationChange={handleLocationChange}
+              />
             </div>
 
             <div className="mt-4">
@@ -212,5 +285,5 @@ export default function AdsManagementPage() {
         </main>
       </div>
     </div>
-  );
+  )
 }

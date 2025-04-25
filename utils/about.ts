@@ -1,3 +1,5 @@
+import { ContactInfo } from "./typeDefinitions"
+
 // Mock data
 const mockHero = {
   title: "About Our Company",
@@ -170,7 +172,16 @@ const mockCta = {
     "Discover how our solutions can transform your business and help you achieve your goals. Our team is ready to provide personalized guidance and support.",
   buttonText: "Contact Us",
   buttonLink: "https://example.com/contact",
+
 }
+
+const mockContactInfo = {
+  email: "hello@example.com",
+  phone: "+1 (555) 123-4567",
+  address: "123 Business Avenue, Suite 500\nSan Francisco, CA 94107",
+  businessHours: "Monday - Friday: 9am - 5pm\nSaturday: 10am - 2pm\nSunday: Closed",
+}
+
 // Hero
 export async function fetchHero() {
   try {
@@ -584,4 +595,38 @@ export async function deleteAwards() {
 
 export async function deleteCta() {
   return true;
+}
+
+export async function fetchContactInfo(): Promise<ContactInfo> {
+  const res = await fetch("/api/about/contact-info", {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    cache: "no-store", // prevent Next.js from caching during SSR
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch contact info");
+  }
+
+  const result = await res.json();
+  return result.data;
+}
+
+export async function updateContactInfo(data: ContactInfo): Promise<ContactInfo> {
+  const res = await fetch("/api/about/contact-info", {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to update contact info");
+  }
+
+  const result = await res.json();
+  return result.data;
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Table,
@@ -41,7 +40,6 @@ interface AdsTableProps {
 }
 
 export function AdsTable({ ads, isLoading, onRefresh }: AdsTableProps) {
-  const router = useRouter();
   const [selectedAd, setSelectedAd] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isApproveOpen, setIsApproveOpen] = useState(false);
@@ -130,7 +128,7 @@ export function AdsTable({ ads, isLoading, onRefresh }: AdsTableProps) {
               <TableHead className="w-[100px] hidden sm:table-cell">Product</TableHead>
               <TableHead>Product Name</TableHead>
               <TableHead className="hidden sm:table-cell">Merchant</TableHead>
-              <TableHead>Price</TableHead>
+              <TableHead>Ad Price</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="hidden sm:table-cell">Payment</TableHead>
               <TableHead className="hidden sm:table-cell">Active</TableHead>
@@ -177,7 +175,7 @@ export function AdsTable({ ads, isLoading, onRefresh }: AdsTableProps) {
                     {ad.product.productName}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{ad.merchantDetail.merchantName}</TableCell>
-                  <TableCell>${ad.price.toFixed(2)}</TableCell>
+                  <TableCell>${ad.adPrice.toFixed(2)}</TableCell>
                   <TableCell>
                     {getApprovalStatusBadge(ad.approvalStatus)}
                   </TableCell>

@@ -14,58 +14,6 @@ import { SuperAdminCard } from "@/components/profile/super-admin-card";
 import { Sidebar } from "@/components/sidebar";
 import { useToast } from "@/components/ui/use-toast";
 
-// Mock admin profiles
-const mockProfiles = {
-  admin: {
-    id: "admin_123",
-    email: "admin@example.com",
-    fullname: "John Admin",
-    phone: "+1 (555) 123-4567",
-    role: "admin",
-    image: "https://i.pravatar.cc/300?img=68",
-    isBanned: false,
-    isDeleted: false,
-    createdAt: "2023-01-15T09:30:00Z",
-    updatedAt: "2023-04-10T14:45:00Z",
-  },
-  superAdmin: {
-    id: "superadmin_456",
-    email: "superadmin@example.com",
-    fullname: "Sarah Super",
-    phone: "+1 (555) 987-6543",
-    role: "superAdmin",
-    image: "https://i.pravatar.cc/300?img=48",
-    createdAt: "2022-06-20T10:00:00Z",
-    updatedAt: "2023-03-15T11:20:00Z",
-  },
-  bannedAdmin: {
-    id: "admin_789",
-    email: "banned@example.com",
-    fullname: "Banned User",
-    phone: "+1 (555) 555-5555",
-    role: "admin",
-    image: "https://i.pravatar.cc/300?img=60",
-    isBanned: true,
-    isDeleted: false,
-    banReason: "Violation of platform policies",
-    createdAt: "2023-02-10T08:15:00Z",
-    updatedAt: "2023-05-01T16:30:00Z",
-  },
-  deletedAdmin: {
-    id: "admin_101",
-    email: "deleted@example.com",
-    fullname: "Deleted User",
-    phone: "+1 (555) 444-3333",
-    role: "admin",
-    image: null,
-    isBanned: false,
-    isDeleted: true,
-    trashDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-    createdAt: "2023-03-05T13:45:00Z",
-    updatedAt: "2023-05-10T09:20:00Z",
-  },
-};
-
 export default function AdminProfilePage() {
   const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,7 +23,6 @@ export default function AdminProfilePage() {
 
   const { toast } = useToast();
 
-  // Demo API function to fetch admin profile
   const fetchAdminProfile = async () => {
     try {
       console.log("Fetching admin profile");
@@ -129,6 +76,7 @@ export default function AdminProfilePage() {
   }, []);
 
   const handleProfileUpdate = async (updatedProfile: any) => {
+    console.log("Update profile data: ", updatedProfile)
     try {
       const res = await fetch("/api/profile", {
         method: "PUT",
@@ -166,42 +114,6 @@ export default function AdminProfilePage() {
       console.error("Error updating profile:", error);
     }
   };
-
-  // const handlePasswordChange = async (newPassword: string) => {
-  //   try {
-  //     const res = await fetch('/api/profile', {
-  //       method: 'PUT',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({ password: newPassword }),
-  //     });
-
-  //     if (!res.ok) {
-  //       const errorData = await res.json();
-  //       toast({
-  //         title: "Password update failed",
-  //         description: errorData.error || "An error occurred while changing your password.",
-  //         variant: "destructive",
-  //       });
-  //       return;
-  //     }
-
-  //     setPasswordDialogOpen(false);
-
-  //     toast({
-  //       title: "Password updated",
-  //       description: "Your password has been changed successfully.",
-  //     });
-  //   } catch (error) {
-  //     toast({
-  //       title: "Unexpected error",
-  //       description: "Something went wrong. Please try again later.",
-  //       variant: "destructive",
-  //     });
-  //     console.error('Error changing password:', error);
-  //   }
-  // };
 
   if (isLoading) {
     return (
@@ -266,7 +178,7 @@ export default function AdminProfilePage() {
                     href="mailto:support@example.com"
                     className="font-medium underline"
                   >
-                    support@example.com
+                    support@bahirmart.com
                   </a>{" "}
                   for assistance.
                 </p>
@@ -314,11 +226,9 @@ export default function AdminProfilePage() {
             <AccountInfoCard profile={profile} />
           </div>
 
-          {/* Additional section for Super Admin */}
           {profile.role === "superAdmin" && <SuperAdminCard />}
         </main>
 
-        {/* Update Profile Dialog */}
         <UpdateProfileDialog
           open={updateDialogOpen}
           onOpenChange={setUpdateDialogOpen}

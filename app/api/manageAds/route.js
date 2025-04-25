@@ -2,28 +2,59 @@ import { connectToDB, isAdminOrSuperAdmin, userInfo } from "@/utils/functions";
 import Ad from "@/models/Ad";
 import fetch from "node-fetch";
 import { v4 as uuidv4 } from "uuid";
+import { adRegions } from "@/lib/adRegion";
 
 const chapaSecretKey = process.env.CHAPA_SECRET_KEY;
 
 export const POST = async (req) => {
   await connectToDB();
-  // await isAdminOrSuperAdmin();
-
   const user = await userInfo();
-  const { product, merchantDetail, startsAt, endsAt, price, location } =
-    await req.json();
 
-  if (
-    !product ||
-    !merchantDetail ||
-    !startsAt ||
-    !endsAt ||
-    !price ||
-    !location
-  ) {
+  const {
+    product,
+    merchantDetail,
+    startsAt,
+    endsAt,
+    adPrice,
+    adRegion,
+    isHome = false,
+  } = await req.json();
+
+  if (!product || !merchantDetail || !startsAt || !endsAt || !adPrice || !adRegion) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
     });
+  }
+
+  const regionCoordinates = adRegions[adRegion];
+  if (!regionCoordinates) {
+    return new Response(JSON.stringify({ error: "Invalid adRegion" }), {
+      status: 400,
+    });
+  }
+
+  const earthRadiusInKm = 6378.1;
+  const maxDistanceInKm = 50;
+
+  const activeNearbyCount = await Ad.countDocuments({
+    isActive: true,
+    approvalStatus: "APPROVED",
+    paymentStatus: "PAID",
+    isHome,
+    location: {
+      $geoWithin: {
+        $centerSphere: [regionCoordinates, maxDistanceInKm / earthRadiusInKm],
+      },
+    },
+  });
+
+  if (activeNearbyCount >= 5) {
+    return new Response(
+      JSON.stringify({
+        error: `Limit reached: Maximum of 5 active ${isHome ? "home" : "non-home"} ads within 50km of ${adRegion}`,
+      }),
+      { status: 400 }
+    );
   }
 
   const tx_ref = uuidv4().replace(/-/g, "").slice(0, 15);
@@ -38,35 +69,32 @@ export const POST = async (req) => {
   }
 
   const paymentPayload = {
-    amount: price,
+    amount: adPrice,
     currency: "ETB",
     email: merchantDetail.merchantEmail,
     first_name: firstName,
     last_name: lastName,
     phone_number: phone,
     tx_ref,
-    callback_url: "https://localhost:3000/callback", // replace with actual callback
-    return_url: `https://localhost:3000/${tx_ref}`, // replace with actual return URL
+    callback_url: "https://localhost:3000/callback",
+    return_url: `https://localhost:3000/${tx_ref}`,
     customization: {
       title: "Ad Payment",
       description: `Ad payment: ${product.productName}`
         .slice(0, 50)
-        .replace(/[^\w\s.-]/g, ""), // sanitize
+        .replace(/[^\w\s.-]/g, ""),
     },
   };
 
   try {
-    const response = await fetch(
-      "https://api.chapa.co/v1/transaction/initialize",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${chapaSecretKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(paymentPayload),
-      }
-    );
+    const response = await fetch("https://api.chapa.co/v1/transaction/initialize", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${chapaSecretKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(paymentPayload),
+    });
 
     const data = await response.json();
     console.log("Data from chapa:", data);
@@ -77,10 +105,15 @@ export const POST = async (req) => {
         merchantDetail,
         startsAt,
         endsAt,
-        price,
-        approvalStatus: "PENDING",
-        location,
+        adPrice,
         tx_ref,
+        approvalStatus: "PENDING",
+        isHome,
+        adRegion,
+        location: {
+          type: "Point",
+          coordinates: regionCoordinates,
+        },
       });
 
       await newAd.save();

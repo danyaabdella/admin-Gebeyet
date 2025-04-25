@@ -96,6 +96,18 @@ const ctaSchema = new mongoose.Schema({
 
 const Cta = mongoose.models.Cta || mongoose.model("Cta", ctaSchema);
 
+const contactInfoSchema = new mongoose.Schema(
+  {
+    email: String,
+    phone: String,
+    address: String,
+    businessHours: String,
+  },
+  { timestamps: true }
+);
+
+const ContactInfo = mongoose.models.ContactInfo || mongoose.model("ContactInfo", contactInfoSchema);
+
 // ✅ Export all models
 export {
   Hero,
@@ -108,4 +120,5 @@ export {
   Location,
   Award,
   Cta,
+  ContactInfo
 };

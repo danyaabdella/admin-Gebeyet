@@ -43,38 +43,56 @@ export async function GET(req) {
 }
   
 export async function PUT(req) {
-    try {
-        await connectToDB();
+  try {
+    await connectToDB()
 
-        const session = await getServerSession(options);
-        if (!session?.user?.email) {
-            return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-        }
-
-        const email = session.user.email;
-        const { fullname, img, phone, password } = await req.json();
-
-        // Only allow updates for these fields
-        const updateData = {};
-        if (fullname) updateData.fullname = fullname;
-        if (img) updateData.img = img;
-        if (phone) updateData.phone = phone;
-        if (password) {
-            updateData.password = await argon2.hash(password);
-        }
-
-        let user = await SuperAdmin.findOneAndUpdate({ email }, updateData, { new: true });
-        if (!user) {
-            user = await Admin.findOneAndUpdate({ email }, updateData, { new: true });
-        }
-
-        if (!user) {
-            return new Response(JSON.stringify({ error: "User not found" }), { status: 404 });
-        }
-
-        return new Response(JSON.stringify({ message: "Profile updated successfully", user }), { status: 200 });
-    } catch (error) {
-        console.error("Error updating profile:", error);
-        return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
+    const session = await getServerSession(options)
+    if (!session?.user?.email) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 })
     }
+
+    const email = session.user.email
+    const { fullname, image, phone, currentPassword, newPassword } = await req.json()
+
+    let user = await SuperAdmin.findOne({ email })
+    if (!user) {
+      user = await Admin.findOne({ email })
+    }
+    if (!user) {
+      return new Response(JSON.stringify({ error: "User not found" }), { status: 404 })
+    }
+
+    const updateData = {}
+    if (fullname) updateData.fullname = fullname
+    if (image) updateData.image = image
+    if (phone) updateData.phone = phone
+
+    if (newPassword) {
+      if (!currentPassword) {
+        return new Response(JSON.stringify({ error: "Current password is required" }), { status: 400 })
+      }
+
+      const isPasswordValid = await argon2.verify(user.password, currentPassword)
+      if (!isPasswordValid) {
+        return new Response(JSON.stringify({ error: "Incorrect current password" }), { status: 400 })
+      }
+
+      updateData.password = await argon2.hash(newPassword)
+    }
+
+    // Update user
+    const updatedUser = await (user.__proto__.constructor).findOneAndUpdate(
+      { email },
+      updateData,
+      { new: true }
+    )
+
+    return new Response(
+      JSON.stringify({ message: "Profile updated successfully", user: updatedUser }),
+      { status: 200 }
+    )
+  } catch (error) {
+    console.error("Error updating profile:", error)
+    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 })
+  }
 }

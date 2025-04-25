@@ -1,31 +1,50 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { HeroSection } from "./hero-section"
-import { MissionVisionSection } from "./mission-vision-section"
-import { ValuesSection } from "./values-section"
-import { StatsSection } from "./stats-section"
-import { TimelineSection } from "./timeline-section"
-import { TeamSection } from "./team-section"
-import { LocationsSection } from "./locations-section"
-import { AwardsSection } from "./awards-section"
-import { CtaSection } from "./cta-section"
-import { useToast } from "@/hooks/use-toast"
-import { Building2, Award, Users, Clock, BarChart3, Heart, Eye, Rocket, MapPin, MessageSquarePlus } from "lucide-react"
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { HeroSection } from "./hero-section";
+import { MissionVisionSection } from "./mission-vision-section";
+import { ValuesSection } from "./values-section";
+import { StatsSection } from "./stats-section";
+import { TimelineSection } from "./timeline-section";
+import { TeamSection } from "./team-section";
+import { LocationsSection } from "./locations-section";
+import { AwardsSection } from "./awards-section";
+import { CtaSection } from "./cta-section";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Building2,
+  Award,
+  Users,
+  Clock,
+  BarChart3,
+  Heart,
+  Eye,
+  Rocket,
+  MapPin,
+  MessageSquarePlus,
+  Mail,
+} from "lucide-react";
+import { ContactInfoSection } from "./contact-info-section";
 
 export default function AboutSettingsPage() {
-  const [activeTab, setActiveTab] = useState("hero")
-  const { toast } = useToast()
+  const [activeTab, setActiveTab] = useState("hero");
+  const { toast } = useToast();
 
   const handleSaveSuccess = (section: string) => {
     toast({
       title: "Changes saved",
       description: `Your ${section} settings have been updated successfully.`,
       duration: 3000,
-    })
-  }
+    });
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-8">
@@ -33,11 +52,16 @@ export default function AboutSettingsPage() {
         <CardHeader>
           <CardTitle>About Page Content</CardTitle>
           <CardDescription>
-            Update the various sections of your about page. Changes will be reflected on your site after saving.
+            Update the various sections of your about page. Changes will be
+            reflected on your site after saving.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
             <TabsList className="grid grid-cols-2 md:grid-cols-5 lg:grid-cols-10 mb-8">
               <TabsTrigger value="hero" className="flex items-center gap-2">
                 <Rocket className="h-4 w-4" />
@@ -67,7 +91,10 @@ export default function AboutSettingsPage() {
                 <Users className="h-4 w-4" />
                 <span className="hidden md:inline">Team</span>
               </TabsTrigger>
-              <TabsTrigger value="locations" className="flex items-center gap-2">
+              <TabsTrigger
+                value="locations"
+                className="flex items-center gap-2"
+              >
                 <MapPin className="h-4 w-4" />
                 <span className="hidden md:inline">Locations</span>
               </TabsTrigger>
@@ -75,9 +102,12 @@ export default function AboutSettingsPage() {
                 <Award className="h-4 w-4" />
                 <span className="hidden md:inline">Awards</span>
               </TabsTrigger>
-              <TabsTrigger value="cta" className="flex items-center gap-2">
-                <MessageSquarePlus className="h-4 w-4" />
-                <span className="hidden md:inline">CTA</span>
+              <TabsTrigger
+                value="contact"
+                className="flex items-center gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-gray-900 data-[state=active]:text-purple-700 dark:data-[state=active]:text-purple-400"
+              >
+                <Mail className="h-4 w-4" />
+                <span className="hidden md:inline">Contact</span>
               </TabsTrigger>
             </TabsList>
 
@@ -86,15 +116,23 @@ export default function AboutSettingsPage() {
             </TabsContent>
 
             <TabsContent value="mission" className="space-y-4">
-              <MissionVisionSection type="mission" onSaveSuccess={() => handleSaveSuccess("mission")} />
+              <MissionVisionSection
+                type="mission"
+                onSaveSuccess={() => handleSaveSuccess("mission")}
+              />
             </TabsContent>
 
             <TabsContent value="vision" className="space-y-4">
-              <MissionVisionSection type="vision" onSaveSuccess={() => handleSaveSuccess("vision")} />
+              <MissionVisionSection
+                type="vision"
+                onSaveSuccess={() => handleSaveSuccess("vision")}
+              />
             </TabsContent>
 
             <TabsContent value="values" className="space-y-4">
-              <ValuesSection onSaveSuccess={() => handleSaveSuccess("values")} />
+              <ValuesSection
+                onSaveSuccess={() => handleSaveSuccess("values")}
+              />
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-4">
@@ -102,7 +140,9 @@ export default function AboutSettingsPage() {
             </TabsContent>
 
             <TabsContent value="timeline" className="space-y-4">
-              <TimelineSection onSaveSuccess={() => handleSaveSuccess("timeline")} />
+              <TimelineSection
+                onSaveSuccess={() => handleSaveSuccess("timeline")}
+              />
             </TabsContent>
 
             <TabsContent value="team" className="space-y-4">
@@ -110,19 +150,25 @@ export default function AboutSettingsPage() {
             </TabsContent>
 
             <TabsContent value="locations" className="space-y-4">
-              <LocationsSection onSaveSuccess={() => handleSaveSuccess("locations")} />
+              <LocationsSection
+                onSaveSuccess={() => handleSaveSuccess("locations")}
+              />
             </TabsContent>
 
             <TabsContent value="awards" className="space-y-4">
-              <AwardsSection onSaveSuccess={() => handleSaveSuccess("awards")} />
+              <AwardsSection
+                onSaveSuccess={() => handleSaveSuccess("awards")}
+              />
             </TabsContent>
 
-            <TabsContent value="cta" className="space-y-4">
-              <CtaSection onSaveSuccess={() => handleSaveSuccess("cta")} />
+            <TabsContent value="contact" className="space-y-4">
+              <ContactInfoSection
+                onSaveSuccess={() => handleSaveSuccess("contact")}
+              />
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
