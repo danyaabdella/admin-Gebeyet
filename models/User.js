@@ -24,7 +24,7 @@ const UserSchema = new Schema(
     trashDate: {
       type: Date,
       default: null,
-      expires: 2592000, // 30 days in seconds
+      expires: 2592000, // 30 days in seconds//30*24*60*60
     },
     approvalStatus: {
       type: String,
