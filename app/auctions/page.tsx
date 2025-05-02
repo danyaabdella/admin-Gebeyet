@@ -314,6 +314,7 @@ export default function AuctionsPageClient() {
                       selected={{ from: dateRange.from, to: dateRange.to }}
                       onSelect={handleDateChange}
                       initialFocus
+                      required
                     />
                   </PopoverContent>
                 </Popover>
@@ -395,7 +396,7 @@ export default function AuctionsPageClient() {
               <CardDescription>
                 Manage all auctions in the marketplace system
               </CardDescription>
-            </CardHeader >
+            </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>

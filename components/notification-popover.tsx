@@ -35,7 +35,34 @@ export function NotificationPopover() {
   };
 
   useEffect(() => {
+    // Initialize Socket.IO client
+    socket = io(process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000", {
+      path: "/api/socket/io",
+    });
+
+    socket.on("connect", () => {
+      console.log("Connected to Socket.IO server");
+    });
+
+    socket.on("new-announcement", (newNotif: Notification) => {
+      setNotifications((prev) => [newNotif, ...prev]);
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket.IO connection error:", error);
+    });
+
+    // Fetch initial notifications
     fetchNotifications();
+
+    // Initialize Socket.IO server
+    fetch("/api/socket").catch((error) =>
+      console.error("Error initializing Socket.IO:", error),
+    );
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const markAsRead = async (id: string) => {

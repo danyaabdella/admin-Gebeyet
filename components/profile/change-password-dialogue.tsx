@@ -20,7 +20,10 @@ interface ChangePasswordDialogProps {
   onOpenChange: (open: boolean) => void
 }
 
-export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
+export function ChangePasswordDialog({
+  open,
+  onOpenChange,
+}: ChangePasswordDialogProps) {
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -73,33 +76,21 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          currentPassword: formData.currentPassword,
-          newPassword: formData.newPassword,
-        }),
+        body: JSON.stringify({ password: formData.newPassword }),
       })
 
       if (!res.ok) {
         const errorData = await res.json()
-        let description = errorData.error || "There was an error changing your password."
-        if (errorData.error === "Incorrect current password") {
-          description = "The current password you entered is incorrect."
-          setErrors((prev) => ({ ...prev, currentPassword: description }))
-        } else if (errorData.error === "User not found") {
-          description = "User account not found."
-        } else if (errorData.error === "Unauthorized") {
-          description = "You are not authorized to perform this action."
-        }
         toast({
-          title: "Password Change Failed",
-          description,
+          title: "Password change failed",
+          description: errorData.error || "There was an error changing your password.",
           variant: "destructive",
         })
         return
       }
 
       toast({
-        title: "Password Changed",
+        title: "Password changed",
         description: "Your password has been changed successfully.",
       })
 
@@ -108,11 +99,11 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
         newPassword: "",
         confirmPassword: "",
       })
-      setErrors({})
+
       onOpenChange(false)
     } catch (error) {
       toast({
-        title: "Something Went Wrong",
+        title: "Something went wrong",
         description: "Please try again later.",
         variant: "destructive",
       })
@@ -140,7 +131,6 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
                 value={formData.currentPassword}
                 onChange={handleChange}
                 className={errors.currentPassword ? "border-red-500" : ""}
-                disabled={isSubmitting}
               />
               {errors.currentPassword && (
                 <p className="text-sm text-red-500">{errors.currentPassword}</p>
@@ -156,7 +146,6 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
                 value={formData.newPassword}
                 onChange={handleChange}
                 className={errors.newPassword ? "border-red-500" : ""}
-                disabled={isSubmitting}
               />
               {errors.newPassword && (
                 <p className="text-sm text-red-500">{errors.newPassword}</p>
@@ -172,7 +161,6 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 className={errors.confirmPassword ? "border-red-500" : ""}
-                disabled={isSubmitting}
               />
               {errors.confirmPassword && (
                 <p className="text-sm text-red-500">{errors.confirmPassword}</p>
@@ -180,12 +168,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
             </div>
           </div>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>

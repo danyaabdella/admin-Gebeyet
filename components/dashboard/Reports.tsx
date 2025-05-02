@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ExportReportButton } from "@/components/export-report-button";
 import { RevenueBarChart } from "@/components/charts/revenur-bar-chart";
 import { UserGrowthBarChart } from "@/components/charts/user-grouth-bar-chart";
 import { CategoryRevenueBarChart } from "@/components/charts/category-revenue-bar-chart";
@@ -100,8 +99,6 @@ export function Reports({
               </SelectContent>
             </Select>
           )}
-
-          <ExportReportButton period={reportPeriod} />
         </div>
       </div>
 

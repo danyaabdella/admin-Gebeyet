@@ -1,70 +1,71 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const AdSchema = new mongoose.Schema(
-  {
-    product: {
-      type: Object,
-      required: true,
-    },
-    merchantDetail: {
-      type: Object,
-      required: true,
-    },
-    startsAt: {
-      type: Date,
-      required: true,
-    },
-    endsAt: {
-      type: Date,
-      required: true,
-    },
-    adPrice: {
-      type: Number,
-      required: true,
-    },
-    tx_ref: {
-      type: String,
-      required: true,
-      unique: true,
-    },
-    approvalStatus: {
-      type: String,
-      enum: ["PENDING", "APPROVED", "REJECTED"],
-      default: "PENDING",
-    },
-    paymentStatus: {
-      type: String,
-      enum: ["PENDING", "PAID", "FAILED"],
-      default: "PENDING",
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-    },
-    isHome: {
-      type: Boolean,
-      default: false,
-    },
-    adRegion: {
-      type: String,
-      required: true,
-    },
-    location: {
-      type: {
-        type: String,
-        enum: ["Point"],
-        default: "Point",
-      },
-      coordinates: {
-        type: [Number], // [longitude, latitude]
-        required: true,
-      },
-    },
+const adSchema = new Schema({
+  product: {
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
+    productName: { type: String, required: true },
+    image: { type: String },
+    price: { type: Number, required: true },
   },
-  { timestamps: true }
-);
+  price: { type: Number, required: true },
+  merchantDetail: {
+    merchantId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    merchantName: { type: String, required: true },
+    merchantEmail: { type: String, required: true },
+    phoneNumber: { type: Number, required: true }
+  },
+  tx_ref: { type: String, required :true },
+  paymentStatus: {
+    type: String,
+    enum: ['PENDING', 'PAID', 'FAILED'],
+    default: 'PENDING'
+  },
+  location: {
+    type: { type: String, default: "Point" },
+    coordinates: { type: [Number], required: true }
+  },
+  approvalStatus: {
+    type: String,
+    enum: ['PENDING', 'APPROVED', 'REJECTED'],
+    default: 'PENDING'
+  },
+  rejectionReason: {
+    reason: { type: String },
+    description: { type: String }
+  },
+  isActive: { type: Boolean, default: false },
+  startsAt: { type: Date },
+  endsAt: { type: Date },
+  createdAt: { type: Date, default: Date.now }
+}, { timestamps: true });
 
-// Create 2dsphere index for geospatial queries
-AdSchema.index({ location: "2dsphere" });
+adSchema.index({ location: "2dsphere" });
 
-export default mongoose.models.Ad || mongoose.model("Ad", AdSchema);
+adSchema.pre('save', async function (next) {
+  if (this.isActive && this.isNew) {
+    const activeNearbyCount = await mongoose.model('Ad').countDocuments({
+      isActive: true,
+      approvalStatus: "APPROVED",
+      paymentStatus: "PAID",
+      location: {
+        $near: {
+          $geometry: {
+            type: "Point",
+            coordinates: this.location.coordinates
+          },
+          $maxDistance: 50000
+        }
+      }
+    });
+
+    if (activeNearbyCount >= 3) {
+      return next(new Error('Maximum number of active, paid, and approved ads (10) within 50km radius reached.'));
+    }
+  }
+
+  next();
+});
+
+
+const Ad = mongoose.models.Ad || mongoose.model('Ad', adSchema);
+export default Ad;

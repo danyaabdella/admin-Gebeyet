@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { useState } from "react"
 import { Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -16,7 +17,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import { uploadImage } from "@/utils/upload"
 
 interface UpdateProfileDialogProps {
   open: boolean
@@ -33,7 +33,6 @@ export function UpdateProfileDialog({ open, onOpenChange, profile, onUpdate }: U
     image: profile?.image || "",
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isUploading, setIsUploading] = useState(false) // Track image upload status
   const { toast } = useToast()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,32 +40,21 @@ export function UpdateProfileDialog({ open, onOpenChange, profile, onUpdate }: U
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // In a real implementation, this would handle file upload
+    // For demo purposes, we'll just simulate it
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setIsUploading(true) // Disable Save button during upload
-
-      try {
-        const downloadUrl = await uploadImage(file)
-        setFormData((prev) => ({ ...prev, image: downloadUrl }))
-
-        toast({
-          title: "Image Uploaded",
-          description: "Your profile image has been uploaded successfully.",
-        })
-      } catch (error) {
-        console.error("Image upload failed:", error)
-        toast({
-          title: "Image Upload Failed",
-          description: "There was an error uploading the image. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setIsUploading(false) // Re-enable Save button after upload completes
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setFormData((prev) => ({ ...prev, image: event.target?.result as string }))
+        }
       }
+      reader.readAsDataURL(e.target.files[0])
     }
   }
 
+  // Demo API function to update admin profile
   const updateAdminProfile = async (profileData: any) => {
     console.log("Updating admin profile:", profileData)
     await new Promise((resolve) => setTimeout(resolve, 1200))
@@ -85,16 +73,15 @@ export function UpdateProfileDialog({ open, onOpenChange, profile, onUpdate }: U
       const updatedProfile = await updateAdminProfile(formData)
 
       toast({
-        title: "Profile Updated",
+        title: "Profile updated",
         description: "Your profile has been updated successfully.",
       })
 
       onUpdate(updatedProfile)
-      onOpenChange(false) // Close dialog on successful update
     } catch (error) {
       console.error("Failed to update profile:", error)
       toast({
-        title: "Profile Update Failed",
+        title: "Update failed",
         description: "There was an error updating your profile. Please try again.",
         variant: "destructive",
       })
@@ -130,59 +117,30 @@ export function UpdateProfileDialog({ open, onOpenChange, profile, onUpdate }: U
                 <Camera className="h-4 w-4" />
                 Change Photo
               </Label>
-              <Input
-                id="image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageChange}
-                disabled={isUploading} // Disable file input during upload
-              />
+              <Input id="image-upload" type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="fullname">Full Name</Label>
-              <Input
-                id="fullname"
-                name="fullname"
-                value={formData.fullname}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-              />
+              <Input id="fullname" name="fullname" value={formData.fullname} onChange={handleChange} required />
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                disabled={isSubmitting}
-              />
+              <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
             </div>
 
             <div className="grid gap-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                name="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={handleChange}
-                disabled={isSubmitting}
-              />
+              <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} />
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || isUploading}>
-              {isSubmitting ? "Saving..." : isUploading ? "Uploading..." : "Save Changes"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>
         </form>
