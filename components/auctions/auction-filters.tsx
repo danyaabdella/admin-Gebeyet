@@ -12,10 +12,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, Clock, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
+  ChevronLeft,
+  ChevronRight,
+  AlertTriangle,
+} from "lucide-react";
 
 interface Auction {
   id: string;
@@ -49,9 +62,14 @@ interface AuctionDetailsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDetailsDialogProps) {
+export function AuctionDetailsDialog({
+  auction,
+  open,
+  onOpenChange,
+}: AuctionDetailsDialogProps) {
   const [rejectionReason, setRejectionReason] = useState("");
-  const [rejectionCategory, setRejectionCategory] = useState("policy_violation");
+  const [rejectionCategory, setRejectionCategory] =
+    useState("policy_violation");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -75,7 +93,10 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
     setIsProcessing(true);
     try {
       // Simulate rejectAuction (no API)
-      console.log("Rejecting auction:", auction.id, { reason: rejectionCategory, description: rejectionReason });
+      console.log("Rejecting auction:", auction.id, {
+        reason: rejectionCategory,
+        description: rejectionReason,
+      });
       setShowRejectDialog(false);
       onOpenChange(false);
     } catch (error) {
@@ -93,42 +114,80 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
 
   const prevImage = () => {
     if (auction.itemImg && auction.itemImg.length > 0) {
-      setCurrentImageIndex((prev) => (prev - 1 + auction.itemImg.length) % auction.itemImg.length);
+      setCurrentImageIndex(
+        (prev) => (prev - 1 + auction.itemImg.length) % auction.itemImg.length
+      );
     }
   };
 
   const statusProps = {
-    pending: { color: "bg-yellow-100 text-yellow-800 border-yellow-300", icon: <Clock className="h-4 w-4 mr-1" /> },
-    active: { color: "bg-green-100 text-green-800 border-green-300", icon: <CheckCircle className="h-4 w-4 mr-1" /> },
-    ended: { color: "bg-blue-100 text-blue-800 border-blue-300", icon: <CheckCircle className="h-4 w-4 mr-1" /> },
-    cancelled: { color: "bg-red-100 text-red-800 border-red-300", icon: <XCircle className="h-4 w-4 mr-1" /> },
+    pending: {
+      color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+      icon: <Clock className="h-4 w-4 mr-1" />,
+    },
+    active: {
+      color: "bg-green-100 text-green-800 border-green-300",
+      icon: <CheckCircle className="h-4 w-4 mr-1" />,
+    },
+    ended: {
+      color: "bg-blue-100 text-blue-800 border-blue-300",
+      icon: <CheckCircle className="h-4 w-4 mr-1" />,
+    },
+    cancelled: {
+      color: "bg-red-100 text-red-800 border-red-300",
+      icon: <XCircle className="h-4 w-4 mr-1" />,
+    },
   };
 
   const approvalProps = {
-    pending: { color: "bg-yellow-100 text-yellow-800 border-yellow-300", icon: <Clock className="h-4 w-4 mr-1" /> },
-    approved: { color: "bg-green-100 text-green-800 border-green-300", icon: <CheckCircle className="h-4 w-4 mr-1" /> },
-    rejected: { color: "bg-red-100 text-red-800 border-red-300", icon: <XCircle className="h-4 w-4 mr-1" /> },
+    pending: {
+      color: "bg-yellow-100 text-yellow-800 border-yellow-300",
+      icon: <Clock className="h-4 w-4 mr-1" />,
+    },
+    approved: {
+      color: "bg-green-100 text-green-800 border-green-300",
+      icon: <CheckCircle className="h-4 w-4 mr-1" />,
+    },
+    rejected: {
+      color: "bg-red-100 text-red-800 border-red-300",
+      icon: <XCircle className="h-4 w-4 mr-1" />,
+    },
   };
 
   return (
     <>
-      <Dialog open={open && !showRejectDialog && !showApproveDialog} onOpenChange={onOpenChange}>
+      <Dialog
+        open={open && !showRejectDialog && !showApproveDialog}
+        onOpenChange={onOpenChange}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
               <span>Auction Details</span>
               <div className="flex gap-2">
-                <Badge className={`${statusProps[auction.status].color} flex items-center px-2 py-1 text-xs`}>
+                <Badge
+                  className={`${
+                    statusProps[auction.status].color
+                  } flex items-center px-2 py-1 text-xs`}
+                >
                   {statusProps[auction.status].icon}
-                  {auction.status.charAt(0).toUpperCase() + auction.status.slice(1)}
+                  {auction.status.charAt(0).toUpperCase() +
+                    auction.status.slice(1)}
                 </Badge>
-                <Badge className={`${approvalProps[auction.adminApproval].color} flex items-center px-2 py-1 text-xs`}>
+                <Badge
+                  className={`${
+                    approvalProps[auction.adminApproval].color
+                  } flex items-center px-2 py-1 text-xs`}
+                >
                   {approvalProps[auction.adminApproval].icon}
-                  {auction.adminApproval.charAt(0).toUpperCase() + auction.adminApproval.slice(1)}
+                  {auction.adminApproval.charAt(0).toUpperCase() +
+                    auction.adminApproval.slice(1)}
                 </Badge>
               </div>
             </DialogTitle>
-            <DialogDescription>View and manage auction information</DialogDescription>
+            <DialogDescription>
+              View and manage auction information
+            </DialogDescription>
           </DialogHeader>
 
           <Tabs defaultValue="details" className="w-full">
@@ -162,53 +221,78 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
                 )}
                 <div>
                   <Label className="text-sm font-medium">Category</Label>
-                  <div className="text-sm mt-1 capitalize">{auction.category}</div>
+                  <div className="text-sm mt-1 capitalize">
+                    {auction.category}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Condition</Label>
-                  <div className="text-sm mt-1 capitalize">{auction.condition}</div>
+                  <div className="text-sm mt-1 capitalize">
+                    {auction.condition}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Start Time</Label>
-                  <div className="text-sm mt-1">{new Date(auction.startTime).toLocaleString()}</div>
+                  <div className="text-sm mt-1">
+                    {new Date(auction.startTime).toLocaleString()}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">End Time</Label>
-                  <div className="text-sm mt-1">{new Date(auction.endTime).toLocaleString()}</div>
+                  <div className="text-sm mt-1">
+                    {new Date(auction.endTime).toLocaleString()}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Starting Price</Label>
-                  <div className="text-sm mt-1">${auction.startingPrice.toFixed(2)}</div>
+                  <div className="text-sm mt-1">
+                    ${auction.startingPrice.toFixed(2)}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Reserved Price</Label>
-                  <div className="text-sm mt-1">${auction.reservedPrice.toFixed(2)}</div>
+                  <div className="text-sm mt-1">
+                    ${auction.reservedPrice.toFixed(2)}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Bid Increment</Label>
-                  <div className="text-sm mt-1">${auction.bidIncrement.toFixed(2)}</div>
+                  <div className="text-sm mt-1">
+                    ${auction.bidIncrement.toFixed(2)}
+                  </div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Payment Duration</Label>
-                  <div className="text-sm mt-1">{auction.paymentDuration} hours</div>
+                  <Label className="text-sm font-medium">
+                    Payment Duration
+                  </Label>
+                  <div className="text-sm mt-1">
+                    {auction.paymentDuration} hours
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Total Quantity</Label>
                   <div className="text-sm mt-1">{auction.totalQuantity}</div>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Remaining Quantity</Label>
-                  <div className="text-sm mt-1">{auction.remainingQuantity}</div>
+                  <Label className="text-sm font-medium">
+                    Remaining Quantity
+                  </Label>
+                  <div className="text-sm mt-1">
+                    {auction.remainingQuantity}
+                  </div>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Buy by Parts</Label>
-                  <div className="text-sm mt-1">{auction.buyByParts ? "Yes" : "No"}</div>
+                  <div className="text-sm mt-1">
+                    {auction.buyByParts ? "Yes" : "No"}
+                  </div>
                 </div>
                 {auction.currentBid && (
                   <div>
                     <Label className="text-sm font-medium">Current Bid</Label>
                     <div className="text-sm mt-1">
-                      ${auction.currentBid.toFixed(2)} ({auction.bidCount || 0} bids)
+                      ${auction.currentBid.toFixed(2)} ({auction.bidCount || 0}{" "}
+                      bids)
                     </div>
                   </div>
                 )}
@@ -216,15 +300,22 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
 
               <div>
                 <Label className="text-sm font-medium">Description</Label>
-                <div className="text-sm mt-1 p-3 bg-muted rounded-md">{auction.description}</div>
+                <div className="text-sm mt-1 p-3 bg-muted rounded-md">
+                  {auction.description}
+                </div>
               </div>
 
               {auction.adminApproval === "rejected" && auction.banReason && (
                 <div className="mt-4 border border-red-200 bg-red-50 p-4 rounded-md">
-                  <Label className="text-sm font-medium text-red-800">Rejection Reason</Label>
+                  <Label className="text-sm font-medium text-red-800">
+                    Rejection Reason
+                  </Label>
                   <div className="text-sm mt-2 text-red-700">
                     <div className="font-medium">
-                      Category: {auction.banReason.reason.replace("_", " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                      Category:{" "}
+                      {auction.banReason.reason
+                        .replace("_", " ")
+                        .replace(/\b\w/g, (c) => c.toUpperCase())}
                     </div>
                     <div className="mt-1">{auction.banReason.description}</div>
                   </div>
@@ -237,7 +328,9 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
                 {auction.itemImg && auction.itemImg.length > 0 ? (
                   <div className="relative border rounded-md overflow-hidden">
                     <img
-                      src={auction.itemImg[currentImageIndex] || "/placeholder.svg"}
+                      src={
+                        auction.itemImg[currentImageIndex] || "/placeholder.svg"
+                      }
                       alt={`Auction image ${currentImageIndex + 1}`}
                       className="w-full h-64 md:h-80 object-contain bg-gray-50"
                     />
@@ -269,7 +362,9 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
                   </div>
                 ) : (
                   <div className="flex items-center justify-center h-64 bg-muted rounded-md">
-                    <span className="text-muted-foreground">No images available</span>
+                    <span className="text-muted-foreground">
+                      No images available
+                    </span>
                   </div>
                 )}
                 {auction.itemImg && auction.itemImg.length > 1 && (
@@ -278,11 +373,17 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
                       <button
                         key={index}
                         className={`relative flex-shrink-0 w-16 h-16 border-2 rounded-md overflow-hidden ${
-                          index === currentImageIndex ? "border-primary" : "border-transparent"
+                          index === currentImageIndex
+                            ? "border-primary"
+                            : "border-transparent"
                         }`}
                         onClick={() => setCurrentImageIndex(index)}
                       >
-                        <img src={img} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                        <img
+                          src={img}
+                          alt={`Thumbnail ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
                       </button>
                     ))}
                   </div>
@@ -291,26 +392,45 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
             </TabsContent>
 
             <TabsContent value="bids">
-              {["active", "ended"].includes(auction.status) && auction.bidCount && auction.bidCount > 0 ? (
+              {["active", "ended"].includes(auction.status) &&
+              auction.bidCount &&
+              auction.bidCount > 0 ? (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h3 className="text-sm font-medium">Bid History</h3>
-                    <span className="text-sm text-muted-foreground">{auction.bidCount} bids total</span>
+                    <span className="text-sm text-muted-foreground">
+                      {auction.bidCount} bids total
+                    </span>
                   </div>
                   <div className="border rounded-md divide-y">
-                    {Array.from({ length: Math.min(auction.bidCount, 5) }).map((_, i) => (
-                      <div key={i} className="p-3 flex justify-between items-center">
-                        <div>
-                          <div className="font-medium">Bidder {auction.bidCount - i}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {new Date(new Date(auction.endTime).getTime() - i * 3600000).toLocaleString()}
+                    {Array.from({ length: Math.min(auction.bidCount, 5) }).map(
+                      (_, i) => (
+                        <div
+                          key={i}
+                          className="p-3 flex justify-between items-center"
+                        >
+                          <div>
+                            <div className="font-medium">
+                              Bidder{" "}
+                              {auction.bidCount ? auction.bidCount - i : 0}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {new Date(
+                                new Date(auction.endTime).getTime() -
+                                  i * 3600000
+                              ).toLocaleString()}
+                            </div>
+                          </div>
+                          <div className="font-medium text-green-600">
+                            $
+                            {(
+                              auction.currentBid! -
+                              i * auction.bidIncrement
+                            ).toFixed(2)}
                           </div>
                         </div>
-                        <div className="font-medium text-green-600">
-                          ${(auction.currentBid! - i * auction.bidIncrement).toFixed(2)}
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                 </div>
               ) : (
@@ -349,7 +469,11 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
                 </Button>
               </>
             )}
-            <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              className="w-full sm:w-auto"
+            >
               Close
             </Button>
           </DialogFooter>
@@ -361,22 +485,34 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
           <DialogHeader>
             <DialogTitle>Reject Auction</DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting this auction. This information will be recorded and may be shared with the merchant.
+              Please provide a reason for rejecting this auction. This
+              information will be recorded and may be shared with the merchant.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid w-full gap-2">
               <Label htmlFor="rejection-category">Rejection Category</Label>
-              <Select value={rejectionCategory} onValueChange={setRejectionCategory}>
+              <Select
+                value={rejectionCategory}
+                onValueChange={setRejectionCategory}
+              >
                 <SelectTrigger id="rejection-category">
                   <SelectValue placeholder="Select a reason" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="policy_violation">Policy Violation</SelectItem>
-                  <SelectItem value="inappropriate_content">Inappropriate Content</SelectItem>
+                  <SelectItem value="policy_violation">
+                    Policy Violation
+                  </SelectItem>
+                  <SelectItem value="inappropriate_content">
+                    Inappropriate Content
+                  </SelectItem>
                   <SelectItem value="pricing_issue">Pricing Issue</SelectItem>
-                  <SelectItem value="product_quality">Product Quality</SelectItem>
-                  <SelectItem value="incomplete_information">Incomplete Information</SelectItem>
+                  <SelectItem value="product_quality">
+                    Product Quality
+                  </SelectItem>
+                  <SelectItem value="incomplete_information">
+                    Incomplete Information
+                  </SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
               </Select>
@@ -393,7 +529,11 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowRejectDialog(false)} disabled={isProcessing}>
+            <Button
+              variant="outline"
+              onClick={() => setShowRejectDialog(false)}
+              disabled={isProcessing}
+            >
               Cancel
             </Button>
             <Button
@@ -412,11 +552,16 @@ export function AuctionDetailsDialog({ auction, open, onOpenChange }: AuctionDet
           <DialogHeader>
             <DialogTitle>Confirm Approval</DialogTitle>
             <DialogDescription>
-              Are you sure you want to approve this auction? This will make it active and allow bidding to begin.
+              Are you sure you want to approve this auction? This will make it
+              active and allow bidding to begin.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowApproveDialog(false)} disabled={isProcessing}>
+            <Button
+              variant="outline"
+              onClick={() => setShowApproveDialog(false)}
+              disabled={isProcessing}
+            >
               Cancel
             </Button>
             <Button onClick={handleApprove} disabled={isProcessing}>

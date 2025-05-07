@@ -3,18 +3,19 @@ import Order from '@/models/Order';
 import { isAdminOrSuperAdmin } from '@/utils/functions';
 import { NextResponse } from 'next/server';
 
-const CHAPA_SECRET_KEY = "CHASECK_TEST-s6oBbGS04bRkcXLT7P6x2do2EKcCXfJ6";
+const CHAPA_SECRET_KEY = "CHASECK_TEST-PIpkm0VxDsgQJcS6nXB3K9Ttx98AzUZ8";
 
 export async function POST(req) {
     try {
         await isAdminOrSuperAdmin();
         const body = await req.json();
+        console.log("body: ", body);
         const { _id, account_name, account_number, amount, bank_code } = body;
         const reference = `mr_tx_${uuidv4().split('-')[0]}`;  // Get the first part of UUID and prepend
         const referenceFinal = reference.substring(0, 20);
         if (!account_name || !account_number || !amount || !bank_code) {
             return NextResponse.json(
-                { message: "All fields (account_name, account_number, amount, currency, bank_code) are required" },
+                { message: "All fields (account_name, account_number, amount, bank_code) are required" },
                 { status: 400 }
             );
         }

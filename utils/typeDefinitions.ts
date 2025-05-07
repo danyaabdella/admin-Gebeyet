@@ -106,6 +106,7 @@ export interface OrderDocument extends Document {
   paymentStatus: 'Pending' | 'Paid' | 'Paid To Merchant' | 'Pending Refund' | 'Refunded';
   location: Location;
   transactionRef: string;
+  reference: string;
   orderDate: Date;
   refundReason?: string;
 }

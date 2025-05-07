@@ -318,8 +318,9 @@ export default function AdminsPageClient() {
               setSelectedAdmin(null);
               fetchAdmins(); // Refresh the list of admins after closing the dialog
             }
-          }}
-        />
+          } } onAction={function (type: "ban" | "unban" | "delete" | "restore" | "permanent-delete", adminId: string): void {
+            throw new Error("Function not implemented.");
+          } }        />
       )}
 
       <CreateAdminDialog

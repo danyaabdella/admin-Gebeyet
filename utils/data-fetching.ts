@@ -125,7 +125,9 @@ export async function fetchDashboardStats() {
     const previousMonth = (currentMonth - 1 + 12) % 12;
     const currentYear = now.getFullYear();
 
-    const filterByMonth = (items: any[], field: string) => ({ current, previous }) => {
+    const filterByMonth = (items: any[], field: string) => 
+      ({ current, previous }: { current: number; previous: number }) => {
+    
       const currentMonthItems = items.filter((item) => {
         const date = new Date(item[field]);
         return !isNaN(date.getTime()) &&
@@ -155,18 +157,18 @@ export async function fetchDashboardStats() {
     // 💰 Transactions
     let totalTransactionAmount = 0;
 
-    orders.forEach(({ paymentStatus, totalPrice }) => {
+    orders.forEach(({ paymentStatus, totalPrice }: { paymentStatus: string; totalPrice: number | string }) => {
       const price = Number(totalPrice) || 0;
-
+    
       if (paymentStatus === "Paid") {
         totalTransactionAmount += price;
-        
       } else if (paymentStatus === "Refunded") {
         totalTransactionAmount += price * 2;
       } else if (paymentStatus === "Paid To Merchant") {
         totalTransactionAmount += price - price * 0.04;
       }
     });
+    
 
     const totalTransactions = +totalTransactionAmount.toFixed(2);
 
@@ -241,7 +243,7 @@ export async function fetchDashboardStats() {
       },
       orders: {
         total: orders.length,
-        pendingRefunds: orders.filter((o) => o.paymentStatus === "Pending Refund").length,
+        pendingRefunds: orders.filter((o: { paymentStatus: string; }) => o.paymentStatus === "Pending Refund").length,
         ...calculateGrowth(currentTransactions.length, previousTransactions.length),
       },
       auctions: {
@@ -261,10 +263,13 @@ export async function fetchDashboardStats() {
       },
     };
   } catch (error) {
+    const err = error as Error;
     console.error("Error fetching dashboard stats:", {
-      message: error.message,
-      stack: error.stack,
+      message: err.message,
+      stack: err.stack,
     });
+  }
+  
 
     return {
       transactions: { total: 0, isIncrease: false, percentChange: 0 },
@@ -279,7 +284,6 @@ export async function fetchDashboardStats() {
       admins: { total: 0, isIncrease: false, percentChange: 0 },
     };
   }
-}
 
 // Mock transaction distribution data
 export async function fetchTransactionDistributionData() {

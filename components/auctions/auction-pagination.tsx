@@ -21,11 +21,9 @@ export function AuctionPagination({ currentPage, totalPages, onPageChange }: Auc
     
     if (totalPages <= maxPagesToShow) {
       // If we have 5 or fewer pages, show all of them
-      for (let i = 1; i <= totalPages; i++)  {
-      // If we have 5 or fewer pages, show all of them
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i)
-      }\
+      }
     } else {
       // Always include first page
       pages.push(1)
@@ -89,7 +87,7 @@ export function AuctionPagination({ currentPage, totalPages, onPageChange }: Auc
                 href="#"
                 onClick={(e) => {
                   e.preventDefault()
-                  onPageChange(page as number)
+                  onPageChange(page as number) // Type cast to number for page
                 }}
                 isActive={page === currentPage}
               >
@@ -113,4 +111,3 @@ export function AuctionPagination({ currentPage, totalPages, onPageChange }: Auc
     </Pagination>
   )
 }
-

@@ -502,6 +502,13 @@ export default function AuctionsPageClient() {
               auction={selectedAuction}
               open={!!selectedAuction}
               onOpenChange={handleDialogOpenChange}
+              onAction={function (
+                type: "approve" | "reject",
+                auctionId: string,
+                rejectionReason?: string
+              ): void {
+                throw new Error("Function not implemented.");
+              }}
             />
           )}
         </main>

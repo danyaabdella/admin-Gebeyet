@@ -13,6 +13,7 @@ import { ImageUploader } from "../shared/image-uploader"
 import { fetchTimelineEvents, updateTimelineEvents } from "@/utils/about"
 import { Loader2, Plus, Trash2 } from "lucide-react"
 
+// Schema validation for each timeline event
 const timelineEventSchema = z.object({
   year: z.string().min(1, { message: "Year is required." }),
   title: z.string().min(2, { message: "Title must be at least 2 characters." }),
@@ -20,6 +21,7 @@ const timelineEventSchema = z.object({
   image: z.string().url({ message: "Please enter a valid image URL." }).optional().or(z.literal("")),
 })
 
+// Main form schema for multiple events
 const formSchema = z.object({
   events: z.array(timelineEventSchema).min(1, { message: "You must add at least one timeline event." }),
 })
@@ -34,6 +36,7 @@ export function TimelineSection({ onSaveSuccess }: TimelineSectionProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
+  // Initialize form with validation and default values
   const form = useForm<TimelineFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -46,6 +49,7 @@ export function TimelineSection({ onSaveSuccess }: TimelineSectionProps) {
     name: "events",
   })
 
+  // Fetch initial timeline data
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -64,16 +68,25 @@ export function TimelineSection({ onSaveSuccess }: TimelineSectionProps) {
     loadData()
   }, [form])
 
+  const transformTimelineEvents = (events: { year: string; title: string; description: string; image?: string }[]) => {
+    return events.map(event => ({
+      title: event.title,
+      description: event.description,
+      date: event.year, // Assuming `year` should be the `date`
+    }));
+  };
+  
+  // In your onSubmit function:
   async function onSubmit(values: TimelineFormValues) {
     try {
-      setIsSaving(true)
-      console.log("Value timeline: ", values);
-      await updateTimelineEvents(values)
-      onSaveSuccess()
+      setIsSaving(true);
+      const transformedValues = transformTimelineEvents(values.events);
+      await updateTimelineEvents(transformedValues);
+      onSaveSuccess();
     } catch (error) {
-      console.error("Failed to update timeline events:", error)
+      console.error("Failed to update timeline events:", error);
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
   }
 
