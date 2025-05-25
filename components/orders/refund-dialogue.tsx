@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 interface RefundDialogProps {
   orderId: string;
   amount: number;
-  transactionRef: string;
+  reference ?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
@@ -29,7 +29,7 @@ interface RefundDialogProps {
 export function RefundDialog({
   orderId,
   amount,
-  transactionRef,
+  reference,
   open,
   onOpenChange,
   onSuccess,
@@ -49,12 +49,13 @@ export function RefundDialog({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          tx_ref: transactionRef,
+          tx_ref: reference,
           reason: reason,
           amount: amount,
         }),
       });
 
+      console.log("Sent data: ", reason, amount);
       const data = await response.json();
 
       if (!response.ok) {
@@ -63,7 +64,7 @@ export function RefundDialog({
 
       toast({
         title: "Refund processed",
-        description: data.message || `Order #${transactionRef} has been refunded.`,
+        description: data.message || `Order #${reference} has been refunded.`,
       });
 
       onSuccess(); // Trigger success callback to refetch data
@@ -97,7 +98,7 @@ export function RefundDialog({
         <DialogHeader>
           <DialogTitle>Process Refund</DialogTitle>
           <DialogDescription>
-            You are about to process a refund for order #{transactionRef}. This
+            You are about to process a refund for order #{reference}. This
             action cannot be undone.
           </DialogDescription>
         </DialogHeader>

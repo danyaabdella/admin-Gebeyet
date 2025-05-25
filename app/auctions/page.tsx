@@ -314,7 +314,7 @@ export default function AuctionsPageClient() {
                       selected={{ from: dateRange.from, to: dateRange.to }}
                       onSelect={handleDateChange}
                       initialFocus
-                    />
+                      required className={undefined} classNames={undefined}                    />
                   </PopoverContent>
                 </Popover>
 
@@ -395,7 +395,7 @@ export default function AuctionsPageClient() {
               <CardDescription>
                 Manage all auctions in the marketplace system
               </CardDescription>
-            </CardHeader >
+            </CardHeader>
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
@@ -501,6 +501,13 @@ export default function AuctionsPageClient() {
               auction={selectedAuction}
               open={!!selectedAuction}
               onOpenChange={handleDialogOpenChange}
+              onAction={function (
+                type: "approve" | "reject",
+                auctionId: string,
+                rejectionReason?: string
+              ): void {
+                throw new Error("Function not implemented.");
+              }}
             />
           )}
         </main>

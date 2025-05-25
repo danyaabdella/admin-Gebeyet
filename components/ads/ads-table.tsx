@@ -177,7 +177,7 @@ export function AdsTable({ ads, isLoading, onRefresh }: AdsTableProps) {
                     {ad.product.productName}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">{ad.merchantDetail.merchantName}</TableCell>
-                  <TableCell>${ad.price.toFixed(2)}</TableCell>
+                  <TableCell>${ad.adPrice.toFixed(2)}</TableCell>
                   <TableCell>
                     {getApprovalStatusBadge(ad.approvalStatus)}
                   </TableCell>

@@ -99,10 +99,12 @@ export default function OrderDetailPage() {
   };
 
   const formatCurrency = (amount: string | number | bigint) => {
+    const parsedAmount = typeof amount === "string" ? Number(amount) : amount;
+
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "ETB",
-    }).format(amount);
+    }).format(parsedAmount);
   };
 
   const getStatusColor = (status: any) => {
@@ -189,7 +191,7 @@ export default function OrderDetailPage() {
             </Button>
             <div>
               <h1 className="text-xl font-semibold md:text-2xl">
-                Order #{order?.transactionRef}
+                Order #{order?.chapaRef}
               </h1>
               <p className="text-sm text-muted-foreground">
                 Placed on{" "}
@@ -201,16 +203,16 @@ export default function OrderDetailPage() {
                 <RefundDialog
                   orderId={order.id}
                   amount={order.totalPrice}
-                  transactionRef={order.transactionRef}
+                  reference={order.chapaRef}
                   open={isRefundDialogOpen}
                   onOpenChange={setIsRefundDialogOpen}
                   onSuccess={handleRefundSuccess}
-                  onFailure={handleRefundFailure} // Add failure callback
+                  onFailure={handleRefundFailure} 
                 />
               )}
               {showPayMerchantButton && (
                 <PayMerchantDialog
-                  orderId={order._id}
+                  orderId={order._id as string}
                   merchantDetails={{
                     account_name: order.merchantDetail.account_name,
                     account_number: order.merchantDetail.account_number,
@@ -227,7 +229,6 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
-          {/* Rest of the JSX for rendering cards, tables, etc., remains unchanged */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card className="md:col-span-2 lg:col-span-1">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -237,7 +238,7 @@ export default function OrderDetailPage() {
                 <div className="flex items-center space-x-2">
                   <Badge
                     variant="outline"
-                    className={getStatusColor(order.status)}
+                    className={getStatusColor(order?.status)}
                   >
                     {order?.status}
                   </Badge>
@@ -260,7 +261,7 @@ export default function OrderDetailPage() {
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
                 <CardDescription>
-                  Transaction Reference: {order?.transactionRef}
+                  Transaction Reference: {order?.chapaRef}
                 </CardDescription>
               </CardHeader>
               <CardContent>

@@ -14,9 +14,10 @@ import { useEffect, useState } from "react";
 
 type AuctionPerformanceChartProps = {
   year?: number;
+  month?: string;  // Add month as an optional prop
 };
 
-export function AuctionPerformanceChart({ year }: AuctionPerformanceChartProps) {
+export function AuctionPerformanceChart({ year, month }: AuctionPerformanceChartProps) {
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -40,6 +41,7 @@ export function AuctionPerformanceChart({ year }: AuctionPerformanceChartProps) 
 
         const selectedYear = year || new Date().getFullYear();
 
+        // Initialize months data for chart
         const months = [
           "Jan", "Feb", "Mar", "Apr", "May", "Jun",
           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
@@ -59,14 +61,18 @@ export function AuctionPerformanceChart({ year }: AuctionPerformanceChartProps) 
           const endDate = new Date(auction.endTime);
           if (endDate.getFullYear() !== selectedYear) return;
 
-          const monthIndex = endDate.getMonth();
+          // Use month prop if provided, else use the auction's end date
+          const selectedMonth = month || months[endDate.getMonth()];
+          const monthIndex = months.indexOf(selectedMonth);
 
-          if (auction.status === "active") monthlyData[monthIndex].active += 1;
-          if (auction.status === "ended") monthlyData[monthIndex].ended += 1;
-          if (auction.status === "cancelled") monthlyData[monthIndex].cancelled += 1;
-          if (auction.status === "pending") monthlyData[monthIndex].pendingStatus += 1;
-          if (auction.adminApproval === "rejected") monthlyData[monthIndex].rejected += 1;
-          if (auction.adminApproval === "approved") monthlyData[monthIndex].approved += 1;
+          if (monthIndex !== -1) {
+            if (auction.status === "active") monthlyData[monthIndex].active += 1;
+            if (auction.status === "ended") monthlyData[monthIndex].ended += 1;
+            if (auction.status === "cancelled") monthlyData[monthIndex].cancelled += 1;
+            if (auction.status === "pending") monthlyData[monthIndex].pendingStatus += 1;
+            if (auction.adminApproval === "rejected") monthlyData[monthIndex].rejected += 1;
+            if (auction.adminApproval === "approved") monthlyData[monthIndex].approved += 1;
+          }
         });
 
         setChartData(monthlyData);
@@ -76,7 +82,7 @@ export function AuctionPerformanceChart({ year }: AuctionPerformanceChartProps) 
     }
 
     fetchAuctionData();
-  }, [year]);
+  }, [year, month]);  // Depend on both year and month
 
   return (
     <div className="w-full overflow-x-auto">

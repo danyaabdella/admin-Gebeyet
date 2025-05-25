@@ -2,9 +2,8 @@ import { options } from "../auth/[...nextauth]/options";
 import { getServerSession } from "next-auth";
 import SuperAdmin from "@/models/SuperAdmin";
 import Admin from "@/models/Admin";
-import {role} from "../auth/[...nextauth]/route";
 import argon2 from "argon2";
-import { connectToDB } from "@/utils/functions";
+import { connectToDB, role } from "@/utils/functions";
 
 export async function GET(req) {
     const role1 = await role();

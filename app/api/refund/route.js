@@ -2,7 +2,7 @@ import Order from '@/models/Order';
 import Product from '@/models/Product';
 import { isAdminOrSuperAdmin } from '@/utils/functions';
 
-const CHAPA_SECRET_KEY = "CHASECK_TEST-s6oBbGS04bRkcXLT7P6x2do2EKcCXfJ6";
+const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
 
 export async function POST(req) {
     try {
@@ -31,7 +31,6 @@ export async function POST(req) {
                 amount: amount,
             }),
         });
-        console.log("Response: ", response);
         const result = await response.json();
         console.log("Result: ", result);
 

@@ -70,12 +70,11 @@ export async function PUT(req) {
         user.approvalStatus = "approved";
         user.approvedBy = userData.email;
         user.rejectionReason = null;
-        if (user.merchantDetails) {
-          user.merchantDetails.uniqueTinNumber = uniqueTin;
+        if (user) {
+          user.uniqueTinNumber = uniqueTin;
         } else {
-          user.merchantDetails = { uniqueTinNumber: uniqueTin };
-        }
-        console.log("Updated user: ", user)
+          user.uniqueTinNumber = uniqueTin ;
+        }        console.log("Updated user: ", user)
         await user.save();
         await sendNotification(user.email, "user", "approved");
         return new Response(JSON.stringify({ message: "User approved" }), { status: 200 });

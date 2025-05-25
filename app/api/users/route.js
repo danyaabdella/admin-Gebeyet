@@ -2,9 +2,8 @@ import { options } from "../auth/[...nextauth]/options";
 import { getServerSession } from "next-auth";
 import SuperAdmin from "@/models/SuperAdmin";
 import Admin from "@/models/Admin";
-import {role} from "../auth/[...nextauth]/route";
 import User from "@/models/User";
-import { connectToDB } from "@/utils/functions";
+import { connectToDB, role } from "@/utils/functions";
 
 export async function GET(req) {
     try {

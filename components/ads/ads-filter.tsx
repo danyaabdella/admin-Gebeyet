@@ -210,8 +210,7 @@ export function AdsFilter({ onFilterChange, onLocationChange, isLoading }: AdsFi
                                 mode="single"
                                 selected={dateFrom}
                                 onSelect={setDateFrom}
-                                initialFocus
-                              />
+                                initialFocus className={undefined} classNames={undefined}                              />
                             </PopoverContent>
                           </Popover>
 
@@ -232,8 +231,7 @@ export function AdsFilter({ onFilterChange, onLocationChange, isLoading }: AdsFi
                                 selected={dateTo}
                                 onSelect={setDateTo}
                                 initialFocus
-                                disabled={(date) => (dateFrom ? date < dateFrom : false)}
-                              />
+                                disabled={(date: Date) => (dateFrom ? date < dateFrom : false)} className={undefined} classNames={undefined}                              />
                             </PopoverContent>
                           </Popover>
                         </div>

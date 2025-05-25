@@ -21,6 +21,7 @@ interface AdminDetailsDialogProps {
   admin: any;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onAction: (type: "ban" | "unban" | "delete" | "restore" | "permanent-delete", adminId: string) => void;
 }
 
 // Confirmation Dialog for Deleting (Existing)
