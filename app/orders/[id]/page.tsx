@@ -191,7 +191,7 @@ export default function OrderDetailPage() {
             </Button>
             <div>
               <h1 className="text-xl font-semibold md:text-2xl">
-                Order #{order?.reference}
+                Order #{order?.chapaRef}
               </h1>
               <p className="text-sm text-muted-foreground">
                 Placed on{" "}
@@ -203,11 +203,11 @@ export default function OrderDetailPage() {
                 <RefundDialog
                   orderId={order.id}
                   amount={order.totalPrice}
-                  reference={order.reference}
+                  reference={order.chapaRef}
                   open={isRefundDialogOpen}
                   onOpenChange={setIsRefundDialogOpen}
                   onSuccess={handleRefundSuccess}
-                  onFailure={handleRefundFailure} // Add failure callback
+                  onFailure={handleRefundFailure} 
                 />
               )}
               {showPayMerchantButton && (
@@ -261,7 +261,7 @@ export default function OrderDetailPage() {
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
                 <CardDescription>
-                  Transaction Reference: {order?.reference}
+                  Transaction Reference: {order?.chapaRef}
                 </CardDescription>
               </CardHeader>
               <CardContent>

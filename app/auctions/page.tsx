@@ -314,8 +314,7 @@ export default function AuctionsPageClient() {
                       selected={{ from: dateRange.from, to: dateRange.to }}
                       onSelect={handleDateChange}
                       initialFocus
-                      required
-                    />
+                      required className={undefined} classNames={undefined}                    />
                   </PopoverContent>
                 </Popover>
 

@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 interface RefundDialogProps {
   orderId: string;
   amount: number;
-  reference: string;
+  reference ?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
@@ -55,6 +55,7 @@ export function RefundDialog({
         }),
       });
 
+      console.log("Sent data: ", reason, amount);
       const data = await response.json();
 
       if (!response.ok) {

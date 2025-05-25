@@ -1,56 +1,39 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Mail, Phone, MapPin, Clock } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Skeleton } from "@/components/ui/skeleton"
-import { LeadershipTeam } from "@/components/contact/leadership-team"
-import { Partners } from "@/components/contact/partners"
-import { Testimonials } from "@/components/contact/testimonial"
-import { ContactForm } from "@/components/contact/contact-form"
-import { fetchLeadershipTeam, fetchPartners, fetchTestimonials } from "@/utils/api-mock"
+import { useEffect, useState } from "react";
+import { Mail, Phone, MapPin, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LeadershipTeam } from "@/components/contact/leadership-team";
+import { ContactForm } from "@/components/contact/contact-form";
+import { fetchLeadershipTeam } from "@/utils/api-mock";
 
 export default function ContactPage() {
-  const [leadershipData, setLeadershipData] = useState<any[]>([])
-  const [partnersData, setPartnersData] = useState<any[]>([])
-  const [testimonialsData, setTestimonialsData] = useState<any[]>([])
+  const [leadershipData, setLeadershipData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState({
     leadership: true,
-    partners: true,
-    testimonials: true,
-  })
-  const [error, setError] = useState<string | null>(null)
+  });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Fetch all data in parallel
-        const [leadership, partners, testimonials] = await Promise.all([
-          fetchLeadershipTeam(),
-          fetchPartners(),
-          fetchTestimonials(),
-        ])
-
-        setLeadershipData(leadership)
-        setPartnersData(partners)
-        setTestimonialsData(testimonials)
+        const leadership = await fetchLeadershipTeam();
+        setLeadershipData(leadership);
       } catch (err) {
-        console.error("Failed to fetch contact page data:", err)
-        setError("Failed to load some content. Please try again later.")
+        console.error("Failed to fetch contact page data:", err);
+        setError("Failed to load some content. Please try again later.");
       } finally {
         setIsLoading({
           leadership: false,
-          partners: false,
-          testimonials: false,
-        })
+        });
       }
-    }
+    };
 
-    loadData()
-  }, [])
+    loadData();
+  }, []);
 
   return (
     <div className="container relative mx-auto px-4 py-8 sm:px-6 sm:py-12 lg:px-8 max-w-7xl">
@@ -68,7 +51,8 @@ export default function ContactPage() {
         <div className="space-y-4 sm:space-y-6">
           <h2 className="text-2xl sm:text-3xl font-bold">Get in Touch</h2>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Have questions about our products or services? Need help with an order? Our team is here to assist you.
+            Have questions about our products or services? Need help with an
+            order? Our team is here to assist you.
           </p>
 
           <div className="grid gap-4">
@@ -78,7 +62,9 @@ export default function ContactPage() {
               </div>
               <div className="sm:ml-4">
                 <h3 className="text-base sm:text-lg font-medium">Email Us</h3>
-                <p className="text-muted-foreground text-sm">Our friendly team is here to help.</p>
+                <p className="text-muted-foreground text-sm">
+                  Our friendly team is here to help.
+                </p>
                 <a
                   href="mailto:hello@example.com"
                   className="text-emerald-600 dark:text-emerald-400 hover:underline mt-1 block"
@@ -94,8 +80,13 @@ export default function ContactPage() {
               </div>
               <div className="sm:ml-4">
                 <h3 className="text-base sm:text-lg font-medium">Call Us</h3>
-                <p className="text-muted-foreground text-sm">Mon-Fri from 8am to 5pm.</p>
-                <a href="tel:+15551234567" className="text-cyan-600 dark:text-cyan-400 hover:underline mt-1 block">
+                <p className="text-muted-foreground text-sm">
+                  Mon-Fri from 8am to 5pm.
+                </p>
+                <a
+                  href="tel:+15551234567"
+                  className="text-cyan-600 dark:text-cyan-400 hover:underline mt-1 block"
+                >
                   +1 (555) 123-4567
                 </a>
               </div>
@@ -107,7 +98,9 @@ export default function ContactPage() {
               </div>
               <div className="sm:ml-4">
                 <h3 className="text-base sm:text-lg font-medium">Visit Us</h3>
-                <p className="text-muted-foreground text-sm">Come say hello at our office.</p>
+                <p className="text-muted-foreground text-sm">
+                  Come say hello at our office.
+                </p>
                 <p className="text-muted-foreground text-sm mt-1">
                   123 Business Avenue, Suite 500
                   <br />
@@ -121,9 +114,15 @@ export default function ContactPage() {
                 <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-cyan-600 dark:text-cyan-400" />
               </div>
               <div className="sm:ml-4">
-                <h3 className="text-base sm:text-lg font-medium">Business Hours</h3>
-                <p className="text-muted-foreground text-sm">Monday - Friday: 9am - 5pm</p>
-                <p className="text-muted-foreground text-sm">Saturday: 10am - 2pm</p>
+                <h3 className="text-base sm:text-lg font-medium">
+                  Business Hours
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  Monday - Friday: 9am - 5pm
+                </p>
+                <p className="text-muted-foreground text-sm">
+                  Saturday: 10am - 2pm
+                </p>
                 <p className="text-muted-foreground text-sm">Sunday: Closed</p>
               </div>
             </div>
@@ -137,7 +136,9 @@ export default function ContactPage() {
 
       {/* Leadership Team Section */}
       <div className="mb-12 sm:mb-20">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-12">Our Leadership Team</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-12">
+          Our Leadership Team
+        </h2>
         {isLoading.leadership ? (
           <div className="grid md:grid-cols-3 gap-6 sm:gap-8">
             {[1, 2, 3].map((i) => (
@@ -149,85 +150,65 @@ export default function ContactPage() {
         )}
       </div>
 
-      {/* Partners & Testimonials Tabs */}
-      <div className="mb-12 sm:mb-20">
-        <Tabs defaultValue="partners" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 sm:mb-8">
-            <TabsTrigger value="partners">Our Partners</TabsTrigger>
-            <TabsTrigger value="testimonials">Client Testimonials</TabsTrigger>
-          </TabsList>
-          <TabsContent value="partners">
-            {isLoading.partners ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Skeleton key={i} className="h-48 w-full" />
-                ))}
-              </div>
-            ) : (
-              <Partners partnersData={partnersData} />
-            )}
-          </TabsContent>
-          <TabsContent value="testimonials">
-            {isLoading.testimonials ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Skeleton key={i} className="h-48 w-full" />
-                ))}
-              </div>
-            ) : (
-              <Testimonials testimonialsData={testimonialsData} />
-            )}
-          </TabsContent>
-        </Tabs>
-      </div>
-
       {/* Map Section */}
       <div className="mb-8 sm:mb-16">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-8">Find Us</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-8">
+          Find Us
+        </h2>
         <div className="aspect-video w-full rounded-xl overflow-hidden border">
           {/* In a real implementation, you would embed a Google Map or similar here */}
           <div className="w-full h-full bg-muted flex items-center justify-center">
-            <p className="text-muted-foreground">Interactive Map Would Be Embedded Here</p>
+            <p className="text-muted-foreground">
+              Interactive Map Would Be Embedded Here
+            </p>
           </div>
         </div>
       </div>
 
       {/* FAQ Section */}
       <div className="mb-8 sm:mb-16 max-w-3xl mx-auto">
-        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-8">Frequently Asked Questions</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4 sm:mb-8">
+          Frequently Asked Questions
+        </h2>
         <div className="space-y-4">
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-base sm:text-lg font-medium mb-2">What are your business hours?</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-2">
+                What are your business hours?
+              </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
-                Our office is open Monday through Friday from 9am to 5pm, Saturday from 10am to 2pm, and closed on
-                Sundays.
+                Our office is open Monday through Friday from 9am to 5pm,
+                Saturday from 10am to 2pm, and closed on Sundays.
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-base sm:text-lg font-medium mb-2">How quickly do you respond to inquiries?</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-2">
+                How quickly do you respond to inquiries?
+              </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
-                We aim to respond to all inquiries within 24 business hours. For urgent matters, please call our office
-                directly.
+                We aim to respond to all inquiries within 24 business hours. For
+                urgent matters, please call our office directly.
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
-              <h3 className="text-base sm:text-lg font-medium mb-2">Do you offer virtual meetings?</h3>
+              <h3 className="text-base sm:text-lg font-medium mb-2">
+                Do you offer virtual meetings?
+              </h3>
               <p className="text-muted-foreground text-sm sm:text-base">
-                Yes, we offer virtual meetings via Zoom, Google Meet, or Microsoft Teams. Please indicate your
-                preference when scheduling.
+                Yes, we offer virtual meetings via Zoom, Google Meet, or
+                Microsoft Teams. Please indicate your preference when
+                scheduling.
               </p>
             </CardContent>
           </Card>
         </div>
       </div>
-
     </div>
-  )
+  );
 }

@@ -17,6 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Partners } from "@/components/contact/partners";
+import { Testimonials } from "@/components/contact/testimonial";
+import { fetchPartners, fetchTestimonials } from "@/utils/api-mock";
 
 // Fetch function to retrieve About Us content
 async function fetchAboutUsContent() {
@@ -65,6 +69,10 @@ export default function AboutUsPage() {
   const [aboutData, setAboutData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [partnersData, setPartnersData] = useState<any[]>([]);
+  const [testimonialsData, setTestimonialsData] = useState<any[]>([]);
+  const [isLoadingPartners, setIsLoadingPartners] = useState(true);
+  const [isLoadingTestimonials, setIsLoadingTestimonials] = useState(true);
 
   useEffect(() => {
     const loadAboutData = async () => {
@@ -80,7 +88,24 @@ export default function AboutUsPage() {
       }
     };
 
+    const loadPartnersAndTestimonials = async () => {
+      try {
+        const [partners, testimonials] = await Promise.all([
+          fetchPartners(),
+          fetchTestimonials(),
+        ]);
+        setPartnersData(partners);
+        setTestimonialsData(testimonials);
+      } catch (err) {
+        console.error("Failed to fetch partners and testimonials:", err);
+      } finally {
+        setIsLoadingPartners(false);
+        setIsLoadingTestimonials(false);
+      }
+    };
+
     loadAboutData();
+    loadPartnersAndTestimonials();
   }, []);
 
   // Function to render the appropriate icon
@@ -363,35 +388,73 @@ export default function AboutUsPage() {
         <h2 className="text-2xl sm:text-3xl font-bold text-center mb-8">
           Awards & Recognition
         </h2>
-
         {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-48 w-full" />
             ))}
           </div>
         ) : aboutData?.awards?.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {aboutData.awards.map((award: any) => (
               <Card key={award.id} className="overflow-hidden">
-                <CardContent className="p-6 flex items-start">
-                  <div className="mr-4 flex-shrink-0">
-                    <div className="h-16 w-16 rounded-full overflow-hidden bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                      <Award className="h-8 w-8 text-purple-600" />
-                    </div>
+                <div className="relative h-48">
+                  <Image
+                    src={award.image || "/placeholder.svg"}
+                    alt={award.title}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+                <CardContent className="p-6">
+                  <div className="flex items-center mb-4">
+                    <Award className="h-6 w-6 text-purple-600 mr-2" />
+                    <h3 className="text-xl font-bold">{award.title}</h3>
                   </div>
-                  <div>
-                    <h3 className="font-bold">{award.title}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {award.organization}, {award.year}
-                    </p>
-                    <p className="text-sm mt-2">{award.description}</p>
+                  <p className="text-muted-foreground">{award.description}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {award.tags?.map((tag: string) => (
+                      <Badge key={tag} variant="secondary">
+                        {tag}
+                      </Badge>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : null}
+      </div>
+
+      <div className="mb-16">
+        <Tabs defaultValue="partners" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6 sm:mb-8">
+            <TabsTrigger value="partners">Our Partners</TabsTrigger>
+            <TabsTrigger value="testimonials">Client Testimonials</TabsTrigger>
+          </TabsList>
+          <TabsContent value="partners">
+            {isLoadingPartners ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton key={i} className="h-48 w-full" />
+                ))}
+              </div>
+            ) : (
+              <Partners partnersData={partnersData} />
+            )}
+          </TabsContent>
+          <TabsContent value="testimonials">
+            {isLoadingTestimonials ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Skeleton key={i} className="h-48 w-full" />
+                ))}
+              </div>
+            ) : (
+              <Testimonials testimonialsData={testimonialsData} />
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
 
       <div className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 rounded-xl p-8 mb-16">

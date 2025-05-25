@@ -16,7 +16,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Skeleton } from "@/components/ui/skeleton"
-import { type OrderFilters } from "@/utils/api"
+import { type OrderFilters } from "@/utils/typeDefinitions"
 import { OrdersFilter } from "@/components/orders/orders-filter"
 
 export function OrdersTable() {

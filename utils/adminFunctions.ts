@@ -82,7 +82,7 @@ export async function fetchUsers(page: number, limit: number, filters: any) {
     return { success: response.ok, message: data.message };
   }
 
-  export async function getUserRole(): Promise<"superadmin" | "admin" | null> {
+  export async function getUserRole(): Promise<"admin" | "superAdmin" | "superadmin"  | null> {
     try {
       // Fetch the session details to get the current user's email
       const sessionRes = await fetch("/api/auth/session");

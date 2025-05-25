@@ -44,11 +44,10 @@ export function DateRangePicker({ value, onValueChange, className }: DateRangePi
             mode="range"
             defaultMonth={value?.from}
             selected={value}
-            onSelect={(range) => {
+            onSelect={(range: DateRange) => {
               if (range) onValueChange(range)
-            }}
-            numberOfMonths={2}
-          />
+            } }
+            numberOfMonths={2} className={undefined} classNames={undefined}          />
         </PopoverContent>
       </Popover>
     </div>

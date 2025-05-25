@@ -41,7 +41,7 @@ const orderSchema = new mongoose.Schema({
       price: { type: Number, required: true },
       delivery: {
         type: String,
-        enum: ["FLAT", "PERPIECS", "PERKG", "FREE"],
+        enum: ["PERPIECE", "PERKG", "FREE", "PERKM", "FLAT"],
         required: true,
       },
       deliveryPrice: { type: Number, required: true },
@@ -86,7 +86,12 @@ const orderSchema = new mongoose.Schema({
     coordinates: { type: [Number], required: true },
   },
   transactionRef: { type: String, required: true },
-  reference: { type: String, required: false },
+  chapaRef: {
+    type: String,
+    required: function () {
+      return this.paymentStatus === "Paid";
+    },
+  },
   orderDate: { type: Date, default: Date.now },
   refundReason: { type: String, required: false },
 });

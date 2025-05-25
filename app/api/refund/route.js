@@ -2,7 +2,7 @@ import Order from '@/models/Order';
 import Product from '@/models/Product';
 import { isAdminOrSuperAdmin } from '@/utils/functions';
 
-const CHAPA_SECRET_KEY = "CHASECK_TEST-PIpkm0VxDsgQJcS6nXB3K9Ttx98AzUZ8"
+const CHAPA_SECRET_KEY = process.env.CHAPA_SECRET_KEY;
 
 export async function POST(req) {
     try {
