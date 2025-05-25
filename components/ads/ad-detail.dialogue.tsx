@@ -163,7 +163,7 @@ export function AdDetailDialog({
                       Ad Price:
                     </span>
                     <p className="font-medium text-green-600">
-                      ${ad.price.toFixed(2)}
+                      ${ad.adPrice.toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -287,7 +287,7 @@ export function AdDetailDialog({
 
                 <div className="h-40 md:h-64 rounded-md overflow-hidden border">
                   <LocationMap
-                    location={ad.location.coordinates}
+                    location={ad.location.coordinates} // [lng, lat]
                     title="Ad Location"
                   />
                 </div>
