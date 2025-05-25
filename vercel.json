@@ -1,9 +1,0 @@
-{
-    "cron": [
-      {
-        "path": "/api/deactivateAds",
-        "schedule": "0 * * * *"
-      }
-    ]
-}
-  
