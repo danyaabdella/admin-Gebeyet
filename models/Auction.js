@@ -1,9 +1,10 @@
+
 import mongoose from 'mongoose'
 
 const auctionSchema = new mongoose.Schema({
-    auctionTitle: { type: String, required: false },
-    merchantName: { type: String, required: true },
-    category: { type: String, required: true },
+    auctionTitle: {type: String, required: true},
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+    merchantId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     description: String,
     condition: { type: String, enum: ['new', 'used'], required: true },
     startTime: { type: Date, required: true },
@@ -12,10 +13,6 @@ const auctionSchema = new mongoose.Schema({
     startingPrice: { type: Number, required: true },
     reservedPrice: { type: Number, required: true },
     bidIncrement: { type: Number, default: 1 },
-    rejectionReason: {
-        category: { type: String },
-        description: { type: String }
-    },
     status: { 
         type: String, 
         enum: ['pending', 'active', 'ended', 'cancelled'],
@@ -26,11 +23,10 @@ const auctionSchema = new mongoose.Schema({
         enum: ['pending', 'approved', 'rejected'],
         default: 'pending'
     },
-    paymentDuration: { type: Number, default: 24 }, 
+    paymentDuration: { type: Number, default: 24 }, // in hours
     totalQuantity: { type: Number, default: 1 },
     remainingQuantity: { type: Number },
-    buyByParts: { type: Boolean, default: false },
-    category: { type: String, required: false }
+    category: { type: String, required: true }
 }, { timestamps: true })
 
 auctionSchema.pre('save', function(next) {
@@ -40,19 +36,18 @@ auctionSchema.pre('save', function(next) {
     
     // Auto-update status based on timestamps
     const now = new Date()
-    if (this.endTime < now) {
+    if (this.endTime < now && this.status !== 'ended') {
         this.status = 'ended'
     } else if (this.startTime <= now && this.status === 'pending') {
         this.status = 'active'
     }
-    next()
+    next();
 })
 
 // Indexes for better query performance
-auctionSchema.index({ merchantId: 1, status: 1 })
-auctionSchema.index({ status: 1, endTime: 1 })
-auctionSchema.index({ category: 1, status: 1 })
+auctionSchema.index({ merchantId: 1, status: 1 });
+auctionSchema.index({ status: 1, endTime: 1 });
+auctionSchema.index({ category: 1, status: 1 });
 
-const Auction = mongoose.models.Auction || mongoose.model('Auction', auctionSchema);
-
-export default Auction;
+const Auction = mongoose.models.Auction || mongoose.model('Auction', auctionSchema)
+export default Auction

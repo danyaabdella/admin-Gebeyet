@@ -1,6 +1,5 @@
 export async function fetchProducts(page: number, limit: number, filters: {
   isBanned: boolean | undefined; 
-  isDeleted: boolean | undefined; 
   phrase: string | undefined; 
   categoryId: string | undefined; 
   minPrice: number | undefined; 
@@ -18,7 +17,6 @@ export async function fetchProducts(page: number, limit: number, filters: {
   const queryParams = new URLSearchParams({
     page: page.toString(),
     limit: limit.toString(),
-    ...(filters.isDeleted !== undefined && { isDeleted: filters.isDeleted.toString() }),
     ...(filters.isBanned !== undefined && { isBanned: filters.isBanned.toString() }),
     ...(filters.phrase && { phrase: filters.phrase }),
     ...(filters.categoryId && { categoryId: filters.categoryId }),

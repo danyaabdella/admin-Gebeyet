@@ -27,7 +27,6 @@ interface RefundDialogProps {
 }
 
 export function RefundDialog({
-  orderId,
   amount,
   reference,
   open,
@@ -51,7 +50,6 @@ export function RefundDialog({
         body: JSON.stringify({
           tx_ref: reference,
           reason: reason,
-          amount: amount,
         }),
       });
 

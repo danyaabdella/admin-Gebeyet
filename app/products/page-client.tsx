@@ -113,8 +113,12 @@ export default function ProductsPageClient() {
         setIsLoadingData(true);
         try {
           const filters = {
-            isDeleted: selectedTab === "deleted" ? true : undefined,
-            isBanned: selectedTab === "banned" ? true : undefined,
+            isBanned:
+              selectedTab === "banned"
+                ? true
+                : selectedTab === "active"
+                ? false
+                : undefined,
             phrase: searchQuery || undefined,
             categoryId:
               selectedCategory !== "all" ? selectedCategory : undefined,
@@ -219,7 +223,7 @@ export default function ProductsPageClient() {
     productId: string,
     additionalData: Record<string, any> = {}
   ) => {
-    console.log("Product actions: ", type);
+    console.log("Product actions and ID: ", type, productId);
     setIsLoading(true);
     try {
       let response;
@@ -333,7 +337,7 @@ export default function ProductsPageClient() {
             </div>
             <div className="flex items-center gap-2">
               <Select
-                defaultValue="all"
+                defaultValue="active"
                 value={selectedTab}
                 onValueChange={handleTabChange}
               >
@@ -344,7 +348,6 @@ export default function ProductsPageClient() {
                   <SelectItem value="all">All Products</SelectItem>
                   <SelectItem value="active">Active Products</SelectItem>
                   <SelectItem value="banned">Banned Products</SelectItem>
-                  <SelectItem value="deleted">Deleted Products</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -540,17 +543,17 @@ export default function ProductsPageClient() {
             <CardHeader className="p-4 text-sm md:text-base lg:text-lg">
               <CardTitle>
                 {selectedTab === "active"
-                  ? "All Products"
+                  ? "Active Products"
                   : selectedTab === "banned"
                   ? "Banned Products"
-                  : "Deleted Products (Trash)"}
+                  : "All Products"}
               </CardTitle>
               <CardDescription className="hidden md:block">
                 {selectedTab === "active"
                   ? "Manage all active products in the marketplace system"
                   : selectedTab === "banned"
                   ? "View and manage banned products"
-                  : "View and restore products moved to the trash"}
+                  : "View all products in the marketplace system"}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">

@@ -8,7 +8,7 @@ export async function GET(req) {
   const page = parseInt(url.searchParams.get("page")) || 1;
   const limit = parseInt(url.searchParams.get("limit")) || 30;
   const skip = (page - 1) * limit;
-  const isDeleted = url.searchParams.get("isDeleted") === "true";
+  const isBanned = url.searchParams.get("isBanned") === "true";
   const phrase = url.searchParams.get("phrase") || "";
   const center = url.searchParams.get("center");
   const radius = parseInt(url.searchParams.get("radius")) || 20000; // Default 20km in meters
@@ -16,16 +16,22 @@ export async function GET(req) {
   // Additional filters
   const minPrice = parseFloat(url.searchParams.get("minPrice")) || undefined;
   const maxPrice = parseFloat(url.searchParams.get("maxPrice")) || undefined;
-  const minQuantity = parseInt(url.searchParams.get("minQuantity")) || undefined;
-  const maxQuantity = parseInt(url.searchParams.get("maxQuantity")) || undefined;
-  const minAvgReview = parseFloat(url.searchParams.get("minAvgReview")) || undefined;
-  const maxAvgReview = parseFloat(url.searchParams.get("maxAvgReview")) || undefined;
+  const minQuantity =
+    parseInt(url.searchParams.get("minQuantity")) || undefined;
+  const maxQuantity =
+    parseInt(url.searchParams.get("maxQuantity")) || undefined;
+  const minAvgReview =
+    parseFloat(url.searchParams.get("minAvgReview")) || undefined;
+  const maxAvgReview =
+    parseFloat(url.searchParams.get("maxAvgReview")) || undefined;
   const delivery = url.searchParams.get("delivery") || undefined;
-  const minDeliveryPrice = parseFloat(url.searchParams.get("minDeliveryPrice")) || undefined;
-  const maxDeliveryPrice = parseFloat(url.searchParams.get("maxDeliveryPrice")) || undefined;
+  const minDeliveryPrice =
+    parseFloat(url.searchParams.get("minDeliveryPrice")) || undefined;
+  const maxDeliveryPrice =
+    parseFloat(url.searchParams.get("maxDeliveryPrice")) || undefined;
   const categoryId = url.searchParams.get("categoryId") || undefined;
 
-  let filter = { isDeleted };
+  let filter = { isBanned };
   if (phrase) filter.$text = { $search: phrase };
   if (minPrice) filter.price = { ...filter.price, $gte: minPrice };
   if (maxPrice) filter.price = { ...filter.price, $lte: maxPrice };
@@ -37,10 +43,13 @@ export async function GET(req) {
     if (maxAvgReview) filter.avgRating.$lte = maxAvgReview;
   }
   if (delivery && delivery !== "all") filter.delivery = delivery.toUpperCase();
-  if (minDeliveryPrice) filter.deliveryPrice = { ...filter.deliveryPrice, $gte: minDeliveryPrice };
-  if (maxDeliveryPrice) filter.deliveryPrice = { ...filter.deliveryPrice, $lte: maxDeliveryPrice };
-  if (categoryId && categoryId !== "all") filter["category.categoryId"] = categoryId;
-  
+  if (minDeliveryPrice)
+    filter.deliveryPrice = { ...filter.deliveryPrice, $gte: minDeliveryPrice };
+  if (maxDeliveryPrice)
+    filter.deliveryPrice = { ...filter.deliveryPrice, $lte: maxDeliveryPrice };
+  if (categoryId && categoryId !== "all")
+    filter["category.categoryId"] = categoryId;
+
   let aggregationSteps = [];
 
   if (center) {
@@ -62,7 +71,9 @@ export async function GET(req) {
     $facet: {
       metadata: [{ $count: "total" }],
       data: [
-        { $sort: phrase ? { score: { $meta: "textScore" } } : { createdAt: -1 } },
+        {
+          $sort: phrase ? { score: { $meta: "textScore" } } : { createdAt: -1 },
+        },
         { $skip: skip },
         { $limit: limit },
       ],
@@ -75,7 +86,11 @@ export async function GET(req) {
   const totalPages = Math.ceil(total / limit);
 
   return new Response(
-    JSON.stringify({ products, total, pagination: { totalPages, page, limit } }),
+    JSON.stringify({
+      products,
+      total,
+      pagination: { totalPages, page, limit },
+    }),
     { status: 200 }
   );
 }
@@ -86,7 +101,9 @@ export async function PUT(req) {
 
   if (adminInfo?.isBanned || adminInfo?.isDeleted) {
     return new Response(
-      JSON.stringify({ error: "You cannot perform this operation temporarily" }),
+      JSON.stringify({
+        error: "You cannot perform this operation temporarily",
+      }),
       { status: 403 }
     );
   }
@@ -94,13 +111,17 @@ export async function PUT(req) {
   const { _id, isBanned, banReason, banDescription } = await req.json();
 
   if (!_id) {
-    return new Response(JSON.stringify({ error: "Product ID is required" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "Product ID is required" }), {
+      status: 400,
+    });
   }
 
   try {
     const product = await Product.findById(_id);
     if (!product) {
-      return new Response(JSON.stringify({ error: "Product not found" }), { status: 404 });
+      return new Response(JSON.stringify({ error: "Product not found" }), {
+        status: 404,
+      });
     }
 
     if (typeof isBanned === "boolean") {
@@ -129,54 +150,77 @@ export async function PUT(req) {
       );
     }
 
-    return new Response(JSON.stringify({ error: "No valid update provided" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "No valid update provided" }), {
+      status: 400,
+    });
   } catch (error) {
     console.error(error);
-    return new Response(
-      JSON.stringify({ error: "Failed to update product" }),
-      { status: 500 }
-    );
+    return new Response(JSON.stringify({ error: "Failed to update product" }), {
+      status: 500,
+    });
   }
 }
 
 export async function DELETE(req) {
   await isAdminOrSuperAdmin();
+
   const adminInfo = await userInfo();
 
   if (adminInfo?.isBanned || adminInfo?.isDeleted) {
-    return new Response(JSON.stringify({ error: "You cannot perform this operation temporarily" }), {
-      status: 403,
-    });
+    return new Response(
+      JSON.stringify({
+        error: "You cannot perform this operation temporarily",
+      }),
+      {
+        status: 403,
+      }
+    );
   }
 
   const url = new URL(req.url);
-  const _id = url.searchParams.get("_id"); // Changed to query param for DELETE consistency
+  const { _id } = await req.json();
 
   if (!_id) {
-    return new Response(JSON.stringify({ error: "Product ID is required" }), { status: 400 });
+    return new Response(JSON.stringify({ error: "Product ID is required" }), {
+      status: 400,
+    });
   }
 
   try {
     const product = await Product.findById(_id);
+
     if (!product) {
-      return new Response(JSON.stringify({ error: "Product not found" }), { status: 404 });
+      return new Response(JSON.stringify({ error: "Product not found" }), {
+        status: 404,
+      });
     }
 
+    await Product.findByIdAndDelete(_id);
+
+    return new Response(
+      JSON.stringify({ message: "Product permanently deleted" }),
+      { status: 200 }
+    );
+
+    // To use trash logic, uncomment the following block:
     // if (product.isDeleted && product.trashDate) {
-      await Product.findByIdAndDelete(_id);
-      return new Response(JSON.stringify({ message: "Product permanently deleted" }), { status: 200 });
+    //   await Product.findByIdAndDelete(_id);
+    //   console.log("[DELETE] Permanently deleted trashed product:", _id);
+    //   return new Response(JSON.stringify({ message: "Product permanently deleted" }), { status: 200 });
     // } else {
     //   product.isDeleted = true;
     //   product.trashDate = new Date();
     //   await product.save();
+    //   console.log("[DELETE] Product moved to trash:", _id);
     //   return new Response(
     //     JSON.stringify({ message: "Product moved to trash. It will be permanently deleted after 30 days" }),
     //     { status: 200 }
     //   );
     // }
   } catch (error) {
-    console.error("Error in DELETE handler:", error.message);
-    return new Response(JSON.stringify({ error: "Internal server error" }), { status: 500 });
+    console.error("[DELETE] Error in handler:", error.message);
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+    });
   }
 }
-
