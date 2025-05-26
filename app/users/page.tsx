@@ -54,6 +54,15 @@ export default function UsersPage() {
   const [approvalStatusFilter, setApprovalStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState<{
+    ban?: boolean;
+    unban?: boolean;
+    delete?: boolean;
+    restore?: boolean;
+    permanentDelete?: boolean;
+    approve?: boolean;
+    reject?: boolean;
+  }>({});
   const [pagination, setPagination] = useState({
     total: 0,
     page: 1,
@@ -266,6 +275,9 @@ export default function UsersPage() {
     actionData?: Record<string, any>
   ) => {
     try {
+      // Set loading state for the specific action
+      setIsActionLoading((prev) => ({ ...prev, [type]: true }));
+
       let result;
       switch (type) {
         case "approve":
@@ -395,6 +407,9 @@ export default function UsersPage() {
           description: `Failed to ${type} user. Please try again.`,
         });
       }
+    } finally {
+      // Clear loading state for the specific action
+      setIsActionLoading((prev) => ({ ...prev, [type]: false }));
     }
   };
 
@@ -583,6 +598,7 @@ export default function UsersPage() {
                   <Button
                     variant="outline"
                     onClick={() => setShowBanDialog(null)}
+                    disabled={isActionLoading.ban}
                   >
                     Cancel
                   </Button>
@@ -603,9 +619,9 @@ export default function UsersPage() {
                       });
                       setShowBanDialog(null);
                     }}
-                    disabled={!selectedBanReason || isLoading}
+                    disabled={!selectedBanReason || isActionLoading.ban}
                   >
-                    Confirm Ban
+                    {isActionLoading.ban ? "Loading..." : "Confirm Ban"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -640,6 +656,7 @@ export default function UsersPage() {
                   <Button
                     variant="outline"
                     onClick={() => setShowApproveDialog(null)}
+                    disabled={isActionLoading.approve}
                   >
                     Cancel
                   </Button>
@@ -659,9 +676,9 @@ export default function UsersPage() {
                       });
                       setShowApproveDialog(null);
                     }}
-                    disabled={!uniqueTin || isLoading}
+                    disabled={!uniqueTin || isActionLoading.approve}
                   >
-                    Confirm Approve
+                    {isActionLoading.approve ? "Loading..." : "Confirm Approve"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -717,6 +734,7 @@ export default function UsersPage() {
                   <Button
                     variant="outline"
                     onClick={() => setShowRejectDialog(null)}
+                    disabled={isActionLoading.reject}
                   >
                     Cancel
                   </Button>
@@ -737,9 +755,13 @@ export default function UsersPage() {
                       });
                       setShowRejectDialog(null);
                     }}
-                    disabled={!selectedRejectionReason || isLoading}
+                    disabled={
+                      !selectedRejectionReason || isActionLoading.reject
+                    }
                   >
-                    Confirm Rejection
+                    {isActionLoading.reject
+                      ? "Loading..."
+                      : "Confirm Rejection"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -763,6 +785,11 @@ export default function UsersPage() {
                   <Button
                     variant="outline"
                     onClick={() => setShowConfirmDialog(null)}
+                    disabled={
+                      isActionLoading[
+                        showConfirmDialog.type as keyof typeof isActionLoading
+                      ]
+                    }
                   >
                     Cancel
                   </Button>
@@ -781,9 +808,17 @@ export default function UsersPage() {
                       );
                       setShowConfirmDialog(null);
                     }}
-                    disabled={isLoading}
+                    disabled={
+                      isActionLoading[
+                        showConfirmDialog.type as keyof typeof isActionLoading
+                      ]
+                    }
                   >
-                    Confirm
+                    {isActionLoading[
+                      showConfirmDialog.type as keyof typeof isActionLoading
+                    ]
+                      ? "Loading..."
+                      : "Confirm"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -807,6 +842,7 @@ export default function UsersPage() {
                   <Button
                     variant="outline"
                     onClick={() => setShowRestoreDialog(null)}
+                    disabled={isActionLoading.restore}
                   >
                     Cancel
                   </Button>
@@ -815,9 +851,9 @@ export default function UsersPage() {
                       await handleConfirmAction("restore", showRestoreDialog);
                       setShowRestoreDialog(null);
                     }}
-                    disabled={isLoading}
+                    disabled={isActionLoading.restore}
                   >
-                    Confirm
+                    {isActionLoading.restore ? "Loading..." : "Confirm"}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -842,6 +878,7 @@ export default function UsersPage() {
                   <Button
                     variant="outline"
                     onClick={() => setShowPermanentDeleteDialog(null)}
+                    disabled={isActionLoading.permanentDelete}
                   >
                     Cancel
                   </Button>
@@ -854,9 +891,11 @@ export default function UsersPage() {
                       );
                       setShowPermanentDeleteDialog(null);
                     }}
-                    disabled={isLoading}
+                    disabled={isActionLoading.permanentDelete}
                   >
-                    Confirm Delete
+                    {isActionLoading.permanentDelete
+                      ? "Loading..."
+                      : "Confirm Delete"}
                   </Button>
                 </DialogFooter>
               </DialogContent>

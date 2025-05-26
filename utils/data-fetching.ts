@@ -305,17 +305,57 @@ export async function fetchRevenueDistributionData() {
 }
 
 // Mock category revenue data
-export async function fetchCategoryRevenueData() {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 500))
-  return [
-    { label: "Electronics", value: 8000, color: "rgba(59, 130, 246, 0.7)" },
-    { label: "Clothing", value: 6000, color: "rgba(16, 185, 129, 0.7)" },
-    { label: "Home & Garden", value: 4000, color: "rgba(249, 115, 22, 0.7)" },
-    { label: "Beauty", value: 3000, color: "rgba(255, 159, 64, 0.7)" },
-    { label: "Toys", value: 2000, color: "rgba(153, 102, 255, 0.7)" },
-  ]
+function generateColor(index: number) {
+  const hue = (index * 47) % 360; // Spread hues evenly
+  const color = `hsl(${hue}, 70%, 60%)`;
+  console.log(`Generated color for index ${index}: ${color}`);
+  return color;
 }
+
+export async function fetchCategoryRevenueData() {
+  try {
+    const res = await fetch('/api/order');
+    const data = await res.json();
+
+    if (!data.success) {
+      console.error("Order fetch unsuccessful.");
+      throw new Error('Failed to fetch orders');
+    }
+
+    const categoryMap = new Map();
+
+    data.orders.forEach((order: { products: any[] }, orderIndex: number) => {
+      order.products.forEach((product, productIndex) => {
+        const category = product.categoryName || 'Unknown';
+        const total = product.price * product.quantity;
+
+        if (categoryMap.has(category)) {
+          const current = categoryMap.get(category);
+          categoryMap.set(category, current + total);
+        } else {
+          categoryMap.set(category, total);
+        }
+      });
+    });
+
+    let index = 0;
+    const categoryRevenueData = Array.from(categoryMap.entries()).map(([label, value]) => {
+      const color = generateColor(index);
+      return {
+        label,
+        value,
+        color,
+      };
+      index++;
+    });
+
+    return categoryRevenueData;
+  } catch (error) {
+    console.error('Error fetching category revenue:', error);
+    return [];
+  }
+}
+
 
 // Mock report generation
 export async function generateReport(period: string, format: string) {

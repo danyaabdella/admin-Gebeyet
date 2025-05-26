@@ -1,5 +1,5 @@
 import Product from "@/models/Product";
-import { isAdminOrSuperAdmin, userInfo } from "@/utils/functions";
+import { isAdminOrSuperAdmin } from "@/utils/functions";
 
 export async function GET(req) {
   await isAdminOrSuperAdmin();
@@ -11,7 +11,7 @@ export async function GET(req) {
   const isBanned = url.searchParams.get("isBanned") === "true";
   const phrase = url.searchParams.get("phrase") || "";
   const center = url.searchParams.get("center");
-  const radius = parseInt(url.searchParams.get("radius")) || 20000; // Default 20km in meters
+  const radius = parseInt(url.searchParams.get("radius")) || 20000;
 
   // Additional filters
   const minPrice = parseFloat(url.searchParams.get("minPrice")) || undefined;
@@ -32,23 +32,43 @@ export async function GET(req) {
   const categoryId = url.searchParams.get("categoryId") || undefined;
 
   let filter = { isBanned };
-  if (phrase) filter.$text = { $search: phrase };
+
+  // Case-insensitive, partial match for productName, brand, description
+  if (phrase) {
+    const regex = new RegExp(phrase, "i");
+    filter.$or = [
+      { productName: regex },
+      { brand: regex },
+      { description: regex },
+    ];
+  }
+
   if (minPrice) filter.price = { ...filter.price, $gte: minPrice };
   if (maxPrice) filter.price = { ...filter.price, $lte: maxPrice };
   if (minQuantity) filter.quantity = { ...filter.quantity, $gte: minQuantity };
   if (maxQuantity) filter.quantity = { ...filter.quantity, $lte: maxQuantity };
+
   if (minAvgReview || maxAvgReview) {
     filter.avgRating = {};
     if (minAvgReview) filter.avgRating.$gte = minAvgReview;
     if (maxAvgReview) filter.avgRating.$lte = maxAvgReview;
   }
-  if (delivery && delivery !== "all") filter.delivery = delivery.toUpperCase();
-  if (minDeliveryPrice)
+
+  if (delivery && delivery !== "all") {
+    filter.delivery = delivery.toUpperCase();
+  }
+
+  if (minDeliveryPrice) {
     filter.deliveryPrice = { ...filter.deliveryPrice, $gte: minDeliveryPrice };
-  if (maxDeliveryPrice)
+  }
+
+  if (maxDeliveryPrice) {
     filter.deliveryPrice = { ...filter.deliveryPrice, $lte: maxDeliveryPrice };
-  if (categoryId && categoryId !== "all")
+  }
+
+  if (categoryId && categoryId !== "all") {
     filter["category.categoryId"] = categoryId;
+  }
 
   let aggregationSteps = [];
 
@@ -70,13 +90,7 @@ export async function GET(req) {
   aggregationSteps.push({
     $facet: {
       metadata: [{ $count: "total" }],
-      data: [
-        {
-          $sort: phrase ? { score: { $meta: "textScore" } } : { createdAt: -1 },
-        },
-        { $skip: skip },
-        { $limit: limit },
-      ],
+      data: [{ $sort: { createdAt: -1 } }, { $skip: skip }, { $limit: limit }],
     },
   });
 

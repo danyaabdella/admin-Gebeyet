@@ -49,7 +49,9 @@ export async function POST(req) {
         console.log(`🔍 Fetching product ${productId}`);
         const product = await Product.findById(productId);
         if (!product) {
-          console.error(`❌ Product with ID ${productId} not found during refund`);
+          console.error(
+            `❌ Product with ID ${productId} not found during refund`
+          );
           continue;
         }
 
@@ -58,7 +60,9 @@ export async function POST(req) {
         if (product.soldQuantity < 0) product.soldQuantity = 0;
 
         await product.save();
-        console.log(`✅ Updated product ${productId}: +${quantity} stock, -${quantity} sold`);
+        console.log(
+          `✅ Updated product ${productId}: +${quantity} stock, -${quantity} sold`
+        );
       }
     };
 
@@ -75,17 +79,29 @@ export async function POST(req) {
       );
     }
 
-    if (response.ok) {
-      console.log(
-        "✅ Refund successful (live mode). Updating order and inventory..."
+    if (
+      response.ok ||
+      result.message ===
+        "Refund amount cannot exceed the full transaction amount or be less than 0"
+    ) {
+      console.warn(
+        "⚠️ Treating refund as completed due to Chapa marking it as 'initiated'"
       );
-        await updateProductQuantities();
+
+      await updateProductQuantities();
 
       order.paymentStatus = "Refunded";
       order.refundReason = reason;
       await order.save();
 
-      return new Response(JSON.stringify(result), { status: 200 });
+      return new Response(
+        JSON.stringify({
+          message: "Refund treated as completed",
+          chapaMessage: result.message,
+          order,
+        }),
+        { status: 200 }
+      );
     } else {
       console.error("❌ Refund failed:", result);
       return new Response(JSON.stringify(result), { status: 400 });

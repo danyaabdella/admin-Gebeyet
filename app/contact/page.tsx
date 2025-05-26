@@ -70,7 +70,7 @@ export default function ContactPage() {
                   href="mailto:hello@example.com"
                   className="text-emerald-600 dark:text-emerald-400 hover:underline mt-1 block"
                 >
-                  hello@example.com
+                  support@bahirmart.com
                 </a>
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function ContactPage() {
                   href="tel:+15551234567"
                   className="text-cyan-600 dark:text-cyan-400 hover:underline mt-1 block"
                 >
-                  +1 (555) 123-4567
+                  +251 975 40 9859
                 </a>
               </div>
             </div>
@@ -103,9 +103,9 @@ export default function ContactPage() {
                   Come say hello at our office.
                 </p>
                 <p className="text-muted-foreground text-sm mt-1">
-                  123 Business Avenue, Suite 500
+                  Belay Zeleke, Suite 500
                   <br />
-                  San Francisco, CA 94107
+                  Bahir Dar, CA 6000
                 </p>
               </div>
             </div>
@@ -119,10 +119,7 @@ export default function ContactPage() {
                   Business Hours
                 </h3>
                 <p className="text-muted-foreground text-sm">
-                  Monday - Friday: 9am - 5pm
-                </p>
-                <p className="text-muted-foreground text-sm">
-                  Saturday: 10am - 2pm
+                  Monday - Saturday: 9am - 5pm
                 </p>
                 <p className="text-muted-foreground text-sm">Sunday: Closed</p>
               </div>

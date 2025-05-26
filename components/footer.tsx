@@ -52,7 +52,7 @@ export function Footer() {
   const handleSubscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Starting subscription process for email:", email);
-    
+
     if (!email) {
       console.log("No email provided");
       toast({
@@ -162,7 +162,7 @@ export function Footer() {
               <h4 className="font-bold text-lg mb-4">Marketplace Admin</h4>
               <p className="text-muted-foreground text-sm mb-4">
                 Empowering businesses with advanced marketplace management
-                solutions since 2020.
+                solutions since 2024.
               </p>
               <div className="flex space-x-3">
                 <a
@@ -331,9 +331,9 @@ export function Footer() {
                 <li className="flex items-start">
                   <MapPin className="h-5 w-5 text-muted-foreground mr-2 mt-0.5" />
                   <span className="text-sm text-muted-foreground">
-                    123 Business Avenue, Suite 500
+                    Belay Zeleke, Suite 500
                     <br />
-                    San Francisco, CA 94107
+                    Bahir Dar, CA 6000
                   </span>
                 </li>
                 <li className="flex items-center">
@@ -342,7 +342,7 @@ export function Footer() {
                     href="tel:+15551234567"
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    +1 (555) 123-4567
+                    +251 975 40 9859
                   </a>
                 </li>
                 <li className="flex items-center">
@@ -351,7 +351,7 @@ export function Footer() {
                     href="mailto:hello@example.com"
                     className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    hello@example.com
+                    support@bahirmart.com
                   </a>
                 </li>
               </ul>
