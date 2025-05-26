@@ -206,27 +206,6 @@ export default function PrivacyPolicyPage() {
         </div>
       )}
 
-      {/* Cookie policy alert */}
-      <div className="mt-8 sm:mt-12 p-4 sm:p-6 border border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20 dark:border-yellow-800 rounded-lg">
-        <div className="flex flex-col sm:flex-row sm:items-start">
-          <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-500 mb-3 sm:mb-0 sm:mr-4 sm:mt-1" />
-          <div>
-            <h3 className="text-lg font-semibold mb-2">Cookie Policy</h3>
-            <p className="text-muted-foreground mb-4 text-sm sm:text-base">
-              Our website uses cookies to enhance your browsing experience, analyze site traffic, and personalize
-              content. By continuing to use our site, you consent to our use of cookies in accordance with our Cookie
-              Policy.
-            </p>
-            <Link href="/cookies">
-              <Button variant="outline" size="sm" className="group">
-                Learn More About Cookies
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
       {/* Contact section */}
       <div className="mt-8 sm:mt-12 flex justify-center">
         <div className="rounded-lg bg-muted p-4 sm:p-8 max-w-2xl w-full">

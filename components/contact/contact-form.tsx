@@ -79,7 +79,7 @@ export function ContactForm() {
             id="email"
             name="email"
             type="email"
-            placeholder="john@example.com"
+            placeholder="youremail@example.com"
             value={formData.email}
             onChange={handleChange}
             required
@@ -92,7 +92,7 @@ export function ContactForm() {
             id="phone"
             name="phone"
             type="tel"
-            placeholder="+1 (555) 123-4567"
+            placeholder="+251 *********"
             value={formData.phone}
             onChange={handleChange}
           />

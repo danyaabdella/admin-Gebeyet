@@ -56,6 +56,11 @@ export default function ProductsPageClient() {
     null
   );
   const [isLoading, setIsLoading] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState<{
+    ban?: boolean;
+    unban?: boolean;
+    delete?: boolean;
+  }>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [products, setProducts] = useState<ProductType[]>([]);
@@ -224,7 +229,7 @@ export default function ProductsPageClient() {
     additionalData: Record<string, any> = {}
   ) => {
     console.log("Product actions and ID: ", type, productId);
-    setIsLoading(true);
+    setIsActionLoading((prev) => ({ ...prev, [type]: true }));
     try {
       let response;
 
@@ -288,7 +293,7 @@ export default function ProductsPageClient() {
         description: `Failed to ${type} product. Please try again.`,
       });
     } finally {
-      setIsLoading(false);
+      setIsActionLoading((prev) => ({ ...prev, [type]: false }));
       setSelectedProduct(null);
     }
   };
@@ -673,7 +678,7 @@ export default function ProductsPageClient() {
               }
             )
           }
-          isLoading={isLoading}
+          isLoading={isActionLoading}
         />
       )}
       <Toaster />

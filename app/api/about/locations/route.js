@@ -3,7 +3,7 @@ import { connectToDB, isSuperAdmin } from "@/utils/functions";
 
 export async function GET() {
   await connectToDB();
-  await isSuperAdmin();
+  // await isSuperAdmin();
 
   try {
     const data = await Location.find();

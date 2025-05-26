@@ -33,6 +33,24 @@ export interface ProductType {
       merchantEmail: string;
     };
     isBanned: boolean;
+    description: string;
+    images: string[];
+    variant: string[];
+    size: string[];
+    brand: string;
+    location: {
+      type: string;
+      coordinates: number[];
+    };
+    delivery: "PERPIECE" | "PERKG" | "FREE" | "PERKM" | "FLAT";
+    deliveryPrice: number;
+    banReason?: {
+      reason: string;
+      description?: string;
+    };
+    bannedAt?: Date;
+    isDeleted: boolean;
+    trashDate: Date | null;
 }
 
 export interface ProductDetailsDialogProps {

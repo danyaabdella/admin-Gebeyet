@@ -19,7 +19,6 @@ import { RevenueChart } from "@/components/charts/revenue-chart"
 import { UserDistributionChart } from "@/components/charts/user-distribution-chart"
 import { RevenueDistributionChart } from "@/components/charts/revenue-distribution-chart"
 import { CategoryRevenueChart } from "@/components/charts/category-revenue-chart"
-import { TransactionTypeDistributionChart } from "@/components/charts/transaction-type-chart"
 import { OrderDistributionPieChart } from "@/components/charts/order-distribution-chart"
 import { Sale } from "@/utils/typeDefinitions"
 
