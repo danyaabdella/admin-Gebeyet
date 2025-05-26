@@ -434,44 +434,52 @@ export function ProductDetailsDialog({
         </Tabs>
 
         <DialogFooter className="flex-col sm:flex-row gap-2 mt-6">
-          {!product.isDeleted && (
-            <>
-              {!product.isBanned ? (
-                <Button
-                  variant="destructive"
-                  onClick={() => {
-                    setSelectedBanReason("");
-                    setBanDescription("");
-                    setShowBanConfirm(true);
-                  }}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto"
-                >
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Ban Product
-                </Button>
+          {!product.isBanned ? (
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setSelectedBanReason("");
+                setBanDescription("");
+                setShowBanConfirm(true);
+              }}
+              disabled={isLoading}
+              className="w-full sm:w-auto"
+            >
+              {isLoading ? (
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowUnbanConfirm(true)}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto"
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Unban Product
-                </Button>
+                <XCircle className="mr-2 h-4 w-4" />
               )}
-              <Button
-                variant="destructive"
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={isLoading}
-                className="w-full sm:w-auto"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Product
-              </Button>
-            </>
+              Ban Product
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => setShowUnbanConfirm(true)}
+              disabled={isLoading}
+              className="w-full sm:w-auto"
+            >
+              {isLoading ? (
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <RefreshCw className="mr-2 h-4 w-4" />
+              )}
+              Unban Product
+            </Button>
           )}
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteConfirm(true)}
+            disabled={isLoading}
+            className="w-full sm:w-auto"
+          >
+            {isLoading ? (
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="mr-2 h-4 w-4" />
+            )}
+            Delete Product
+          </Button>
 
           {/* Ban Confirmation Dialog */}
           {showBanConfirm && (
@@ -517,6 +525,7 @@ export function ProductDetailsDialog({
                   <Button
                     variant="outline"
                     onClick={() => setShowBanConfirm(false)}
+                    disabled={isLoading}
                   >
                     Cancel
                   </Button>
@@ -533,6 +542,9 @@ export function ProductDetailsDialog({
                     }}
                     disabled={!selectedBanReason || isLoading}
                   >
+                    {isLoading ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
                     Confirm Ban
                   </Button>
                 </DialogFooter>
@@ -554,6 +566,7 @@ export function ProductDetailsDialog({
                   <Button
                     variant="outline"
                     onClick={() => setShowUnbanConfirm(false)}
+                    disabled={isLoading}
                   >
                     Cancel
                   </Button>
@@ -567,6 +580,9 @@ export function ProductDetailsDialog({
                     }}
                     disabled={isLoading}
                   >
+                    {isLoading ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
                     Confirm
                   </Button>
                 </DialogFooter>
@@ -592,6 +608,7 @@ export function ProductDetailsDialog({
                   <Button
                     variant="outline"
                     onClick={() => setShowDeleteConfirm(false)}
+                    disabled={isLoading}
                   >
                     Cancel
                   </Button>
@@ -606,6 +623,9 @@ export function ProductDetailsDialog({
                     }}
                     disabled={isLoading}
                   >
+                    {isLoading ? (
+                      <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
                     Confirm Delete
                   </Button>
                 </DialogFooter>

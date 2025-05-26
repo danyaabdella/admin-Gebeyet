@@ -49,6 +49,7 @@ export async function connectToDB() {
 // Utility function to check if the user has "superAdmin" role
 export async function isSuperAdmin() {
   const userRole = await role();
+  console.log("User role: ", userRole);
   if (userRole !== "superAdmin") {
     throw new Error(
       "Unauthorized: Only superAdmins can perform this operation"

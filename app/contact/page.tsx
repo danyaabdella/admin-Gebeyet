@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LeadershipTeam } from "@/components/contact/leadership-team";
 import { ContactForm } from "@/components/contact/contact-form";
 import { fetchLeadershipTeam } from "@/utils/api-mock";
+import LocationMap from "@/components/location/LocationMap";
 
 export default function ContactPage() {
   const [leadershipData, setLeadershipData] = useState<any[]>([]);
@@ -156,12 +157,11 @@ export default function ContactPage() {
           Find Us
         </h2>
         <div className="aspect-video w-full rounded-xl overflow-hidden border">
-          {/* In a real implementation, you would embed a Google Map or similar here */}
-          <div className="w-full h-full bg-muted flex items-center justify-center">
-            <p className="text-muted-foreground">
-              Interactive Map Would Be Embedded Here
-            </p>
-          </div>
+          <LocationMap
+            location={[37.3833, 11.6]}
+            title="Our Location in Bahir Dar"
+            className="w-full h-full"
+          />
         </div>
       </div>
 

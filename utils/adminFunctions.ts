@@ -76,7 +76,7 @@ export async function fetchUsers(page: number, limit: number, filters: any) {
     const response = await fetch("/api/manageUsers", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ _id: userId }),
     });
     const data = await response.json();
     return { success: response.ok, message: data.message };

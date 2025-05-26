@@ -401,9 +401,6 @@ export default function AuctionsPageClient() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Auction</TableHead>
-                    <TableHead className="hidden md:table-cell">
-                      Merchant
-                    </TableHead>
                     <TableHead>
                       <span className="inline md:hidden">Price</span>
                       <span className="hidden md:inline">Start Price</span>
@@ -437,9 +434,6 @@ export default function AuctionsPageClient() {
                       >
                         <TableCell className="font-medium">
                           {auction.auctionTitle || "N/A"}
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          {auction.merchantName || "N/A"}
                         </TableCell>
                         <TableCell>
                           ${auction.startingPrice.toFixed(2)}
