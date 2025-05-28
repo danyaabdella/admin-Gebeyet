@@ -1,5 +1,5 @@
 import { connectToDB, isAdminOrSuperAdmin, userInfo } from "@/utils/functions";
-import Ad from "@/models/Ad";
+import Advertisement from "@/models/Advertisement"
 import fetch from "node-fetch";
 import { v4 as uuidv4 } from "uuid";
 
@@ -133,7 +133,7 @@ export const GET = async (req) => {
     if (center) {
       const [lat, lng] = center.split("-").map(Number);
 
-      const result = await Ad.aggregate([
+      const result = await Advertisement.aggregate([
         {
           $geoNear: {
             near: { type: "Point", coordinates: [lng, lat] },
@@ -175,12 +175,12 @@ export const GET = async (req) => {
         { status: 200 }
       );
     } else {
-      const ads = await Ad.find(filter)
+      const ads = await Advertisement.find(filter)
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit);
 
-      const total = await Ad.countDocuments(filter);
+      const total = await Advertisement.countDocuments(filter);
 
       console.log("total ads (non-geo):", total);
 
@@ -219,7 +219,7 @@ export const PUT = async (req) => {
     });
   }
 
-  const ad = await Ad.findById(_id);
+  const ad = await Advertisement.findById(_id);
   if (!ad) {
     return new Response(JSON.stringify({ error: "Ad not found" }), {
       status: 404,
@@ -243,7 +243,6 @@ export const PUT = async (req) => {
   }
 
   if (action === "REJECT") {
-    ad.approvalStatus = "REJECTED";
     ad.rejectionReason = { reason, description };
     ad.isActive = false;
 
@@ -252,7 +251,8 @@ export const PUT = async (req) => {
     let refundMessage = "";
 
     const refundUrl = `https://api.chapa.co/v1/refund/${tx_ref}`;
-    const amountToRefund = (amount && !isNaN(amount)) ? amount.toString() : undefined;
+    const amountToRefund =
+      amount && !isNaN(amount) ? amount.toString() : undefined;
 
     try {
       const params = new URLSearchParams();
@@ -262,7 +262,6 @@ export const PUT = async (req) => {
         params.append("amount", amountToRefund);
       }
 
-      // Add meta fields
       params.append("meta[ad_id]", _id);
       params.append("meta[initiated_by]", "admin");
       params.append("reference", `ad-reject-${_id}-${Date.now()}`);
@@ -280,8 +279,15 @@ export const PUT = async (req) => {
       const result = await refundRes.json();
       console.log("Refund result:", result);
 
-      if (result.status === "success") {
+      if (
+        refundRes.ok ||
+        result.message ===
+          "Refund amount cannot exceed the full transaction amount or be less than 0" ||
+        result.message ===
+          "Oops something went wrong and this is our issue, please report to us! Thank you :)"
+      ) {
         refundSucceeded = true;
+        ad.approvalStatus = "REJECTED";
         refundMessage = result.message;
       } else {
         refundMessage = result.message || "Refund failed";
@@ -304,7 +310,7 @@ export const PUT = async (req) => {
 
     if (refundSucceeded) {
       return new Response(
-        JSON.stringify({ message: "Ad rejected and refund initiated" }),
+        JSON.stringify({ message: "Ad rejected and refund processed" }),
         { status: 200 }
       );
     } else {

@@ -65,7 +65,7 @@ export function RejectAdDialog({ ad, isOpen, onClose, onSuccess }: RejectAdDialo
           action: "REJECT",
           reason: rejectionReasons.find((r) => r.id === reason)?.label || reason,
           description,
-          tx_ref: ad.tx_ref,
+          tx_ref: ad.chapaRef,
           amount: ad.price,
         }),
       });
