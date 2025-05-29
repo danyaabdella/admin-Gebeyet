@@ -4,7 +4,7 @@ import Admin from "@/models/Admin";
 import SuperAdmin from "@/models/SuperAdmin";
 import { getServerSession } from "next-auth";
 import { options } from "../app/api/auth/[...nextauth]/options";
-import Ad from "@/models/Ad";
+import Advertisement from "@/models/Advertisement";
 
 export async function fetchUserData() {
   let data;
@@ -46,6 +46,7 @@ export async function connectToDB() {
   }
 }
 
+
 // Utility function to check if the user has "superAdmin" role
 export async function isSuperAdmin() {
   const userRole = await role();
@@ -66,7 +67,6 @@ export async function isAdmin() {
 
 export async function isAdminOrSuperAdmin() {
   const userRole = await role();
-  console.log("role: ", userRole);
   if (userRole !== "admin" && userRole !== "superAdmin") {
     throw new Error(
       "Unauthorized: Only admins or superAdmins can perform this operation"
@@ -135,7 +135,7 @@ const transporter = nodemailer.createTransport({
  */
 export async function sendNotification(to, userType, action, password = "") {
   const contactEmail = process.env.EMAIL_USER;
-  let subject, text;
+  let subject, text;  
 
   switch (action) {
     case "created":
@@ -220,7 +220,7 @@ const deactivateExpiredAds = async () => {
 
     const now = new Date();
 
-    const result = await Ad.updateMany(
+    const result = await Advertisement.updateMany(
       {
         isActive: true,
         approvalStatus: "APPROVED",
